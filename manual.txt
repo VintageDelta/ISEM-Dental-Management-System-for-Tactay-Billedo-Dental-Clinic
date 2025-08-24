@@ -1,0 +1,5 @@
+To install the environment:
+
+python -m venv django_env
+django_env\Scripts\activate
+pip install -r requirements.txt
