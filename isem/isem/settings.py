@@ -75,8 +75,12 @@ WSGI_APPLICATION = "isem.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'isem_db',         # database name you created
+        'USER': 'root',            # default WAMP username
+        'PASSWORD': 'p@ssw0rd',    # WAMP password of your account (e.g. p@ssw0rd)
+        'HOST': '127.0.0.1',       # or 'localhost'
+        'PORT': '3306',            # default MySQL port in WAMP
     }
 }
 
