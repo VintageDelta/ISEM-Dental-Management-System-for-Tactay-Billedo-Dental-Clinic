@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Tactay-Billedo Dental Clinic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<div class="flex items-center justify-center min-h-screen bg-green-100 relative overflow-hidden">
+    <!-- Green Semi-Circle Background -->
+    <div class="absolute top-0 w-full h-1/2 bg-green-500 rounded-b-full"></div>
+
+    <!-- Sign-Up Card -->
+    <div class="relative bg-white shadow-lg rounded-md w-full max-w-md p-6">
+        <div class="text-center mb-6">
+            <div class="mx-auto w-12 h-12 bg-green-500 rounded-full mb-2"></div>
+            <h1 class="text-green-700 font-bold text-lg">Tactay-Billedo</h1>
+            <p class="text-green-700 text-sm">Dental Clinic</p>
+        </div>
+        <h2 class="text-center text-xl font-semibold mb-4">Sign Up</h2>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <!-- Full Name -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" name="full_name" class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="John Doe" required>
+            </div>
+            <!-- Email -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                <input type="email" name="email" class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="example@email.com" required>
+            </div>
+            <!-- Username -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Username</label>
+                <input type="text" name="username" class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="username" required>
+            </div>
+            <!-- Password -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" name="password1" class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="********" required>
+            </div>
+            <!-- Confirm Password -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                <input type="password" name="password2" class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="********" required>
+            </div>
+            <!-- Terms -->
+            <div class="flex items-center">
+                <input type="checkbox" name="terms" class="mr-2">
+                <label class="text-sm text-gray-600">I agree to the <a href="#" class="text-green-600 hover:underline">terms & conditions</a></label>
+            </div>
+            <!-- Submit Button -->
+            <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">Sign Up</button>
+        </form>
+
+        <!-- Sign In Redirect -->
+        <div class="mt-4 text-center text-sm">
+            Already have an account? <a href="{% url 'userprofile:signin' %}" class="text-green-600 hover:underline">Sign in</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
