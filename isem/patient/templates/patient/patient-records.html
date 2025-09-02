@@ -1,9 +1,152 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block title %}
-ISEM
+Patient Records
 {% endblock %}
 
 {% block content %}
-<h2 class="text-2xl font-semibold mb-4">Patient Records</h2>
+<div class="w-full">
+  <div class="w-full">
+    <div class="p-4 rounded-xl">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <h4 class="capitalize text-lg font-medium">Patient Records</h4>
+        <div class="flex justify-center flex-wrap mt-2 md:mt-0">
+          <nav aria-label="breadcrumb">
+            <ol class="flex space-x-2 text-sm text-gray-500">
+              <li><a href="{% url 'dashboard:index' %}" class="hover:text-gray-700"><i class="las la-home"></i> Dashboard</a></li>
+              <li class="text-gray-400">/</li>
+              <li class="text-gray-700 font-medium">Patients</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="w-full mt-6">
+  <div class="w-full">
+    <div class="bg-white w-full p-5 md:px-8 rounded-xl shadow mb-6">
+
+      <!-- Top controls -->
+      <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+        <div class="flex flex-wrap items-center gap-4">
+          <!-- Search bar -->
+          <div class="flex items-center bg-gray-100 rounded px-3 py-2">
+            <input 
+              id="search-bar" 
+              type="search" 
+              placeholder="Search patients..." 
+              class="bg-transparent outline-none text-sm w-56"
+            />
+          </div>
+        </div>
+
+        <!-- Add Patient Button -->
+        <div class="flex gap-2 mt-4 md:mt-0">
+          <button 
+            id="add-patient-btn" 
+            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md flex items-center gap-1 hover:bg-blue-700 transition"
+          >
+            <i class="la la-plus"></i> Add Patient
+          </button>
+        </div>
+      </div>
+
+      <!-- Patient Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm border">
+          <thead class="bg-gray-50 text-gray-600 text-left">
+            <tr>
+              <th class="py-3 px-4 border-b">Patient ID</th>
+              <th class="py-3 px-4 border-b">Name</th>
+              <th class="py-3 px-4 border-b">Address</th>
+              <th class="py-3 px-4 border-b">Telephone</th>
+              <th class="py-3 px-4 border-b">Age</th>
+              <th class="py-3 px-4 border-b">Occupation</th>
+              <th class="py-3 px-4 border-b">Status</th>
+              <th class="py-3 px-4 border-b">Complaint</th>
+              <th class="py-3 px-4 border-b text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for patient in patients %}
+            <tr class="hover:bg-gray-50 border-b">
+              <td class="py-3 px-4">{{ patient.id }}</td>
+              <td class="py-3 px-4">{{ patient.name }}</td>
+              <td class="py-3 px-4">{{ patient.address }}</td>
+              <td class="py-3 px-4">{{ patient.telephone }}</td>
+              <td class="py-3 px-4">{{ patient.age }}</td>
+              <td class="py-3 px-4">{{ patient.occupation }}</td>
+              <td class="py-3 px-4">{{ patient.status }}</td>
+              <td class="py-3 px-4">{{ patient.complaint }}</td>
+              <td class="py-3 px-4 text-right">
+                <div class="flex justify-end gap-2">
+                  <a href="#" class="text-gray-500 hover:text-gray-700"><i class="uil uil-edit"></i></a>
+                  <a href="#" class="text-gray-500 hover:text-red-600"><i class="uil uil-trash-alt"></i></a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="py-4 text-center text-gray-500">No patients found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex justify-between items-center border-t pt-4 mt-4">
+        <div class="flex space-x-2 text-sm">
+          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
+          <a href="#" class="px-3 py-1 border rounded bg-blue-500 text-white">1</a>
+          <a href="#" class="px-3 py-1 border rounded">2</a>
+          <a href="#" class="px-3 py-1 border rounded">3</a>
+          <a href="#" class="px-3 py-1 border rounded">...</a>
+          <a href="#" class="px-3 py-1 border rounded">12</a>
+          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
+        </div>
+        <select class="border rounded px-2 py-1 text-sm">
+          <option value="20">20/page</option>
+          <option value="40">40/page</option>
+          <option value="60">60/page</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Patient Popup -->
+<div id="patient-popup" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div id="popup-content" 
+       class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
+    <h2 class="text-lg font-semibold mb-4 text-center">Add Patient</h2>
+    <form method="post" action="{% url 'patient:list' %}" class="space-y-3">
+      {% csrf_token %}
+      <input type="text" name="name" placeholder="Name" required class="w-full border rounded-md p-2 text-sm">
+      <input type="text" name="address" placeholder="Address" required class="w-full border rounded-md p-2 text-sm">
+      <input type="text" name="telephone" placeholder="Telephone" required class="w-full border rounded-md p-2 text-sm">
+      <input type="number" name="age" placeholder="Age" required class="w-full border rounded-md p-2 text-sm">
+      <input type="text" name="occupation" placeholder="Occupation" class="w-full border rounded-md p-2 text-sm">
+      <input type="text" name="status" placeholder="Status" class="w-full border rounded-md p-2 text-sm">
+      <textarea name="complaint" placeholder="Complaint" rows="3" class="w-full border rounded-md p-2 text-sm"></textarea>
+
+      <div class="flex justify-end gap-2 pt-3">
+        <button type="button" id="close-popup-btn" class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600">
+          Cancel
+        </button>
+        <button type="submit" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/patient.js' %}"></script>
 {% endblock %}

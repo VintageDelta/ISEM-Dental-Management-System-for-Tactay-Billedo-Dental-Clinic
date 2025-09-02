@@ -1,0 +1,135 @@
+/* ===================== Layout ===================== */
+.patient-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+/* ===================== Header ===================== */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#search-bar {
+    padding: 10px 14px;
+    width: 250px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+#add-patient-btn {
+    background-color: #22c55e;
+    color: #fff;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.25s, transform 0.15s;
+}
+
+#add-patient-btn:hover {
+    background-color: #16a34a;
+    transform: translateY(-2px);
+}
+
+/* ===================== Table ===================== */
+.patient-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+}
+
+.patient-table th, 
+.patient-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.patient-table th {
+    background-color: #f9fafb;
+    font-weight: 700;
+}
+
+.patient-table tr:hover {
+    background-color: #f0fdf4;
+}
+
+/* ===================== Popup ===================== */
+.patient-popup {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none; /* hidden by default */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.patient-popup.active {
+    display: flex;
+}
+
+.popup-content {
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+.popup-content h2 {
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.popup-content input,
+.popup-content textarea {
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.popup-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.popup-actions button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.popup-actions button[type="submit"] {
+    background: #22c55e;
+    color: #fff;
+}
+.popup-actions button[type="submit"]:hover {
+    background: #16a34a;
+}
+
+.popup-actions #close-popup-btn {
+    background: #64748b;
+    color: #fff;
+}
+.popup-actions #close-popup-btn:hover {
+    background: #475569;
+}

@@ -28,4 +28,6 @@ urlpatterns = [
     path("dashboard/billing/", include('billing.urls')),
     path("user/",include('userprofile.urls')),
     path("admin/", admin.site.urls),
+
+    path("patients/", include("patient.urls")),
 ]

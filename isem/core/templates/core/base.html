@@ -11,7 +11,9 @@
     />
 
     <script src="https://cdn.tailwindcss.com"></script>
-  </head>
+
+    {% block extra_css %}{% endblock %}
+</head>
 
   <body class="bg-gray-100">
     <div class="flex min-h-screen">
@@ -105,9 +107,9 @@
     </div>
 
     <!-- Google Material Icons -->
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
-  </body>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    {% block extra_js %}{% endblock %}
+</body>
+
 </html>

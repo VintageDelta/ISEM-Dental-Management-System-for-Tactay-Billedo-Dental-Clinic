@@ -1,9 +1,95 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
-{% block title %}
-ISEM
+{% block title %}ISEM{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-<h2 class="text-2xl font-semibold mb-4">Appointments</h2>
+<h2 class="text-2xl font-semibold mb-6">Appointments</h2>
+
+<!-- Create Appointment Button -->
+<div class="flex justify-start mb-6">
+  <button id="create-appointment-btn" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-md shadow hover:bg-green-700 transition">
+    Create Appointment
+  </button>
+</div>
+
+<!-- Appointments Container -->
+<div class="flex flex-col md:flex-row gap-6">
+  <!-- Calendar -->
+  <div class="flex-1 bg-white rounded-xl shadow p-4 md:max-w-xl">
+    <div id="calendar"></div>
+  </div>
+
+  <!-- Today's Appointments -->
+  <div class="flex-1 bg-white rounded-xl shadow p-4 md:max-w-md">
+    <h3 class="text-lg font-semibold mb-4">Today's Appointments</h3>
+    <ul id="todays-appointments-list" class="divide-y divide-gray-200">
+      <li class="py-2">No appointments today.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Add Appointment Modal -->
+<div id="appointment-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
+    <h2 class="text-lg font-semibold mb-4 text-center">Add Appointment</h2>
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <!-- Patient Name -->
+      <input type="text" name="customer_name" placeholder="Patient Name" required class="w-full border rounded-md p-2 text-sm">
+
+      <!-- Start -->
+      <div class="flex gap-2">
+        <label class="flex-none w-14 text-sm font-medium pt-2">Start</label>
+        <input type="date" name="start_date" required class="flex-1 border rounded-md p-2 text-sm">
+        <input type="time" name="start_time" required class="flex-1 border rounded-md p-2 text-sm">
+      </div>
+
+      <!-- End -->
+      <div class="flex gap-2">
+        <label class="flex-none w-14 text-sm font-medium pt-2">End</label>
+        <input type="date" name="end_date" required class="flex-1 border rounded-md p-2 text-sm">
+        <input type="time" name="end_time" required class="flex-1 border rounded-md p-2 text-sm">
+      </div>
+
+      <!-- Description -->
+      <textarea name="description" placeholder="Description" rows="3" class="w-full border rounded-md p-2 text-sm"></textarea>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-2 pt-3">
+        <button type="button" id="close-appointment-btn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="{% static 'js/calendar.js' %}"></script>
+<script>
+// Show/hide appointment modal
+const createBtn = document.getElementById('create-appointment-btn');
+const modal = document.getElementById('appointment-modal');
+const closeBtn = document.getElementById('close-appointment-btn');
+
+createBtn.addEventListener('click', () => {
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    modal.children[0].classList.remove('opacity-0', 'scale-95');
+    modal.children[0].classList.add('opacity-100', 'scale-100');
+  }, 10);
+});
+
+closeBtn.addEventListener('click', () => {
+  modal.children[0].classList.remove('opacity-100', 'scale-100');
+  modal.children[0].classList.add('opacity-0', 'scale-95');
+  setTimeout(() => modal.classList.add('hidden'), 200);
+});
+</script>
 {% endblock %}
