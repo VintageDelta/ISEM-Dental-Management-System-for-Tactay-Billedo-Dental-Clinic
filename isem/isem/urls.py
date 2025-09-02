@@ -29,5 +29,5 @@ urlpatterns = [
     path("user/",include('userprofile.urls')),
     path("admin/", admin.site.urls),
 
-    path("patients/", include("patient.urls")),
+    # path("patients/", include("patient.urls")),
 ]
