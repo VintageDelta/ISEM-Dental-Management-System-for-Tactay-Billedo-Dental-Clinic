@@ -46,7 +46,7 @@ Patient Records
         <!-- Add Patient Button -->
         <div class="flex gap-2 mt-4 md:mt-0">
           <button 
-            id="add-patient-btn" 
+            id="add-modal-btn" 
             class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md flex items-center gap-1 hover:bg-blue-700 transition"
           >
             <i class="la la-plus"></i> Add Patient
@@ -119,7 +119,7 @@ Patient Records
 </div>
 
 <!-- Add Patient Popup -->
-<div id="patient-popup" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+<div id="modal-popup" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
   <div id="popup-content" 
        class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
     <h2 class="text-lg font-semibold mb-4 text-center">Add Patient</h2>
@@ -148,5 +148,5 @@ Patient Records
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/patient.js' %}"></script>
+<script src="{% static 'js/modal.js' %}"></script>
 {% endblock %}

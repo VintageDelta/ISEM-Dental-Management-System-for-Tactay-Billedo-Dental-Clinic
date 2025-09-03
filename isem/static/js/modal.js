@@ -1,10 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const popup = document.getElementById("patient-popup");
+  const popup = document.getElementById("modal-popup");
   const popupContent = document.getElementById("popup-content");
-  const addBtn = document.getElementById("add-patient-btn");
+  const addBtn = document.getElementById("add-modal-btn");
   const closeBtn = document.getElementById("close-popup-btn");
-  const searchBar = document.getElementById("search-bar");
-  const tableBody = document.getElementById("patient-table-body");
+  // const searchBar = document.getElementById("search-bar");
+  // const tableBody = document.getElementById("patient-table-body");
 
   // Open popup
   addBtn.addEventListener("click", () => {
@@ -37,13 +37,13 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Search filter
-  searchBar.addEventListener("keyup", () => {
-    const query = searchBar.value.toLowerCase();
-    const rows = tableBody.getElementsByTagName("tr");
+  // searchBar.addEventListener("keyup", () => {
+  //   const query = searchBar.value.toLowerCase();
+  //   const rows = tableBody.getElementsByTagName("tr");
 
-    Array.from(rows).forEach((row) => {
-      const text = row.textContent.toLowerCase();
-      row.style.display = text.includes(query) ? "" : "none";
-    });
-  });
+  //   Array.from(rows).forEach((row) => {
+  //     const text = row.textContent.toLowerCase();
+  //     row.style.display = text.includes(query) ? "" : "none";
+  //   });
+  // });
 });
