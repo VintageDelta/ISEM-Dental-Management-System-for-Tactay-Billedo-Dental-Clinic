@@ -1,95 +1,136 @@
-{% extends 'core/base.html' %} {% block title %} Billing {% endblock %}
-<!--prettier ignore-->
-
-{% block content %}
-<div class="p-6">
-  <!-- Header -->
-  <div
-    class="flex flex-col md:flex-row md:items-center md:justify-between mb-6"
-  >
-    <h4 class="capitalize text-lg font-medium">Billing</h4>
-    <nav aria-label="breadcrumb">
-      <ol class="flex space-x-2 text-sm text-gray-500">
-        <li>
-          <a href="#" class="hover:text-gray-700">
-            <i class="las la-home"></i> Billing
-          </a>
-        </li>
-        <li class="text-gray-400">/</li>
-        <li class="text-gray-700 font-medium">Records</li>
-      </ol>
-    </nav>
-  </div>
-
-  <!-- Controls -->
-  <div
-    class="flex flex-col md:flex-row md:justify-between md:items-center mb-6"
-  >
-    <!-- Search -->
-    <div
-      class="flex items-center border border-gray-300 rounded px-3 py-2 w-full md:w-1/3 bg-white"
-    >
-      <input
-        type="search"
-        placeholder="Search bills..."
-        class="bg-transparent outline-none text-sm w-full"
-      />
-    </div>
-
-    <!-- Add Billing Button -->
-    <button
-      class="px-4 py-2 mt-3 md:mt-0 text-sm bg-green-600 text-white rounded-md flex items-center gap-1"
-    >
-      <i class="la la-plus"></i> Add Billing
-    </button>
-  </div>
-
-  <!-- Table -->
-  <div class="bg-white p-5 rounded-xl shadow">
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead>
-          <tr class="text-left text-gray-500 border-b">
-            <th class="py-3">
-              <input type="checkbox" class="form-checkbox" />
-            </th>
-            <th class="py-3">Patient ID</th>
-            <th class="py-3">Patient Name</th>
-            <th class="py-3">Amount</th>
-            <th class="py-3">Type</th>
-            <th class="py-3">Date</th>
-            <th class="py-3 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Example Row -->
-          <tr class="border-b hover:bg-gray-50">
-            <td class="py-3">
-              <input type="checkbox" class="form-checkbox" />
-            </td>
-            <td class="py-3">P-101</td>
-            <td class="py-3">John Doe</td>
-            <td class="py-3">$120.00</td>
-            <td class="py-3">Consultation</td>
-            <td class="py-3">Jan 02, 2025</td>
-            <td class="py-3 text-right">
-              <div class="flex justify-end gap-3">
-                <a href="#" class="text-gray-500 hover:text-gray-700"
-                  ><i class="uil uil-eye"></i
-                ></a>
-                <a href="#" class="text-gray-500 hover:text-gray-700"
-                  ><i class="uil uil-edit"></i
-                ></a>
-                <a href="#" class="text-gray-500 hover:text-red-600"
-                  ><i class="uil uil-trash-alt"></i
-                ></a>
-              </div>
-            </td>
-          </tr>
-          <!-- More rows -->
-        </tbody>
-      </table>
+{% extends 'core/base.html' %} {% load static %} {% block title %} Billing
+{%endblock %} {% block content %}
+<div class="w-full">
+  <div class="w-full">
+    <div class="p-4 rounded-xl">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <h4 class="capitalize text-lg font-medium">Billing</h4>
+        <div class="flex justify-center flex-wrap mt-2 md:mt-0">
+          <nav aria-label="breadcrumb">
+            <ol class="flex space-x-2 text-sm text-gray-500">
+              <li>
+                <a
+                  href="{% url 'dashboard:index' %}"
+                  class="hover:text-gray-700"
+                >
+                  <i class="las la-home"></i> Dashboard
+                </a>
+              </li>
+              <li class="text-gray-400">/</li>
+              <li class="text-gray-700 font-medium">Billing</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<div class="w-full mt-6">
+  <div class="w-full">
+    <div class="bg-white w-full p-5 md:px-8 rounded-xl shadow mb-6">
+      <!-- Top controls -->
+      <div
+        class="flex flex-col md:flex-row md:justify-between md:items-center mb-6"
+      >
+        <div class="flex flex-wrap items-center gap-4">
+          <!-- Search bar -->
+          <div class="flex items-center bg-gray-100 rounded px-3 py-2">
+            <input
+              id="search-bar"
+              type="search"
+              placeholder="Search billing records..."
+              class="bg-transparent outline-none text-sm w-56"
+            />
+          </div>
+        </div>
+
+        <!-- Add Billing Button -->
+        <div class="flex gap-2 mt-4 md:mt-0">
+          <button
+            id="add-modal-btn"
+            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md flex items-center gap-1 hover:bg-blue-700 transition"
+          >
+            <i class="la la-plus"></i> Add Billing
+          </button>
+        </div>
+      </div>
+
+      <!-- Billing Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm border">
+          <thead class="bg-gray-50 text-gray-600 text-left">
+            <tr>
+              <th class="py-3 px-4 border-b"><input type="checkbox" /></th>
+              <th class="py-3 px-4 border-b">Patient ID</th>
+              <th class="py-3 px-4 border-b">Patient Name</th>
+              <th class="py-3 px-4 border-b">Amount</th>
+              <th class="py-3 px-4 border-b">Type</th>
+              <th class="py-3 px-4 border-b">Date</th>
+              <th class="py-3 px-4 border-b text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bill in bills %}
+            <tr class="hover:bg-gray-50 border-b">
+              <td class="py-3 px-4"><input type="checkbox" /></td>
+              <td class="py-3 px-4">{{ bill.patient.id }}</td>
+              <td class="py-3 px-4">{{ bill.patient.name }}</td>
+              <td class="py-3 px-4">₱{{ bill.amount }}</td>
+              <td class="py-3 px-4">{{ bill.type }}</td>
+              <td class="py-3 px-4">{{ bill.date }}</td>
+              <td class="py-3 px-4 text-right">
+                <div class="flex justify-end gap-2">
+                  <a
+                    href="{% url 'billing:billing_edit' bill.pk %}"
+                    class="text-gray-500 hover:text-gray-700"
+                    ><i class="uil uil-edit"></i
+                  ></a>
+                  <a
+                    href="{% url 'billing:billing_delete' bill.pk %}"
+                    class="text-gray-500 hover:text-red-600"
+                    ><i class="uil uil-trash-alt"></i
+                  ></a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="py-4 text-center text-gray-500">
+                No billing records found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination (placeholder) -->
+      <div class="flex justify-between items-center border-t pt-4 mt-4">
+        <div class="flex space-x-2 text-sm">
+          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100"
+            >&laquo;</a
+          >
+          <a href="#" class="px-3 py-1 border rounded bg-blue-500 text-white"
+            >1</a
+          >
+          <a href="#" class="px-3 py-1 border rounded">2</a>
+          <a href="#" class="px-3 py-1 border rounded">3</a>
+          <a href="#" class="px-3 py-1 border rounded">...</a>
+          <a href="#" class="px-3 py-1 border rounded">12</a>
+          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100"
+            >&raquo;</a
+          >
+        </div>
+        <select class="border rounded px-2 py-1 text-sm">
+          <option value="20">20/page</option>
+          <option value="40">40/page</option>
+          <option value="60">60/page</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="{% static 'js/modal.js' %}"></script>
 {% endblock %}
