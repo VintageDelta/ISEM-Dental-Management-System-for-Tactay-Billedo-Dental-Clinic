@@ -3,8 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const popupContent = document.getElementById("popup-content");
   const addBtn = document.getElementById("add-modal-btn");
   const closeBtn = document.getElementById("close-popup-btn");
-  // const searchBar = document.getElementById("search-bar");
-  // const tableBody = document.getElementById("patient-table-body");
 
   // Open popup
   addBtn.addEventListener("click", () => {
@@ -36,14 +34,5 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target === popup) closePopup();
   });
 
-  // Search filter
-  // searchBar.addEventListener("keyup", () => {
-  //   const query = searchBar.value.toLowerCase();
-  //   const rows = tableBody.getElementsByTagName("tr");
-
-  //   Array.from(rows).forEach((row) => {
-  //     const text = row.textContent.toLowerCase();
-  //     row.style.display = text.includes(query) ? "" : "none";
-  //   });
-  // });
+ 
 });
