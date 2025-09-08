@@ -110,15 +110,20 @@
               <td class="py-3 px-4 text-right">
                 <div class="flex justify-end gap-2">
                   <a
-                    href="{% url 'inventory:edit' item.pk %}"
-                    class="text-gray-500 hover:text-gray-700"
-                    ><i class="uil uil-edit"></i
-                  ></a>
+                    href="#"
+                    class="edit-btn text-gray-500 hover:text-gray-700 edit-btn"
+                    data-id="{{ item.pk }}"
+                  >
+                    <i class="uil uil-edit"></i>
+                  </a>
+
                   <a
-                    href="{% url 'inventory:delete' item.pk %}"
-                    class="text-gray-500 hover:text-red-600"
-                    ><i class="uil uil-trash-alt"></i
-                  ></a>
+                    href="#"
+                    class="text-gray-500 hover:text-red-600 delete-btn"
+                    data-id="{{ item.pk }}"
+                  >
+                    <i class="uil uil-trash-alt"></i>
+                  </a>
                 </div>
               </td>
             </tr>
@@ -160,7 +165,7 @@
   </div>
 </div>
 
-<!-- Add Inventory Popup -->
+<!-- Inventory Modal (shared for Add & Edit) -->
 <div
   id="inventory-modal"
   class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
@@ -170,27 +175,75 @@
       id="inventory-content"
       class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95"
     >
-      <h2 class="text-lg font-semibold mb-4 text-center">Add Item</h2>
-      <!-- Form-->
-      <form method="post" action="{% url 'inventory:add' %}" class="space-y-3">
-        {% csrf_token %} {{ form.non_field_errors }} {% for field in form %}
-        <div>
-          <label
-            for="{{ field.id_for_label }}"
-            class="block text-sm font-medium text-gray-700"
-          >
-            {{ field.label }}
-          </label>
-          {{ field }} {% if field.errors %}
-          <p class="text-red-500 text-xs mt-1">{{ field.errors|striptags }}</p>
-          {% endif %}
-        </div>
-        {% endfor %}
+      <h2 id="modal-title" class="text-lg font-semibold mb-4 text-center">Add Item</h2>
+
+      <!-- Shared Form -->
+      <form method="post" id="inventory-form" class="space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="id" id="item-id" />
+
+        <input
+          type="text"
+          name="item_name"
+          id="item-name"
+          placeholder="Item Name"
+          class="w-full border border-gray-300 rounded-md p-2 text-sm"
+          required
+        />
+
+        <select
+          name="category"
+          id="category"
+          class="w-full border border-gray-300 rounded-md p-2 text-sm"
+          required
+        >
+          <option value="consumable">Consumable</option>
+          <option value="equipment">Equipment</option>
+          <option value="medicine">Medicine</option>
+          <option value="other">Other</option>
+        </select>
+
+        <textarea
+          name="description"
+          id="description"
+          placeholder="Description"
+          rows="3"
+          class="w-full border border-gray-300 rounded-md p-2 text-sm"
+        ></textarea>
+
+        <input
+          type="number"
+          name="stock"
+          id="stock"
+          placeholder="Stock"
+          class="w-full border border-gray-300 rounded-md p-2 text-sm"
+          required
+        />
+
+        <input
+          type="date"
+          name="expiry_date"
+          id="expiry-date"
+          class="w-full border border-gray-300 rounded-md p-2 text-sm"
+          required
+        />
+
+        <select
+          name="status"
+          id="status"
+          class="w-full border border-gray-300 rounded-md p-2 text-sm"
+          required
+        >
+          <option value="available">Available</option>
+          <option value="low_stock">Low Stock</option>
+          <option value="out_of_stock">Out of Stock</option>
+          <option value="expired">Expired</option>
+        </select>
 
         <div class="flex justify-end gap-2 pt-3">
           <button
             type="button"
-            id="close-inventory-btn"
+            id="close-modal-btn"
             class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
           >
             Cancel
@@ -205,29 +258,231 @@
       </form>
     </div>
   </div>
+</div>
 
+  <!-- Deleting-->
+  <div
+    id="inventory-delete-modal"
+    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+  >
+    <div class="w-full h-full flex items-center justify-center">
+      <div
+        id="inventory-delete-content"
+        class="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 transform transition-all duration-200 opacity-0 scale-95"
+      >
+        <h2 class="text-lg font-semibold mb-4 text-center text-red-600">
+          Delete Item
+        </h2>
+        <p class="text-sm text-gray-600 text-center mb-6">
+          Are you sure you want to delete this item? This action cannot be
+          undone.
+        </p>
+
+        <form
+          method="post"
+          id="delete-inventory-form"
+          class="flex justify-end gap-2"
+        >
+          {% csrf_token %}
+          <input type="hidden" name="id" id="delete-id" />
+          <button
+            type="button"
+            id="close-delete-btn"
+            class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700"
+          >
+            Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+<!-- Notification Modal -->
+<div id="notification-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+  <div id="notification-content" class="bg-white p-6 rounded-lg shadow-lg transform transition-all duration-200 opacity-0 scale-95 text-center w-96">
+    <p id="notification-message" class="text-gray-800 font-medium"></p>
+    <button id="close-notification-btn" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+      OK
+    </button>
+  </div>
+</div>
   {% endblock %} {% block extra_js %}
   <script>
-    const addInventoryBtn = document.getElementById("add-modal-btn");
-    const inventoryModal = document.getElementById("inventory-modal");
-    const inventoryContent = document.getElementById("inventory-content");
-    const closeInventoryBtn = document.getElementById("close-inventory-btn");
+  const modal = document.getElementById("inventory-modal");
+  const modalContent = document.getElementById("inventory-content");
+  const closeModalBtn = document.getElementById("close-modal-btn");
+  const modalTitle = document.getElementById("modal-title");
+  const form = document.getElementById("inventory-form");
 
-    if (addInventoryBtn && inventoryModal && closeInventoryBtn) {
-      addInventoryBtn.addEventListener("click", () => {
-        inventoryModal.classList.remove("hidden");
-        setTimeout(() => {
-          inventoryContent.classList.remove("opacity-0", "scale-95");
-          inventoryContent.classList.add("opacity-100", "scale-100");
-        }, 10);
-      });
+  // Inputs
+  const itemIdField = document.getElementById("item-id");
+  const itemNameField = document.getElementById("item-name");
+  const categoryField = document.getElementById("category");
+  const descriptionField = document.getElementById("description");
+  const stockField = document.getElementById("stock");
+  const expiryDateField = document.getElementById("expiry-date");
+  const statusField = document.getElementById("status");
 
-      closeInventoryBtn.addEventListener("click", () => {
-        inventoryContent.classList.remove("opacity-100", "scale-100");
-        inventoryContent.classList.add("opacity-0", "scale-95");
-        setTimeout(() => inventoryModal.classList.add("hidden"), 200);
+  // Open Add Modal
+  document.getElementById("add-modal-btn").addEventListener("click", () => {
+    modalTitle.textContent = "Add Item";
+    form.action = "{% url 'inventory:add' %}";
+    itemIdField.value = "";
+    itemNameField.value = "";
+    categoryField.value = "consumable";
+    descriptionField.value = "";
+    stockField.value = "";
+    expiryDateField.value = "";
+    statusField.value = "available";
+
+    modal.classList.remove("hidden");
+    modal.style.display = "flex";
+    setTimeout(() => {
+      modalContent.classList.remove("opacity-0", "scale-95");
+      modalContent.classList.add("opacity-100", "scale-100");
+    }, 10);
+  });
+
+  // Open Edit Modal
+  document.querySelectorAll(".edit-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const itemId = btn.dataset.id;
+
+      fetch(`/dashboard/inventory/${itemId}/edit/`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          modalTitle.textContent = "Edit Item";
+          form.action = `/dashboard/inventory/${itemId}/edit/`;
+
+          itemIdField.value = data.id;
+          itemNameField.value = data.item_name;
+          categoryField.value = data.category;
+          descriptionField.value = data.description;
+          stockField.value = data.stock;
+          expiryDateField.value = data.expiry_date;
+          statusField.value = data.status;
+
+          modal.classList.remove("hidden");
+          modal.style.display = "flex";
+          setTimeout(() => {
+            modalContent.classList.remove("opacity-0", "scale-95");
+            modalContent.classList.add("opacity-100", "scale-100");
+          }, 10);
+        });
+    });
+  });
+
+  // Close modal
+  closeModalBtn.addEventListener("click", () => {
+    modalContent.classList.remove("opacity-100", "scale-100");
+    modalContent.classList.add("opacity-0", "scale-95");
+    setTimeout(() => {
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+    }, 200);
+  });
+</script>
+
+  <!-- Deleting-->
+  <script>
+  const deleteButtons = document.querySelectorAll(".delete-btn");
+  const deleteModal = document.getElementById("inventory-delete-modal");
+  const deleteContent = document.getElementById("inventory-delete-content");
+  const closeDeleteBtn = document.getElementById("close-delete-btn");
+  const deleteForm = document.getElementById("delete-inventory-form");
+
+  let deleteId = null;
+
+  deleteButtons.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      deleteId = btn.dataset.id;
+
+      // show modal
+      deleteModal.classList.remove("hidden");
+      setTimeout(() => {
+        deleteContent.classList.remove("opacity-0", "scale-95");
+        deleteContent.classList.add("opacity-100", "scale-100");
+      }, 10);
+    });
+  });
+
+  // Cancel button
+  closeDeleteBtn.addEventListener("click", () => {
+    deleteContent.classList.remove("opacity-100", "scale-100");
+    deleteContent.classList.add("opacity-0", "scale-95");
+    setTimeout(() => deleteModal.classList.add("hidden"), 200);
+  });
+
+  // Handle form submit with AJAX
+  deleteForm.addEventListener("submit", function (e) {
+    e.preventDefault(); // prevent full-page reload
+
+    fetch(`/dashboard/inventory/${deleteId}/delete/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("✅ Delete response:", data);
+
+        if (data.success) {
+          // Close modal
+          deleteContent.classList.remove("opacity-100", "scale-100");
+          deleteContent.classList.add("opacity-0", "scale-95");
+          setTimeout(() => deleteModal.classList.add("hidden"), 200);
+
+          // Remove the deleted row from the table
+          const row = document.querySelector(`[data-row-id="${deleteId}"]`);
+          if (row) row.remove();
+
+          // Show success popup (simple alert for now)
+          function showNotification(message) {
+  const modal = document.getElementById("notification-modal");
+  const content = document.getElementById("notification-content");
+  const msg = document.getElementById("notification-message");
+  const closeBtn = document.getElementById("close-notification-btn");
+  const row = document.querySelector(`[data-row-id="${document.getElementById("delete-id").value}"]`);
+  if (row) {
+    row.remove();
+  }
+  msg.textContent = message;
+  modal.classList.remove("hidden");
+
+  setTimeout(() => {
+    content.classList.remove("opacity-0", "scale-95");
+    content.classList.add("opacity-100", "scale-100");
+  }, 10);
+
+  closeBtn.onclick = () => {
+    content.classList.remove("opacity-100", "scale-100");
+    content.classList.add("opacity-0", "scale-95");
+    setTimeout(() => modal.classList.add("hidden"), 200);
+  };
+}
+  
+          showNotification(data.message);
+        } else {
+          alert(data.message || "Failed to delete item.");
+        }
+      })
+      .catch((error) => {
+        console.error("❌ Error:", error);
+        alert("An error occurred. Please try again.");
       });
-    }
-  </script>
+  });
+</script>
+
   {% endblock %}
 </div>

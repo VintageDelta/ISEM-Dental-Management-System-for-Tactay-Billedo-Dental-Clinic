@@ -15,7 +15,7 @@ class InventoryItemForm(forms.ModelForm):
                 'class': 'w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
                 'placeholder': 'Item Name'
             }),
-            'category': forms.TextInput(attrs={
+            'category': forms.Select(attrs={
                 'class': 'w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
                 'placeholder': 'Category'
             }),
