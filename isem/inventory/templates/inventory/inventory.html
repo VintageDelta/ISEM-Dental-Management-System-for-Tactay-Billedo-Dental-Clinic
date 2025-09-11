@@ -447,7 +447,7 @@
           const row = document.querySelector(`[data-row-id="${deleteId}"]`);
           if (row) row.remove();
 
-          // Show success popup (simple alert for now)
+          // Show success popup 
           function showNotification(message) {
   const modal = document.getElementById("notification-modal");
   const content = document.getElementById("notification-content");
@@ -478,7 +478,7 @@
         }
       })
       .catch((error) => {
-        console.error("❌ Error:", error);
+        console.error("Error:", error);
         alert("An error occurred. Please try again.");
       });
   });

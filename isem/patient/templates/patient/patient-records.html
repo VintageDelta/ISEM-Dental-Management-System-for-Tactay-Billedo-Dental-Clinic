@@ -1,11 +1,5 @@
-{% extends 'core/base.html' %}
-{% load static %}
-
-{% block title %}
-Patient Records
-{% endblock %}
-
-{% block content %}
+{% extends 'core/base.html' %} {% load static %} {% block title %} Patient
+Records {% endblock %} {% block content %}
 <div class="w-full">
   <div class="w-full">
     <div class="p-4 rounded-xl">
@@ -14,7 +8,13 @@ Patient Records
         <div class="flex justify-center flex-wrap mt-2 md:mt-0">
           <nav aria-label="breadcrumb">
             <ol class="flex space-x-2 text-sm text-gray-500">
-              <li><a href="{% url 'dashboard:index' %}" class="hover:text-gray-700"><i class="las la-home"></i> Dashboard</a></li>
+              <li>
+                <a
+                  href="{% url 'dashboard:index' %}"
+                  class="hover:text-gray-700"
+                  ><i class="las la-home"></i> Dashboard</a
+                >
+              </li>
               <li class="text-gray-400">/</li>
               <li class="text-gray-700 font-medium">Patients</li>
             </ol>
@@ -28,16 +28,17 @@ Patient Records
 <div class="w-full mt-6">
   <div class="w-full">
     <div class="bg-white w-full p-5 md:px-8 rounded-xl shadow mb-6">
-
       <!-- Top controls -->
-      <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+      <div
+        class="flex flex-col md:flex-row md:justify-between md:items-center mb-6"
+      >
         <div class="flex flex-wrap items-center gap-4">
           <!-- Search bar -->
           <div class="flex items-center bg-gray-100 rounded px-3 py-2">
-            <input 
-              id="search-bar" 
-              type="search" 
-              placeholder="Search patients..." 
+            <input
+              id="search-bar"
+              type="search"
+              placeholder="Search patients..."
               class="bg-transparent outline-none text-sm w-56"
             />
           </div>
@@ -45,8 +46,8 @@ Patient Records
 
         <!-- Add Patient Button -->
         <div class="flex gap-2 mt-4 md:mt-0">
-          <button 
-            id="add-modal-btn" 
+          <button
+            id="add-modal-btn"
             class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md flex items-center gap-1 hover:bg-blue-700 transition"
           >
             <i class="la la-plus"></i> Add Patient
@@ -58,15 +59,14 @@ Patient Records
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm border">
           <thead class="bg-gray-50 text-gray-600 text-left">
-            <tr> 
+            <tr>
               <th class="py-3 px-4 border-b">Patient ID</th>
               <th class="py-3 px-4 border-b">Name</th>
+              <th class="py-3 px-4 border-b">Email</th>
               <th class="py-3 px-4 border-b">Address</th>
               <th class="py-3 px-4 border-b">Telephone</th>
               <th class="py-3 px-4 border-b">Age</th>
               <th class="py-3 px-4 border-b">Occupation</th>
-              <th class="py-3 px-4 border-b">Status</th>
-              <th class="py-3 px-4 border-b">Complaint</th>
               <th class="py-3 px-4 border-b text-right">Actions</th>
             </tr>
           </thead>
@@ -75,29 +75,33 @@ Patient Records
             <tr class="hover:bg-gray-50 border-b patient-row">
               <td class="py-3 px-4">{{ patient.id }}</td>
               <td class="py-3 px-4">{{ patient.name }}</td>
+              <td class="py-3 px-4">{{ patient.email }}</td>
               <td class="py-3 px-4">{{ patient.address }}</td>
               <td class="py-3 px-4">{{ patient.telephone }}</td>
               <td class="py-3 px-4">{{ patient.age }}</td>
               <td class="py-3 px-4">{{ patient.occupation }}</td>
-              <td class="py-3 px-4">{{ patient.status }}</td>
-              <td class="py-3 px-4">{{ patient.complaint }}</td>
               <td class="py-3 px-4 text-right">
-              <div class="flex justify-end gap-2">
-                <a href="#" 
-                  class="text-gray-500 hover:text-gray-700"
-                  data-id="{{patient.id}}"
-                  ><i class="uil uil-edit text-xl"></i>
-                </a>
-                <a href="#" class="text-gray-500 hover:text-red-600 delete-btn"
-                  data-id="{{ patient.id }}"
-                  ><i class="uil uil-trash-alt text-xl"></i>
+                <div class="flex justify-end gap-2">
+                  <a
+                    href="#"
+                    class="text-gray-500 hover:text-gray-700"
+                    data-id="{{patient.id}}"
+                    ><i class="uil uil-edit text-xl"></i>
+                  </a>
+                  <a
+                    href="#"
+                    class="text-gray-500 hover:text-red-600 delete-btn"
+                    data-id="{{ patient.id }}"
+                    ><i class="uil uil-trash-alt text-xl"></i>
                   </a>
                 </div>
               </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="9" class="py-4 text-center text-gray-500">No patients found.</td>
+              <td colspan="9" class="py-4 text-center text-gray-500">
+                No patients found.
+              </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -107,13 +111,19 @@ Patient Records
       <!-- Pagination -->
       <div class="flex justify-between items-center border-t pt-4 mt-4">
         <div class="flex space-x-2 text-sm">
-          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
-          <a href="#" class="px-3 py-1 border rounded bg-blue-500 text-white">1</a>
+          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100"
+            >&laquo;</a
+          >
+          <a href="#" class="px-3 py-1 border rounded bg-blue-500 text-white"
+            >1</a
+          >
           <a href="#" class="px-3 py-1 border rounded">2</a>
           <a href="#" class="px-3 py-1 border rounded">3</a>
           <a href="#" class="px-3 py-1 border rounded">...</a>
           <a href="#" class="px-3 py-1 border rounded">12</a>
-          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
+          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100"
+            >&raquo;</a
+          >
         </div>
         <select class="border rounded px-2 py-1 text-sm">
           <option value="20">20/page</option>
@@ -126,25 +136,70 @@ Patient Records
 </div>
 
 <!-- Add Patient Popup -->
-<div id="modal-popup" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-  <div id="popup-content" 
-       class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
+<div
+  id="modal-popup"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+>
+  <div
+    id="popup-content"
+    class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95"
+  >
     <h2 class="text-lg font-semibold mb-4 text-center">Add Patient</h2>
     <form method="post" action="{% url 'patient:list' %}" class="space-y-3">
       {% csrf_token %}
-      <input type="text" name="name" placeholder="Name" required class="w-full border rounded-md p-2 text-sm">
-      <input type="text" name="address" placeholder="Address" required class="w-full border rounded-md p-2 text-sm">
-      <input type="text" name="telephone" placeholder="Telephone" required class="w-full border rounded-md p-2 text-sm">
-      <input type="number" name="age" placeholder="Age" required class="w-full border rounded-md p-2 text-sm">
-      <input type="text" name="occupation" placeholder="Occupation" class="w-full border rounded-md p-2 text-sm">
-      <input type="text" name="status" placeholder="Status" class="w-full border rounded-md p-2 text-sm">
-      <textarea name="complaint" placeholder="Complaint" rows="3" class="w-full border rounded-md p-2 text-sm"></textarea>
+      <input
+        type="text"
+        name="name"
+        placeholder="Name"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="email"
+        name="email"
+        placeholder="Email"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="address"
+        placeholder="Address"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="telephone"
+        placeholder="Telephone"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="number"
+        name="age"
+        placeholder="Age"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="occupation"
+        placeholder="Occupation"
+        class="w-full border rounded-md p-2 text-sm"
+      />
 
       <div class="flex justify-end gap-2 pt-3">
-        <button type="button" id="close-popup-btn" class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600">
+        <button
+          type="button"
+          id="close-popup-btn"
+          class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+        >
           Cancel
         </button>
-        <button type="submit" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+        <button
+          type="submit"
+          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
           Save
         </button>
       </div>
@@ -153,16 +208,31 @@ Patient Records
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-  <div id="delete-modal-content" 
-       class="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 transform transition-all duration-200 opacity-0 scale-95">
-    <h2 class="text-lg font-semibold mb-4 text-center text-red-600">Confirm Delete</h2>
-    <p class="text-center mb-6">Are you sure you want to delete this patient?</p>
+<div
+  id="delete-modal"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+>
+  <div
+    id="delete-modal-content"
+    class="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 transform transition-all duration-200 opacity-0 scale-95"
+  >
+    <h2 class="text-lg font-semibold mb-4 text-center text-red-600">
+      Confirm Delete
+    </h2>
+    <p class="text-center mb-6">
+      Are you sure you want to delete this patient?
+    </p>
     <div class="flex justify-center gap-4">
-      <button id="cancel-delete" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
+      <button
+        id="cancel-delete"
+        class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+      >
         Cancel
       </button>
-      <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+      <button
+        id="confirm-delete"
+        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+      >
         Delete
       </button>
     </div>
@@ -170,26 +240,82 @@ Patient Records
 </div>
 
 <!-- Edit Patient Modal -->
-<div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-  <div id="edit-modal-content" 
-       class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
+<div
+  id="edit-modal"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+>
+  <div
+    id="edit-modal-content"
+    class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95"
+  >
     <h2 class="text-lg font-semibold mb-4 text-center">Edit Patient</h2>
-    <form id="edit-form" method="post" action="{% url 'patient:update' %}" class="space-y-3">
+    <form
+      id="edit-form"
+      method="post"
+      action="{% url 'patient:update' %}"
+      class="space-y-3"
+    >
       {% csrf_token %}
-      <input type="hidden" name="id" id="edit-id">
-      <input type="text" name="name" id="edit-name" placeholder="Name" required class="w-full border rounded-md p-2 text-sm">
-      <input type="text" name="address" id="edit-address" placeholder="Address" required class="w-full border rounded-md p-2 text-sm">
-      <input type="text" name="telephone" id="edit-telephone" placeholder="Telephone" required class="w-full border rounded-md p-2 text-sm">
-      <input type="number" name="age" id="edit-age" placeholder="Age" required class="w-full border rounded-md p-2 text-sm">
-      <input type="text" name="occupation" id="edit-occupation" placeholder="Occupation" class="w-full border rounded-md p-2 text-sm">
-      <input type="text" name="status" id="edit-status" placeholder="Status" class="w-full border rounded-md p-2 text-sm">
-      <textarea name="complaint" id="edit-complaint" placeholder="Complaint" rows="3" class="w-full border rounded-md p-2 text-sm"></textarea>
+      <input type="hidden" name="id" id="edit-id" />
+      <input
+        type="text"
+        name="name"
+        id="edit-name"
+        placeholder="Name"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="email"
+        name="email"
+        id="edit-email"
+        placeholder="Email"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="address"
+        id="edit-address"
+        placeholder="Address"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="telephone"
+        id="edit-telephone"
+        placeholder="Telephone"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="number"
+        name="age"
+        id="edit-age"
+        placeholder="Age"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="occupation"
+        id="edit-occupation"
+        placeholder="Occupation"
+        class="w-full border rounded-md p-2 text-sm"
+      />
 
       <div class="flex justify-end gap-2 pt-3">
-        <button type="button" id="cancel-edit" class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600">
+        <button
+          type="button"
+          id="cancel-edit"
+          class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+        >
           Cancel
         </button>
-        <button type="submit" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+        <button
+          type="submit"
+          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
           Save Changes
         </button>
       </div>
@@ -197,10 +323,7 @@ Patient Records
   </div>
 </div>
 
-
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script src="{% static 'js/patient.js' %}"></script>
 <script src="{% static 'js/modal.js' %}"></script>
 {% endblock %}
