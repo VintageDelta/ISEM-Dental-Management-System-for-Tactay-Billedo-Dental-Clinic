@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
       popup.classList.remove("flex");
       popup.classList.add("hidden");
-    }, 200); // duration matches Tailwind's `duration-200`
+    }, 200); // duration matches Tailwind's duration-200
   };
 
   // Close popup (button & outside click)

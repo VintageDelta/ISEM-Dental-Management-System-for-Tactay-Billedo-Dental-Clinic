@@ -29,7 +29,7 @@
 </div>
 
 <!-- Main grid -->
-<div class="grid grid-cols-1 lg:grid-cols-[700px_auto] gap-4 mt-6">
+<div class="grid grid-cols-1 lg:grid-cols-[700px_auto] gap-4 mt-6 items-start">
   <!-- Calendar section -->
   <div class="flex flex-col">
     <!-- Create appointment button (full width, outside card) -->
@@ -47,7 +47,7 @@
   <!-- Today’s appointments timeline -->
 <div class="bg-white p-5 md:p-6 rounded-xl shadow w-full">
   <!-- External Calendar Controls go here -->
-  <div id="calendar-controls" class="flex items-center gap-2 mb-4"></div>
+  <div id="calendar-controls" class="flex justify-center items-center gap-2 mb-4"></div>
 
   <div class="relative pl-4 border-l border-gray-300 max-h-[600px] overflow-y-auto">
     <ul id="todays-appointments-list" class="space-y-6">
@@ -73,37 +73,55 @@
 
 </div>
 
+<!-- Choose Patient Type Modal -->
+<div id="choose-type-modal"
+  class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
+  <div id="choose-type-content"
+    class="bg-white p-10 rounded-2xl shadow-2xl flex flex-col items-center gap-8 relative">
+    <h2 class="text-2xl font-semibold text-gray-800">Select Patient Type</h2>
+
+    <div class="flex gap-12">
+      <!-- Registered -->
+      <button id="choose-registered"
+        class="flex flex-col items-center justify-center w-48 h-48 bg-white border-2 border-green-500 rounded-xl shadow-md hover:shadow-xl hover:bg-green-50 transition">
+        <div
+          class="flex items-center justify-center w-16 h-16 rounded-full bg-green-500 text-white text-4xl font-bold">
+          R
+        </div>
+        <span class="mt-4 text-xl font-medium text-gray-700">Registered</span>
+      </button>
+
+      <!-- Guest -->
+      <button id="choose-guest"
+        class="flex flex-col items-center justify-center w-48 h-48 bg-white border-2 border-green-500 rounded-xl shadow-md hover:shadow-xl hover:bg-green-50 transition">
+        <div
+          class="flex items-center justify-center w-16 h-16 rounded-full bg-green-500 text-white text-4xl font-bold">
+          +
+        </div>
+        <span class="mt-4 text-xl font-medium text-gray-700">Guest</span>
+      </button>
+    </div>
+
+    <button id="cancel-choose"
+      class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+  </div>
+</div>
+
 <!-- Add Appointment Modal -->
 <div id="appointment-modal"
   class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
   <div id="appointment-modal-content"
     class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
     <h2 class="text-lg font-semibold mb-4 text-center">Add Appointment</h2>
-    <form method="post" class="space-y-4">
+    <form method="POST" class="space-y-4">
+
       {% csrf_token %}
-      <!-- Patient Name -->
-      <input type="text" name="customer_name" placeholder="Patient Name" required
+      <!-- Dentist Name -->
+      <input type="text" id="dentist_name" name="dentist_name" placeholder="Dentist Name"
         class="w-full border rounded-md p-2 text-sm">
-
-      <!-- Service -->
-      <div>
-        <label for="service" class="block text-sm font-medium mb-1">Service</label>
-        <input type="text" id="service" name="service" placeholder="e.g., Tooth Extraction"
-          class="w-full border rounded-md p-2 text-sm" required>
-      </div>
-
-      <!-- Start -->
-      <div>
-        <label class="block text-sm font-medium mb-1">Date and Time</label>
-        <div class="flex gap-2">
-          <input type="date" name="start_date" required class="flex-1 border rounded-md p-2 text-sm">
-          <input type="time" name="start_time" required class="flex-1 border rounded-md p-2 text-sm">
-        </div>
-      </div>
 
       <!-- Location -->
       <div>
-        <label for="location" class="block text-sm font-medium mb-1">Location</label>
         <select id="location" name="location" required
           class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select location</option>
@@ -112,9 +130,43 @@
         </select>
       </div>
 
-      <!-- Description -->
-      <textarea name="description" placeholder="Description" rows="3"
+      <!-- Date Time -->
+      <div>
+        <div class="flex gap-2">
+          <input type="date" id="date" name="date" required 
+          class="flex-1 border rounded-md p-2 text-sm">
+          <input type="time" id="time" name="time" required 
+          class="flex-1 border rounded-md p-2 text-sm">
+        </div>
+      </div>
+    
+      <!-- Service -->
+      <div>
+        <select name="servicetype" id="servicetype" required
+          class="w-full border rounded-md p-2 text-sm" >
+            <option value="" disabled selected>Select Service Type</option>
+            <option value="Cleaning">Cleaning</option>
+            <option value="Extraction">Extraction</option>
+            <option value="Filling">Filling</option>
+            <option value="Other">Other</option>
+        </select>   
+      </div>
+
+      <!-- Reason for Visist -->
+      <textarea name="reason" id="reason" placeholder="Reason for Visit" rows="3"
         class="w-full border rounded-md p-2 text-sm"></textarea>
+      
+      <!-- ID -->
+      <div>
+        <input type="id" id="id_no" name="id_no" placeholder="ID No." required
+          class="w-full border rounded-md p-2 text-sm" required>
+      </div>
+
+      <!-- Email -->
+      <div>
+        <input type="email" id="email" name="email" placeholder="Email" required
+          class="w-full border rounded-md p-2 text-sm" required>
+      </div>
 
       <!-- Actions -->
       <div class="flex justify-end gap-2 pt-3">
@@ -128,9 +180,9 @@
 </div>
 {% endblock %}
 
+
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script src="{% static 'js/calendar.js' %}"></script>
 <script src="{% static 'js/appointment.js' %}"></script>
-<script src="{% static 'js/modal.js' %}"></script>
 {% endblock %}

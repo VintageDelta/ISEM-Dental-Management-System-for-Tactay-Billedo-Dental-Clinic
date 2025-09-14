@@ -30,7 +30,11 @@ document.addEventListener('DOMContentLoaded', function () {
         { title: 'Follow-up - Jane Smith', start: '2025-09-12T11:00:00' },
         { title: 'Consultation - Mark Lee', start: '2025-09-12T14:00:00' }
       ],
+      // this when clicking
       dateClick: function (info) {
+        document.querySelectorAll('.fc-daygrid-day').forEach(el =>{
+          el.classList.remove('bg-green-100', 'rounded-lg')
+        });
         info.dayEl.classList.add('bg-green-100', 'rounded-lg');
       }
     });
