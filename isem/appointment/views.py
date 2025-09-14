@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from .models import Appointment
 from .forms import Appointment
 
-# Create your views here.
+# POST!! iykyk
 def appointment_record(request):
     if request.method == "POST":
         dentist_name = request.POST.get("dentist_name")
@@ -28,30 +30,18 @@ def appointment_record(request):
     appointment = Appointment.objects.all()
     return render(request, "appointment/appointment.html", {"appointments": appointment})
         
+def appointment_events(request):
+    events = []
+    appointments = Appointment.objects.all()
     
+
+    for appt in appointments:
+        events.append({
+            "title": f"{appt.servicetype} - {appt.reason}",
+            "start": f"{appt.date}T{appt.time}",
+        })
+
+    return JsonResponse(events, safe=False)
+
         
 
-
-# def patient_records(request):
-#     if request.method == "POST":
-#         name = request.POST.get("name")
-#         address = request.POST.get("address")
-#         telephone = request.POST.get("telephone")
-#         age = request.POST.get("age")
-#         occupation = request.POST.get("occupation")
-#         status = request.POST.get("status")
-#         complaint = request.POST.get("complaint")
-
-#         Patient.objects.create(
-#             name=name,
-#             address=address,
-#             telephone=telephone,
-#             age=age,
-#             occupation=occupation,
-#             status=status,
-#             complaint=complaint
-#         )
-#         return redirect("patient:list")  # redirect after saving
-
-#     patients = Patient.objects.all()
-#     return render(request, "patient/patient-records.html", {"patients": patients})

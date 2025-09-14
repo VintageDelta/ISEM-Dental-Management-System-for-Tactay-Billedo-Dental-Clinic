@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const controlsEl = document.getElementById('calendar-controls');
   const listEl = document.getElementById('todays-appointments-list');
 
+    
   if (calendarEl && controlsEl && listEl) {
     const calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
@@ -25,11 +26,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         info.el.classList.add('rounded-lg', 'hover:bg-gray-50', 'transition');
       },
-      events: [
-        { title: 'Dental Check-up - John Doe', start: '2025-09-12T09:00:00' },
-        { title: 'Follow-up - Jane Smith', start: '2025-09-12T11:00:00' },
-        { title: 'Consultation - Mark Lee', start: '2025-09-12T14:00:00' }
-      ],
+      events:eventsUrl,
+
       // this when clicking
       dateClick: function (info) {
         document.querySelectorAll('.fc-daygrid-day').forEach(el =>{
@@ -131,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       }
     }
-
+    
     // Run once & hook events
     renderTodaysAppointments();
     calendar.on("eventAdd", renderTodaysAppointments);

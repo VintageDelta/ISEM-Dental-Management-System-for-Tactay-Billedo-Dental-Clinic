@@ -182,6 +182,10 @@
 
 
 {% block extra_js %}
+<script>
+  // dont remove this, this should be in the Calendar.js but no, it dont work if its in therre!
+  const eventsUrl = "{% url 'appointment:events' %}";
+</script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script src="{% static 'js/calendar.js' %}"></script>
 <script src="{% static 'js/appointment.js' %}"></script>
