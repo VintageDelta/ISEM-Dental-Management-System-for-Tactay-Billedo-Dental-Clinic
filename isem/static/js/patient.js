@@ -15,20 +15,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-      const cookies = document.cookie.split(";");
-      for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name + "=")) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
   // ==== DELETE BUTTON ====
   const deleteModal = document.getElementById("delete-modal");
   const deleteContent = document.getElementById("delete-modal-content");
@@ -44,30 +30,89 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  cancelDelete.addEventListener("click", () =>
-    closeModal(deleteModal, deleteContent)
-  );
-  deleteModal.addEventListener("click", (e) => {
-    if (e.target === deleteModal) closeModal(deleteModal, deleteContent);
-  });
+  if (cancelDelete) {
+    cancelDelete.addEventListener("click", () =>
+      closeModal(deleteModal, deleteContent)
+    );
+  }
 
-  confirmDelete.addEventListener("click", () => {
-    console.log("Delete patient ID:", patientToDelete);
-
-    // Send delete request to Django
-    fetch(`/dashboard/patient/delete/${patientToDelete}/`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-    }).then((response) => {
-      if (response.ok) {
-        window.location.reload(); // reload to update table
-      } else {
-        console.error("Delete failed");
-      }
+  if (deleteModal) {
+    deleteModal.addEventListener("click", (e) => {
+      if (e.target === deleteModal) closeModal(deleteModal, deleteContent);
     });
-  });
+  }
+
+  if (confirmDelete) {
+    confirmDelete.addEventListener("click", () => {
+      console.log("Delete patient ID:", patientToDelete);
+
+      fetch(`/dashboard/patient/delete/${patientToDelete}/`, {
+        method: "POST",
+        headers: { "X-CSRFToken": getCookie("csrftoken") },
+      }).then((response) => {
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          console.error("Delete failed");
+        }
+      });
+    });
+  }
+
+  // ==== CHOOSE TYPE MODAL ====
+  const chooseModal = document.getElementById("choose-type-modal");
+  const chooseContent = document.getElementById("choose-type-content");
+  const addModalBtn = document.getElementById("add-modal-btn");
+  const popupModal = document.getElementById("modal-popup");
+  const popupContent = document.getElementById("popup-content");
+  const cancelChoose = document.getElementById("cancel-choose");
+  const btnRegistered = document.getElementById("choose-registered");
+  const btnGuest = document.getElementById("choose-guest");
+  const closeBtn = document.getElementById("close-popup-btn"); // <-- make sure this ID exists in your HTML
+
+  if (addModalBtn) {
+    addModalBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeAllModals();
+      openModal(chooseModal, chooseContent);
+      setTimeout(() => {
+        const outsideClickHandler = (e) => {
+          if (e.target === chooseModal) {
+            closeModal(chooseModal, chooseContent);
+            chooseModal.removeEventListener("click", outsideClickHandler);
+          }
+        };
+        chooseModal.addEventListener("click", outsideClickHandler);
+      }, 0);
+    });
+  }
+
+  if (btnRegistered) {
+    btnRegistered.addEventListener("click", () => {
+      closeModal(chooseModal, chooseContent);
+      setTimeout(() => openModal(popupModal, popupContent), 250);
+    });
+  }
+
+  if (btnGuest) {
+    btnGuest.addEventListener("click", () => {
+      closeModal(chooseModal, chooseContent);
+      setTimeout(() => openModal(popupModal, popupContent), 250);
+    });
+  }
+
+  if (cancelChoose) {
+    cancelChoose.addEventListener("click", () =>
+      closeModal(chooseModal, chooseContent)
+    );
+  }
+
+  // if (chooseModal) {
+  //   chooseModal.addEventListener("click", (e) => {
+  //     if (e.target === chooseModal) closeModal(chooseModal, chooseContent);
+  //   });
+  // }
+
   // ==== EDIT BUTTON ====
   const editModal = document.getElementById("edit-modal");
   const editContent = document.getElementById("edit-modal-content");
@@ -76,10 +121,10 @@ document.addEventListener("DOMContentLoaded", function () {
   document.querySelectorAll(".uil-edit").forEach((icon) => {
     icon.parentElement.addEventListener("click", (e) => {
       e.preventDefault();
-
       const btn = icon.parentElement;
 
-      // Fill edit form
+      closeAllModals();
+
       document.getElementById("edit-id").value = btn.dataset.id;
       document.getElementById("edit-name").value =
         btn.closest("tr").children[1].innerText;
@@ -98,44 +143,82 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  cancelEdit.addEventListener("click", () =>
-    closeModal(editModal, editContent)
-  );
-  editModal.addEventListener("click", (e) => {
-    if (e.target === editModal) closeModal(editModal, editContent);
+  if (cancelEdit) {
+    cancelEdit.addEventListener("click", () =>
+      closeModal(editModal, editContent)
+    );
+  }
+
+  if (editModal) {
+    editModal.addEventListener("click", (e) => {
+      if (e.target === editModal) closeModal(editModal, editContent);
+    });
+  }
+
+  // ===== Helper Functions =====
+  function openModal(modal, content) {
+    if (!modal || !content) return;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    requestAnimationFrame(() => {
+      content.classList.remove("opacity-0", "scale-95");
+      content.classList.add("opacity-100", "scale-100");
+    });
+  }
+
+  function closeModal(modal, content) {
+    if (!modal || !content) return;
+    content.classList.remove("opacity-100", "scale-100");
+    content.classList.add("opacity-0", "scale-95");
+    setTimeout(() => {
+      modal.classList.remove("flex");
+      modal.classList.add("hidden");
+    }, 200);
+  }
+
+  function closeAllModals() {
+    const allModals = [
+      { modal: deleteModal, content: deleteContent },
+      { modal: chooseModal, content: chooseContent },
+      { modal: popupModal, content: popupContent },
+      { modal: editModal, content: editContent },
+    ];
+    allModals.forEach(({ modal, content }) => {
+      if (modal && content && modal.classList.contains("flex")) {
+        closeModal(modal, content);
+      }
+    });
+  }
+
+  // ==== CLOSE POPUP ====
+  const closePopup = () => {
+    popupContent.classList.remove("opacity-100", "scale-100");
+    popupContent.classList.add("opacity-0", "scale-95");
+    setTimeout(() => {
+      popupModal.classList.remove("flex");
+      popupModal.classList.add("hidden");
+    }, 200);
+  };
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", closePopup);
+  }
+  popupModal.addEventListener("click", (e) => {
+    if (e.target === popupModal) closePopup();
   });
-});
 
-// ===== Helpers =====
-function openModal(modal, content) {
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-  requestAnimationFrame(() => {
-    content.classList.remove("opacity-0", "scale-95");
-    content.classList.add("opacity-100", "scale-100");
-  });
-}
-
-function closeModal(modal, content) {
-  content.classList.remove("opacity-100", "scale-100");
-  content.classList.add("opacity-0", "scale-95");
-  setTimeout(() => {
-    modal.classList.remove("flex");
-    modal.classList.add("hidden");
-  }, 200);
-}
-
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== "") {
-    const cookies = document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === name + "=") {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
       }
     }
+    return cookieValue;
   }
-  return cookieValue;
-}
+});
