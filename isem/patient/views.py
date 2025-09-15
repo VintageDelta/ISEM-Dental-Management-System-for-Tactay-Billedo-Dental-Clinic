@@ -1,8 +1,9 @@
-from django.contrib import messages              # ✅ correct import
+from sys import path
+from django.contrib import messages                 
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import JsonResponse
 
-from .models import Patient
+from .models import Patient, MedicalHistory
 
 
 def patient_records(request):
@@ -71,3 +72,24 @@ def update_patient(request):
         patient.occupation = request.POST.get("occupation")
         patient.save()
         return redirect("patient:list")
+
+def medical_history(request, pk):
+    patient = get_object_or_404(Patient, pk=pk)
+    history = patient.medical_history.all()  # Assuming a related name
+    return render(request, "patient/medical_history.html", {"patient": patient, "history": history})
+
+def add_medical_history(request, patient_id):
+    patient = get_object_or_404(Patient, pk=patient_id)
+    if request.method == "POST":
+        description = request.POST.get("description")
+        date = request.POST.get("date")
+        # Assuming a MedicalHistory model with a foreign key to Patient
+        patient.medical_history.create(description=description, date=date)
+        return redirect("patient:medical_history", pk=patient_id)
+    return render(request, "patient/add_medical_history.html", {"patient": patient})
+
+def financial_history(request, patient_id):
+    patient = get_object_or_404(Patient, pk=patient_id)
+    # Assuming a FinancialHistory model with a foreign key to Patient
+    history = patient.financial_history.all()
+    return render(request, "patient/financial_history.html", {"patient": patient, "history": history})
