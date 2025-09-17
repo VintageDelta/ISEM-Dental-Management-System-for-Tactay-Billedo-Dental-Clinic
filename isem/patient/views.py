@@ -75,18 +75,24 @@ def update_patient(request):
 
 def medical_history(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
-    history = patient.medical_history.all()  # Assuming a related name
+    history = patient.medical_history.all() 
     return render(request, "patient/medical_history.html", {"patient": patient, "history": history})
 
 def add_medical_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     if request.method == "POST":
-        description = request.POST.get("description")
-        date = request.POST.get("date")
-        # Assuming a MedicalHistory model with a foreign key to Patient
-        patient.medical_history.create(description=description, date=date)
+        MedicalHistory.objects.create(
+            patient=patient,
+            date=request.POST.get("date"),
+            dentist=request.POST.get("dentist"),
+            reason=request.POST.get("reason"),
+            diagnosis=request.POST.get("diagnosis"),
+            service=request.POST.get("service"),
+            treatment=request.POST.get("treatment"),
+            prescriptions=request.POST.get("prescriptions"),
+        )
         return redirect("patient:medical_history", pk=patient_id)
-    return render(request, "patient/add_medical_history.html", {"patient": patient})
+    return render(request, "patient/medical_history.html", {"patient": patient})
 
 def financial_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)

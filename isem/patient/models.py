@@ -15,15 +15,20 @@ class Patient(models.Model):
     
 
 class MedicalHistory(models.Model):
-    patient = models.ForeignKey(Patient,
-                                on_delete=models.CASCADE,
-                                related_name='medical_history')  # or any name you prefer
-    ...
+    patient = models.ForeignKey(Patient, related_name="medical_history", on_delete=models.CASCADE)
+    date = models.DateField(null=True, blank=True)
+    dentist = models.CharField(max_length=255, blank=True)
+    reason = models.TextField(blank=True)
+    diagnosis = models.TextField(null=True, blank=True)
+    service = models.CharField(blank=True, max_length=255)
+    treatment = models.TextField(blank=True)
+    prescriptions = models.TextField(blank=True)   
+
 
 class FinancialHistory(models.Model):
     patient = models.ForeignKey(Patient,
                                 on_delete=models.CASCADE,
-                                related_name='financial_history')  # or any name you prefer
+                                related_name='financial_history')  
     date = models.DateField()
     number = models.AutoField(primary_key=True)
     description = models.TextField()

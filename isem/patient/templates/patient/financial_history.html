@@ -19,12 +19,13 @@
       </button>
     </div>
 
-    <a
-      href="{% url 'patient:add_medical_history' patient.id %}"
+    <button
+      id="add-modal-btn"
+      href="{% url 'patient:add_financial_history' patient.id %}"
       class="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
     >
       + Add Record
-    </a>
+    </button>
   </div>
 
   <!-- Table container -->
@@ -32,8 +33,11 @@
     <table class="min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50">
         <tr>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Number
+          </th>
           <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">No.</th>
+
           <th class="px-4 py-2 text-left font-semibold text-gray-700">
             Description
           </th>
@@ -53,8 +57,8 @@
           <td class="px-4 py-2 text-gray-800">
             {{ record.date|date:"Y-m-d" }}
           </td>
-          <td class="px-4 py-2 text-gray-800">{{ record.date }}</td>
           <td class="px-4 py-2 text-gray-800">{{ record.number }}</td>
+          <td class="px-4 py-2 text-gray-800">{{ record.date }}</td>
           <td class="px-4 py-2 text-gray-800">{{ record.description }}</td>
           <td class="px-4 py-2 text-gray-800">{{ record.time|time:"H:i" }}</td>
           <td class="px-4 py-2 text-gray-800">{{ record.type }}</td>

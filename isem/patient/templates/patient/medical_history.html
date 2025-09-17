@@ -1,4 +1,4 @@
-{% extends "core/base.html" %} {% block content %}
+{% extends "core/base.html" %} {%load static%} {% block content %}
 <div class="p-6">
   <!-- Header with Toggle + Add button -->
   <div
@@ -7,24 +7,27 @@
     <div class="flex items-center space-x-4">
       <button
         id="medicalTab"
+        href="{% url 'patient:medical_history' patient.id %}"
         class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none"
       >
         Medical History
       </button>
       <button
         id="financialTab"
+        href="{% url 'patient:financial_history' patient.id %}"
         class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
       >
         Financial History
       </button>
     </div>
 
-    <a
+    <button
+      id="add-modal-btn"
       href="{% url 'patient:add_medical_history' patient.id %}"
       class="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
     >
       + Add Record
-    </a>
+    </button>
   </div>
 
   <!-- Table container -->
@@ -77,8 +80,89 @@
     </table>
   </div>
 </div>
+<!-- Add Record Popup -->
+<div
+  id="modal-popup"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+>
+  <div
+    id="popup-content"
+    class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95"
+  >
+    <h2 class="text-lg font-semibold mb-4 text-center">Add Record</h2>
+    <form
+      method="post"
+      action="{% url 'patient:add_medical_history' patient.id %}"
+      class="space-y-3"
+    >
+      {% csrf_token %}
+      <input
+        type="date"
+        name="date"
+        placeholder="Date"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="dentist"
+        placeholder="Dentist"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="reason"
+        placeholder="Reason"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="diagnosis"
+        placeholder="Diagnosis"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="service"
+        placeholder="Service"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="treatment"
+        placeholder="Treatment"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="prescriptions"
+        placeholder="Prescriptions"
+        class="w-full border rounded-md p-2 text-sm"
+      />
 
-<!-- Simple toggle script -->
+      <div class="flex justify-end gap-2 pt-3">
+        <button
+          type="button"
+          id="close-popup-btn"
+          class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{%endblock %} {%block extra_js %}
+<!-- Simple toggle script
 <script>
   document.getElementById("financialTab").addEventListener("click", () => {
     window.location.href = "{% url 'patient:financial_history' patient.id %}";
@@ -87,4 +171,41 @@
     window.location.href = "{% url 'patient:medical_history' patient.id %}";
   });
 </script>
+ Record Popup Script
+<script>
+  const modal = document.getElementById("modal-popup");
+  const popupContent = document.getElementById("popup-content");
+  const addRecordBtn = document.querySelector(
+    'a[href="{% url "patient:medical_history" patient.id %}"]'
+  );
+  const closePopupBtn = document.getElementById("close-popup-btn");
+
+  addRecordBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    modal.classList.remove("hidden");
+    setTimeout(() => {
+      popupContent.classList.remove("opacity-0", "scale-95");
+      popupContent.classList.add("opacity-100", "scale-100");
+    }, 10);
+  });
+
+  closePopupBtn.addEventListener("click", () => {
+    popupContent.classList.remove("opacity-100", "scale-100");
+    popupContent.classList.add("opacity-0", "scale-95");
+    setTimeout(() => {
+      modal.classList.add("hidden");
+    }, 200);
+  });
+
+  window.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      popupContent.classList.remove("opacity-100", "scale-100");
+      popupContent.classList.add("opacity-0", "scale-95");
+      setTimeout(() => {
+        modal.classList.add("hidden");
+      }, 200);
+    }
+  });
+</script> -->
+<script src="{% static 'js/modal.js' %}"></script>
 {% endblock %}
