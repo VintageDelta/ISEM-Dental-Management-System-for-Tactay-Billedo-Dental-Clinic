@@ -1,0 +1,91 @@
+{% extends "core/base.html" %} {% block content %}
+<div class="p-6">
+  <!-- Header with Toggle + Add button -->
+  <div
+    class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4"
+  >
+    <div class="flex items-center space-x-4">
+      <button
+        id="medicalTab"
+        class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none"
+      >
+        Medical History
+      </button>
+      <button
+        id="financialTab"
+        class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
+      >
+        Financial History
+      </button>
+    </div>
+
+    <button
+      id="add-modal-btn"
+      href="{% url 'patient:add_financial_history' patient.id %}"
+      class="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
+    >
+      + Add Record
+    </button>
+  </div>
+
+  <!-- Table container -->
+  <div class="overflow-x-auto bg-white shadow rounded-lg">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Number
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
+
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Description
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Time</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Type</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Amount
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Balance
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for record in history %}
+        <tr class="hover:bg-gray-100">
+          <td class="px-4 py-2 text-gray-800">
+            {{ record.date|date:"Y-m-d" }}
+          </td>
+          <td class="px-4 py-2 text-gray-800">{{ record.number }}</td>
+          <td class="px-4 py-2 text-gray-800">{{ record.date }}</td>
+          <td class="px-4 py-2 text-gray-800">{{ record.description }}</td>
+          <td class="px-4 py-2 text-gray-800">{{ record.time|time:"H:i" }}</td>
+          <td class="px-4 py-2 text-gray-800">{{ record.type }}</td>
+          <td class="px-4 py-2 text-gray-800">{{ record.amount}}</td>
+          <td class="px-4 py-2 text-gray-800">{{ record.balance}}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="px-4 py-6 text-center text-gray-500">
+            No medical history records yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Simple toggle script -->
+<script>
+  document.getElementById("financialTab").addEventListener("click", () => {
+    window.location.href =
+      "{% url 'patient:financial_history.html' patient.id %}";
+  });
+  document.getElementById("medicalTab").addEventListener("click", () => {
+    window.location.href =
+      "{% url 'patient:medical_history.html' patient.id %}";
+  });
+</script>
+{% endblock %}

@@ -1,95 +1,192 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}ISEM{% endblock %}
+{% block title %}Appointments{% endblock %}
 
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-<h2 class="text-2xl font-semibold mb-6">Appointments</h2>
-
-<!-- Create Appointment Button -->
-<div class="flex justify-start mb-6">
-  <button id="create-appointment-btn" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-md shadow hover:bg-green-700 transition">
-    Create Appointment
-  </button>
+<div class="w-full">
+  <!-- Page header -->
+  <div class="w-full p-4 rounded-xl">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+      <h4 class="capitalize text-lg font-medium">Appointments</h4>
+      <nav aria-label="breadcrumb" class="mt-2 md:mt-0">
+        <ol class="flex space-x-2 text-sm text-gray-500">
+          <li>
+            <a href="{% url 'dashboard:index' %}" class="hover:text-gray-700 flex items-center gap-1">
+              <i class="las la-home"></i> Dashboard
+            </a>
+          </li>
+          <li class="text-gray-400">/</li>
+          <li class="text-gray-700 font-medium">Appointments</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
 </div>
 
-<!-- Appointments Container -->
-<div class="flex flex-col md:flex-row gap-6">
-  <!-- Calendar -->
-  <div class="flex-1 bg-white rounded-xl shadow p-4 md:max-w-xl">
-    <div id="calendar"></div>
+<!-- Main grid -->
+<div class="grid grid-cols-1 lg:grid-cols-[700px_auto] gap-4 mt-6 items-start">
+  <!-- Calendar section -->
+  <div class="flex flex-col">
+    <!-- Create appointment button (full width, outside card) -->
+    <button id="create-appointment-btn"
+      class="w-[700px] mb-3 px-3 py-2 text-sm bg-green-600 text-white rounded-md flex items-center justify-center gap-1 hover:bg-green-700 transition">
+      <i class="la la-plus"></i> Create Appointment
+    </button>
+
+    <!-- Calendar card -->
+    <div class="bg-white p-5 md:p-6 rounded-xl shadow flex flex-col w-[700px]">
+      <div id="calendar" class="w-full"></div>
+    </div>
   </div>
 
-  <!-- Today's Appointments -->
-  <div class="flex-1 bg-white rounded-xl shadow p-4 md:max-w-md">
-    <h3 class="text-lg font-semibold mb-4">Today's Appointments</h3>
-    <ul id="todays-appointments-list" class="divide-y divide-gray-200">
-      <li class="py-2">No appointments today.</li>
+  <!-- Today’s appointments timeline -->
+<div class="bg-white p-5 md:p-6 rounded-xl shadow w-full">
+  <!-- External Calendar Controls go here -->
+  <div id="calendar-controls" class="flex justify-center items-center gap-2 mb-4"></div>
+
+  <div class="relative pl-4 border-l border-gray-300 max-h-[600px] overflow-y-auto">
+    <ul id="todays-appointments-list" class="space-y-6">
+      <!-- Example timeline items -->
+      <li class="relative">
+        <div class="absolute -left-2 top-1 w-3 h-3 rounded-full bg-blue-500"></div>
+        <p class="text-sm text-gray-500">09:00 AM</p>
+        <p class="font-medium text-gray-800">Dental Check-up - John Doe</p>
+      </li>
+      <li class="relative">
+        <div class="absolute -left-2 top-1 w-3 h-3 rounded-full bg-green-500"></div>
+        <p class="text-sm text-gray-500">11:00 AM</p>
+        <p class="font-medium text-gray-800">Follow-up - Jane Smith</p>
+      </li>
+      <li class="relative">
+        <div class="absolute -left-2 top-1 w-3 h-3 rounded-full bg-purple-500"></div>
+        <p class="text-sm text-gray-500">02:00 PM</p>
+        <p class="font-medium text-gray-800">Consultation - Mark Lee</p>
+      </li>
     </ul>
   </div>
 </div>
 
+</div>
+
+<!-- Choose Patient Type Modal -->
+<div id="choose-type-modal"
+  class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
+  <div id="choose-type-content"
+    class="bg-white p-10 rounded-2xl shadow-2xl flex flex-col items-center gap-8 relative">
+    <h2 class="text-2xl font-semibold text-gray-800">Select Patient Type</h2>
+
+    <div class="flex gap-12">
+      <!-- Registered -->
+      <button id="choose-registered"
+        class="flex flex-col items-center justify-center w-48 h-48 bg-white border-2 border-green-500 rounded-xl shadow-md hover:shadow-xl hover:bg-green-50 transition">
+        <div
+          class="flex items-center justify-center w-16 h-16 rounded-full bg-green-500 text-white text-4xl font-bold">
+          R
+        </div>
+        <span class="mt-4 text-xl font-medium text-gray-700">Registered</span>
+      </button>
+
+      <!-- Guest -->
+      <button id="choose-guest"
+        class="flex flex-col items-center justify-center w-48 h-48 bg-white border-2 border-green-500 rounded-xl shadow-md hover:shadow-xl hover:bg-green-50 transition">
+        <div
+          class="flex items-center justify-center w-16 h-16 rounded-full bg-green-500 text-white text-4xl font-bold">
+          +
+        </div>
+        <span class="mt-4 text-xl font-medium text-gray-700">Guest</span>
+      </button>
+    </div>
+
+    <button id="cancel-choose"
+      class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+  </div>
+</div>
+
 <!-- Add Appointment Modal -->
-<div id="appointment-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
+<div id="appointment-modal"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+  <div id="appointment-modal-content"
+    class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
     <h2 class="text-lg font-semibold mb-4 text-center">Add Appointment</h2>
-    <form method="post" class="space-y-4">
+    <form method="POST" class="space-y-4">
+
       {% csrf_token %}
-      <!-- Patient Name -->
-      <input type="text" name="customer_name" placeholder="Patient Name" required class="w-full border rounded-md p-2 text-sm">
+      <!-- Dentist Name -->
+      <input type="text" id="dentist_name" name="dentist_name" placeholder="Dentist Name"
+        class="w-full border rounded-md p-2 text-sm">
 
-      <!-- Start -->
-      <div class="flex gap-2">
-        <label class="flex-none w-14 text-sm font-medium pt-2">Start</label>
-        <input type="date" name="start_date" required class="flex-1 border rounded-md p-2 text-sm">
-        <input type="time" name="start_time" required class="flex-1 border rounded-md p-2 text-sm">
+      <!-- Location -->
+      <div>
+        <select id="location" name="location" required
+          class="w-full border rounded-md p-2 text-sm">
+          <option value="" disabled selected>Select location</option>
+          <option value="Vigan">Vigan</option>
+          <option value="Magsingal">Magsingal</option>
+        </select>
       </div>
 
-      <!-- End -->
-      <div class="flex gap-2">
-        <label class="flex-none w-14 text-sm font-medium pt-2">End</label>
-        <input type="date" name="end_date" required class="flex-1 border rounded-md p-2 text-sm">
-        <input type="time" name="end_time" required class="flex-1 border rounded-md p-2 text-sm">
+      <!-- Date Time -->
+      <div>
+        <div class="flex gap-2">
+          <input type="date" id="date" name="date" required 
+          class="flex-1 border rounded-md p-2 text-sm">
+          <input type="time" id="time" name="time" required 
+          class="flex-1 border rounded-md p-2 text-sm">
+        </div>
+      </div>
+    
+      <!-- Service -->
+      <div>
+        <select name="servicetype" id="servicetype" required
+          class="w-full border rounded-md p-2 text-sm" >
+            <option value="" disabled selected>Select Service Type</option>
+            <option value="Cleaning">Cleaning</option>
+            <option value="Extraction">Extraction</option>
+            <option value="Filling">Filling</option>
+            <option value="Other">Other</option>
+        </select>   
       </div>
 
-      <!-- Description -->
-      <textarea name="description" placeholder="Description" rows="3" class="w-full border rounded-md p-2 text-sm"></textarea>
+      <!-- Reason for Visist -->
+      <textarea name="reason" id="reason" placeholder="Reason for Visit" rows="3"
+        class="w-full border rounded-md p-2 text-sm"></textarea>
+      
+      <!-- ID -->
+      <div>
+        <input type="id" id="id_no" name="id_no" placeholder="ID No." required
+          class="w-full border rounded-md p-2 text-sm" required>
+      </div>
+
+      <!-- Email -->
+      <div>
+        <input type="email" id="email" name="email" placeholder="Email" required
+          class="w-full border rounded-md p-2 text-sm" required>
+      </div>
 
       <!-- Actions -->
       <div class="flex justify-end gap-2 pt-3">
-        <button type="button" id="close-appointment-btn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
-        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button>
+        <button type="button" id="close-appointment-btn"
+          class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+        <button type="submit"
+          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button>
       </div>
     </form>
   </div>
 </div>
 {% endblock %}
 
+
 {% block extra_js %}
+<script>
+  // dont remove this, this should be in the Calendar.js but no, it dont work if its in therre!
+  const eventsUrl = "{% url 'appointment:events' %}";
+</script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script src="{% static 'js/calendar.js' %}"></script>
-<script>
-// Show/hide appointment modal
-const createBtn = document.getElementById('create-appointment-btn');
-const modal = document.getElementById('appointment-modal');
-const closeBtn = document.getElementById('close-appointment-btn');
-
-createBtn.addEventListener('click', () => {
-  modal.classList.remove('hidden');
-  setTimeout(() => {
-    modal.children[0].classList.remove('opacity-0', 'scale-95');
-    modal.children[0].classList.add('opacity-100', 'scale-100');
-  }, 10);
-});
-
-closeBtn.addEventListener('click', () => {
-  modal.children[0].classList.remove('opacity-100', 'scale-100');
-  modal.children[0].classList.add('opacity-0', 'scale-95');
-  setTimeout(() => modal.classList.add('hidden'), 200);
-});
-</script>
+<script src="{% static 'js/appointment.js' %}"></script>
 {% endblock %}

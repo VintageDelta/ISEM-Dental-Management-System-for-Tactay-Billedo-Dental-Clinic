@@ -9,8 +9,15 @@ class InventoryItem(models.Model):
         ('out_of_stock', 'Out of Stock'),
         ('expired', 'Expired'),
     )
+
+    CATEGORY_CHOICES = (
+        ('consumable', 'Consumable'),
+        ('equipment', 'Equipment'),
+        # ('medicine', 'Medicine'),
+        ('other', 'Other'),
+    )
     item_name = models.CharField(max_length=200)
-    category = models.CharField(max_length=100)
+    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
     description = models.TextField()
     stock = models.PositiveIntegerField()
     expiry_date = models.DateField()

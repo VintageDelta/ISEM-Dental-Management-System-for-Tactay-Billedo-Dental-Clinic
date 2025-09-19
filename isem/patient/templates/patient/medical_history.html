@@ -1,0 +1,312 @@
+{% extends "core/base.html" %} {% load static %} {% block content %}
+
+<!-- === TAB BUTTONS === -->
+<div class="flex items-center space-x-4 mb-6">
+  <button
+    id="medicalTab"
+    class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none"
+  >
+    Medical History
+  </button>
+  <button
+    id="financialTab"
+    class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
+  >
+    Financial History
+  </button>
+  <button
+    id="add-medical-btn"
+    class="items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
+  >
+    + Add Record
+  </button>
+  <button
+    id="add-financial-btn"
+    class="hidden items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
+  >
+    + Add Record
+  </button>
+</div>
+
+<!-- === MEDICAL TAB CONTENT === -->
+<div id="medicalContent" class="space-y-4">
+  <div class="overflow-x-auto bg-white shadow rounded-lg">
+    <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Dentist
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Reason
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Diagnosis
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Service
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Treatment
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Prescriptions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for record in history %}
+        <tr class="hover:bg-gray-100">
+          <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
+          <td class="px-4 py-2">{{ record.dentist }}</td>
+          <td class="px-4 py-2">{{ record.reason }}</td>
+          <td class="px-4 py-2">{{ record.diagnosis }}</td>
+          <td class="px-4 py-2">{{ record.service }}</td>
+          <td class="px-4 py-2">{{ record.treatment }}</td>
+          <td class="px-4 py-2">{{ record.prescriptions }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="px-4 py-6 text-center text-gray-500">
+            No medical history records yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- === FINANCIAL TAB CONTENT === -->
+<div id="financialContent" class="space-y-4 hidden">
+  <div class="overflow-x-auto bg-white shadow rounded-lg">
+    <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Number
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Description
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Time</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Type</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Amount
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Balance
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for record in history %}
+        <tr class="hover:bg-gray-100">
+          <td class="px-4 py-2">{{ record.number }}</td>
+          <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
+          <td class="px-4 py-2">{{ record.description }}</td>
+          <td class="px-4 py-2">{{ record.time|time:"H:i" }}</td>
+          <td class="px-4 py-2">{{ record.type }}</td>
+          <td class="px-4 py-2">{{ record.amount }}</td>
+          <td class="px-4 py-2">{{ record.balance }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="px-4 py-6 text-center text-gray-500">
+            No financial history records yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<!-- Add Record Popup -->
+<div
+  id="modal-popup"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+>
+  <div
+    id="popup-content"
+    class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95"
+  >
+    <h2 class="text-lg font-semibold mb-4 text-center">Add Record</h2>
+    <!-- Medical History Form -->
+    <form
+      id="medicalForm"
+      method="post"
+      action="{% url 'patient:add_medical_history' patient.id %}"
+      class="space-y-3"
+    >
+      {% csrf_token %}
+      <input
+        type="date"
+        name="date"
+        placeholder="Date"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="dentist"
+        placeholder="Dentist"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="reason"
+        placeholder="Reason"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="diagnosis"
+        placeholder="Diagnosis"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="service"
+        placeholder="Service"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="treatment"
+        placeholder="Treatment"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="prescriptions"
+        placeholder="Prescriptions"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+
+      <div class="flex justify-end gap-2 pt-3">
+        <button
+          type="button"
+          id="close-popup-btn"
+          class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Save
+        </button>
+      </div>
+    </form>
+<!-- Financial Form  -->
+    <form
+      id="financialForm"
+      method="post"
+      action="{% url 'patient:add_financial_history' patient.id %}"
+      class="space-y-3"
+    >
+      {% csrf_token %}
+      <input
+        type="number"
+        name="number"
+        placeholder="Number"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="date"
+        name="date" required
+        placeholder="Date"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="Description" 
+        placeholder="Description"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="time"
+        name="time"
+        placeholder="Time"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="Type"
+        placeholder="Type"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="number"
+        name="Amount"
+        placeholder="Amount"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="number"
+        name="Balance"
+        placeholder="Balance"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <div class="flex justify-end gap-2 pt-3">
+        <button
+          type="button"
+          id="close-popup-btn"
+          class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</div>
+
+{% endblock %} {% block extra_js %}
+<script src="{% static 'js/modal.js' %}"></script>
+<script>
+  const medicalTab = document.getElementById("medicalTab");
+  const financialTab = document.getElementById("financialTab");
+  const medicalContent = document.getElementById("medicalContent");
+  const financialContent = document.getElementById("financialContent");
+
+  medicalTab.addEventListener("click", () => {
+    medicalContent.classList.remove("hidden");
+    financialContent.classList.add("hidden");
+    medicalTab.classList.replace("bg-gray-200", "bg-blue-600");
+    medicalTab.classList.replace("text-gray-700", "text-white");
+    financialTab.classList.replace("bg-blue-600", "bg-gray-200");
+    financialTab.classList.replace("text-white", "text-gray-700");
+  });
+
+  financialTab.addEventListener("click", () => {
+    financialContent.classList.remove("hidden");
+    medicalContent.classList.add("hidden");
+    financialTab.classList.replace("bg-gray-200", "bg-blue-600");
+    financialTab.classList.replace("text-gray-700", "text-white");
+    medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
+    medicalTab.classList.replace("text-white", "text-gray-700");
+  });
+</script>
+<script>
+  const medicalUrl = "{% url 'patient:add_medical_history' patient.id %}";
+  const financialUrl = "{% url 'patient:add_financial_history' patient.id %}";
+</script>
+{% endblock %}
