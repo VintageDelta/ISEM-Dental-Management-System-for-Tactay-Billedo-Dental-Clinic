@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import JsonResponse
 
-from .models import Patient, MedicalHistory
+from .models import Patient, MedicalHistory, FinancialHistory
 
 
 def patient_records(request):
@@ -98,4 +98,19 @@ def financial_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     # Assuming a FinancialHistory model with a foreign key to Patient
     history = patient.financial_history.all()
-    return render(request, "patient/financial_history.html", {"patient": patient, "history": history})
+    return render(request, "patient/medical_history.html", {"patient": patient, "history": history})
+
+def add_financial_history(request, patient_id):
+    patient = get_object_or_404(Patient, pk=patient_id)
+    if request.method == "POST":
+        FinancialHistory.objects.create(
+            patient=patient,
+            date=request.POST.get("date"),
+            description=request.POST.get("description"),
+            time=request.POST.get("time"),
+            type=request.POST.get("type"),
+            amount=request.POST.get("amount"),
+            balance=request.POST.get("balance"),
+        )
+        return redirect("patient:financial_history", patient_id=patient_id)
+    return render(request, "patient/medical_history.html", {"patient": patient})

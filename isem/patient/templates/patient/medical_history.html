@@ -1,38 +1,37 @@
-{% extends "core/base.html" %} {%load static%} {% block content %}
-<div class="p-6">
-  <!-- Header with Toggle + Add button -->
-  <div
-    class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4"
+{% extends "core/base.html" %} {% load static %} {% block content %}
+
+<!-- === TAB BUTTONS === -->
+<div class="flex items-center space-x-4 mb-6">
+  <button
+    id="medicalTab"
+    class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none"
   >
-    <div class="flex items-center space-x-4">
-      <button
-        id="medicalTab"
-        href="{% url 'patient:medical_history' patient.id %}"
-        class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none"
-      >
-        Medical History
-      </button>
-      <button
-        id="financialTab"
-        href="{% url 'patient:financial_history' patient.id %}"
-        class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
-      >
-        Financial History
-      </button>
-    </div>
+    Medical History
+  </button>
+  <button
+    id="financialTab"
+    class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
+  >
+    Financial History
+  </button>
+  <button
+    id="add-medical-btn"
+    class="items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
+  >
+    + Add Record
+  </button>
+  <button
+    id="add-financial-btn"
+    class="hidden items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
+  >
+    + Add Record
+  </button>
+</div>
 
-    <button
-      id="add-modal-btn"
-      href="{% url 'patient:add_medical_history' patient.id %}"
-      class="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
-    >
-      + Add Record
-    </button>
-  </div>
-
-  <!-- Table container -->
+<!-- === MEDICAL TAB CONTENT === -->
+<div id="medicalContent" class="space-y-4">
   <div class="overflow-x-auto bg-white shadow rounded-lg">
-    <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50">
         <tr>
           <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
@@ -59,20 +58,64 @@
       <tbody class="divide-y divide-gray-100">
         {% for record in history %}
         <tr class="hover:bg-gray-100">
-          <td class="px-4 py-2 text-gray-800">
-            {{ record.date|date:"Y-m-d" }}
-          </td>
-          <td class="px-4 py-2 text-gray-800">{{ record.dentist }}</td>
-          <td class="px-4 py-2 text-gray-800">{{ record.reason }}</td>
-          <td class="px-4 py-2 text-gray-800">{{ record.diagnosis }}</td>
-          <td class="px-4 py-2 text-gray-800">{{ record.service }}</td>
-          <td class="px-4 py-2 text-gray-800">{{ record.treatment }}</td>
-          <td class="px-4 py-2 text-gray-800">{{ record.prescriptions }}</td>
+          <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
+          <td class="px-4 py-2">{{ record.dentist }}</td>
+          <td class="px-4 py-2">{{ record.reason }}</td>
+          <td class="px-4 py-2">{{ record.diagnosis }}</td>
+          <td class="px-4 py-2">{{ record.service }}</td>
+          <td class="px-4 py-2">{{ record.treatment }}</td>
+          <td class="px-4 py-2">{{ record.prescriptions }}</td>
         </tr>
         {% empty %}
         <tr>
           <td colspan="7" class="px-4 py-6 text-center text-gray-500">
             No medical history records yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- === FINANCIAL TAB CONTENT === -->
+<div id="financialContent" class="space-y-4 hidden">
+  <div class="overflow-x-auto bg-white shadow rounded-lg">
+    <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Number
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Description
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Time</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Type</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Amount
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">
+            Balance
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for record in history %}
+        <tr class="hover:bg-gray-100">
+          <td class="px-4 py-2">{{ record.number }}</td>
+          <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
+          <td class="px-4 py-2">{{ record.description }}</td>
+          <td class="px-4 py-2">{{ record.time|time:"H:i" }}</td>
+          <td class="px-4 py-2">{{ record.type }}</td>
+          <td class="px-4 py-2">{{ record.amount }}</td>
+          <td class="px-4 py-2">{{ record.balance }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="px-4 py-6 text-center text-gray-500">
+            No financial history records yet.
           </td>
         </tr>
         {% endfor %}
@@ -90,7 +133,9 @@
     class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95"
   >
     <h2 class="text-lg font-semibold mb-4 text-center">Add Record</h2>
+    <!-- Medical History Form -->
     <form
+      id="medicalForm"
       method="post"
       action="{% url 'patient:add_medical_history' patient.id %}"
       class="space-y-3"
@@ -159,53 +204,109 @@
         </button>
       </div>
     </form>
+<!-- Financial Form  -->
+    <form
+      id="financialForm"
+      method="post"
+      action="{% url 'patient:add_financial_history' patient.id %}"
+      class="space-y-3"
+    >
+      {% csrf_token %}
+      <input
+        type="number"
+        name="number"
+        placeholder="Number"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="date"
+        name="date" required
+        placeholder="Date"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="Description" 
+        placeholder="Description"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="time"
+        name="time"
+        placeholder="Time"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="text"
+        name="Type"
+        placeholder="Type"
+        required
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="number"
+        name="Amount"
+        placeholder="Amount"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <input
+        type="number"
+        name="Balance"
+        placeholder="Balance"
+        class="w-full border rounded-md p-2 text-sm"
+      />
+      <div class="flex justify-end gap-2 pt-3">
+        <button
+          type="button"
+          id="close-popup-btn"
+          class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Save
+        </button>
+      </div>
+    </form>
   </div>
 </div>
-{%endblock %} {%block extra_js %}
-<!-- Simple toggle script
+
+</div>
+
+{% endblock %} {% block extra_js %}
+<script src="{% static 'js/modal.js' %}"></script>
 <script>
-  document.getElementById("financialTab").addEventListener("click", () => {
-    window.location.href = "{% url 'patient:financial_history' patient.id %}";
+  const medicalTab = document.getElementById("medicalTab");
+  const financialTab = document.getElementById("financialTab");
+  const medicalContent = document.getElementById("medicalContent");
+  const financialContent = document.getElementById("financialContent");
+
+  medicalTab.addEventListener("click", () => {
+    medicalContent.classList.remove("hidden");
+    financialContent.classList.add("hidden");
+    medicalTab.classList.replace("bg-gray-200", "bg-blue-600");
+    medicalTab.classList.replace("text-gray-700", "text-white");
+    financialTab.classList.replace("bg-blue-600", "bg-gray-200");
+    financialTab.classList.replace("text-white", "text-gray-700");
   });
-  document.getElementById("medicalTab").addEventListener("click", () => {
-    window.location.href = "{% url 'patient:medical_history' patient.id %}";
+
+  financialTab.addEventListener("click", () => {
+    financialContent.classList.remove("hidden");
+    medicalContent.classList.add("hidden");
+    financialTab.classList.replace("bg-gray-200", "bg-blue-600");
+    financialTab.classList.replace("text-gray-700", "text-white");
+    medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
+    medicalTab.classList.replace("text-white", "text-gray-700");
   });
 </script>
- Record Popup Script
 <script>
-  const modal = document.getElementById("modal-popup");
-  const popupContent = document.getElementById("popup-content");
-  const addRecordBtn = document.querySelector(
-    'a[href="{% url "patient:medical_history" patient.id %}"]'
-  );
-  const closePopupBtn = document.getElementById("close-popup-btn");
-
-  addRecordBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    modal.classList.remove("hidden");
-    setTimeout(() => {
-      popupContent.classList.remove("opacity-0", "scale-95");
-      popupContent.classList.add("opacity-100", "scale-100");
-    }, 10);
-  });
-
-  closePopupBtn.addEventListener("click", () => {
-    popupContent.classList.remove("opacity-100", "scale-100");
-    popupContent.classList.add("opacity-0", "scale-95");
-    setTimeout(() => {
-      modal.classList.add("hidden");
-    }, 200);
-  });
-
-  window.addEventListener("click", (e) => {
-    if (e.target === modal) {
-      popupContent.classList.remove("opacity-100", "scale-100");
-      popupContent.classList.add("opacity-0", "scale-95");
-      setTimeout(() => {
-        modal.classList.add("hidden");
-      }, 200);
-    }
-  });
-</script> -->
-<script src="{% static 'js/modal.js' %}"></script>
+  const medicalUrl = "{% url 'patient:add_medical_history' patient.id %}";
+  const financialUrl = "{% url 'patient:add_financial_history' patient.id %}";
+</script>
 {% endblock %}

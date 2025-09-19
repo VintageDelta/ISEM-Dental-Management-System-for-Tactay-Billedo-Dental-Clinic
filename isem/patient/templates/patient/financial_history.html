@@ -80,10 +80,12 @@
 <!-- Simple toggle script -->
 <script>
   document.getElementById("financialTab").addEventListener("click", () => {
-    window.location.href = "{% url 'patient:financial_history' patient.id %}";
+    window.location.href =
+      "{% url 'patient:financial_history.html' patient.id %}";
   });
   document.getElementById("medicalTab").addEventListener("click", () => {
-    window.location.href = "{% url 'patient:medical_history' patient.id %}";
+    window.location.href =
+      "{% url 'patient:medical_history.html' patient.id %}";
   });
 </script>
 {% endblock %}

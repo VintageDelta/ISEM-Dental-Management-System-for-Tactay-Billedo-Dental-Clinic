@@ -29,13 +29,13 @@ class FinancialHistory(models.Model):
     patient = models.ForeignKey(Patient,
                                 on_delete=models.CASCADE,
                                 related_name='financial_history')  
-    date = models.DateField()
-    number = models.AutoField(primary_key=True)
-    description = models.TextField()
+    date = models.DateField(blank=True, null=True)
+    number = models.AutoField(primary_key=True) 
+    description = models.TextField(blank=True, null=True)
     time = models.TimeField()
-    type = models.CharField(max_length=100)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    balance = models.DecimalField(max_digits=10, decimal_places=2)
+    type = models.CharField(max_length=100, null=True, blank=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
 def __str__(self):
         return f"Financial Record {self.number} for {self.patient.name}"
