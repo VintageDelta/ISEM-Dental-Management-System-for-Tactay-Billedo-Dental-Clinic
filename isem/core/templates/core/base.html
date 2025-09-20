@@ -81,14 +81,28 @@
             <button><span class="material-icons">mail</span></button>
             <button><span class="material-icons">notifications</span></button>
             <button><span class="material-icons">settings</span></button>
-            <div class="flex items-center space-x-2">
-              <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
-              <div>
-                <p class="font-semibold">Username</p>
-                <p class="text-xs text-gray-500">Admin</p>
-              </div>
-            </div>
-          </div>
+            <div class="relative inline-block text-left">
+  <!-- Trigger -->
+  <div class="relative">
+  <button id="userMenuButton"
+          class="flex items-center space-x-2 focus:outline-none hover:opacity-80">
+      <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+      <div class="text-left">
+        <p class="font-semibold">Username</p>
+        <p class="text-xs text-gray-500">Admin</p>
+      </div>
+      <span class="material-icons text-gray-500">expand_more</span>
+  </button>
+
+  <!-- Dropdown -->
+  <div id="userDropdown"
+       class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg">
+      <a href="{% url 'userprofile:profile' %}"
+         class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+      <a href="{% url 'userprofile:logout' %}"
+         class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Log Out</a>
+  </div>
+</div>
         </header>
 
         <!-- Dashboard Content -->
@@ -109,7 +123,26 @@
     <!-- Google Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-    {% block extra_js %}{% endblock %}
+   {% block extra_js %}
+
+
+{% endblock %}
+   <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('userMenuButton');
+    const menu = document.getElementById('userDropdown');
+
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();              // prevent document click from closing immediately
+        menu.classList.toggle('hidden');   // toggle dropdown
+    });
+
+    // Close dropdown when clicking anywhere else
+    document.addEventListener('click', function () {
+        menu.classList.add('hidden');
+    });
+});
+</script>
 </body>
 
 </html>
