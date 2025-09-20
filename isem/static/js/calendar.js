@@ -1,116 +1,119 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const calendarEl = document.getElementById('calendar');
-  const controlsEl = document.getElementById('calendar-controls');
+  const mainCalendarEl = document.getElementById('calendar');
+  const timelineCalendarEl = document.getElementById('timeline-calendar');
+  const timelineControlsEl = document.getElementById('timeline-controls');
   const listEl = document.getElementById('todays-appointments-list');
 
-    
-  if (calendarEl && controlsEl && listEl) {
-    const calendar = new FullCalendar.Calendar(calendarEl, {
+  if (mainCalendarEl && timelineCalendarEl && listEl) {
+    // Main Calendar
+    const mainCalendar = new FullCalendar.Calendar(mainCalendarEl, {
       initialView: 'dayGridMonth',
       height: "auto",
       aspectRatio: 1.4,
       expandRows: true,
       handleWindowResize: true,
-      headerToolbar: false, // disable default header
-
+      headerToolbar: { left: "prev today", center: "title", right: "next" },
+      events: eventsUrl,
       eventDidMount: function (info) {
         info.el.classList.add(
           'bg-blue-500', 'text-white', 'text-xs', 'font-medium',
           'px-2', 'py-1', 'rounded-lg', 'shadow-sm', 'truncate'
         );
       },
-      dayCellDidMount: function (info) {
-        const dayNum = info.el.querySelector('.fc-daygrid-day-number');
-        if (dayNum) {
-          dayNum.classList.add('text-gray-700', 'font-semibold');
-        }
-        info.el.classList.add('rounded-lg', 'hover:bg-gray-50', 'transition');
-      },
-      events:eventsUrl,
+      titleFormat: { year: 'numeric', month: 'short' },
 
-      // this when clicking
-      dateClick: function (info) {
-        document.querySelectorAll('.fc-daygrid-day').forEach(el =>{
-          el.classList.remove('bg-green-100', 'rounded-lg')
-        });
-        info.dayEl.classList.add('bg-green-100', 'rounded-lg');
+      // 👇 add this
+      dateClick: function(info) {
+        timelineCalendar.changeView("timeGridDay", info.date); // jump to date
       }
     });
+    mainCalendar.render();
 
-    calendar.render();
+    // Timeline Calendar
+    const timelineCalendar = new FullCalendar.Calendar(timelineCalendarEl, {
+      initialView: 'timeGridDay',
+      height: "auto",
+      expandRows: true,
+      headerToolbar: {
+        left: "prev,next",
+        center: "title",
+        right: "today,timeGridDay,timeGridWeek"
+      },
+      slotMinTime: "07:00:00",
+      slotMaxTime: "20:00:00",
+      slotDuration: "00:15:00",
+      slotLabelInterval: "01:00:00",
+      slotEventOverlap: false,
+      allDaySlot: false,
+      events: eventsUrl,
+      titleFormat: { year: 'numeric', month: 'short', day: 'numeric' }, // smaller title
+      eventContent: function(arg) {
+        // Title
+        const title = document.createElement("div");
+        title.textContent = arg.event.title;
+        title.className = "truncate text-sm font-semibold text-gray-800";
 
-    // --- Render toolbar into external container ---
-    const toolbar = document.createElement("div");
-    toolbar.className = "fc-header-toolbar flex items-center justify-between mb-4";
+        // Only show buttons in Day view
+        if (arg.view.type === "timeGridDay") {
+          const btnContainer = document.createElement("div");
+          btnContainer.className = "mt-2 flex gap-2";
 
-    // Left side (navigation)
-    const leftControls = document.createElement("div");
-    leftControls.className = "flex items-center gap-2";
+          const followBtn = document.createElement("button");
+          followBtn.textContent = "Follow up";
+          followBtn.className =
+            "px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600";
+          followBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openModal("followup-modal");
+          });
 
-    // Title (fixed space so buttons don’t move)
-    const titleWrapper = document.createElement("div");
-    titleWrapper.className = "flex-1 text-center"; // takes full space in middle
+          const rescheduleBtn = document.createElement("button");
+          rescheduleBtn.textContent = "Reschedule";
+          rescheduleBtn.className =
+            "px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600";
+          rescheduleBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openModal("reschedule-modal");
+          });
 
-    const titleSpan = document.createElement("span");
-    titleSpan.className = "font-semibold text-gray-800 text-lg inline-block min-w-[180px]"; 
-    titleSpan.textContent = calendar.view.title;
+          btnContainer.appendChild(followBtn);
+          btnContainer.appendChild(rescheduleBtn);
 
-    titleWrapper.appendChild(titleSpan);
+          const container = document.createElement("div");
+          container.className = "flex flex-col";
+          container.appendChild(title);
+          container.appendChild(btnContainer);
 
-    // Right side (view buttons)
-    const rightControls = document.createElement("div");
-    rightControls.className = "flex items-center gap-2";
+          return { domNodes: [container] };
+        }
 
-    // Reusable button factory
+        return { domNodes: [title] };
+      }
+    });
+    timelineCalendar.render();
+
+    // External controls (Week, Day, Today)
     function makeBtn(label, onClick) {
       const btn = document.createElement("button");
       btn.textContent = label;
       btn.className =
         "px-3 py-1.5 text-sm font-medium border border-gray-300 rounded-md " +
-        "bg-transparent text-gray-700 hover:bg-gray-100 transition " +
+        "bg-white/80 text-gray-600 hover:bg-gray-100 transition " +
         "focus:outline-none focus:ring-2 focus:ring-blue-500";
       btn.onclick = onClick;
       return btn;
     }
 
-    // Navigation
-    const prevBtn = makeBtn("Prev", () => calendar.prev());
-    const nextBtn = makeBtn("Next", () => calendar.next());
-    const todayBtn = makeBtn("Today", () => calendar.today());
+    timelineControlsEl.appendChild(makeBtn("Week", () => timelineCalendar.changeView("timeGridWeek")));
+    timelineControlsEl.appendChild(makeBtn("Day", () => timelineCalendar.changeView("timeGridDay")));
+    timelineControlsEl.appendChild(makeBtn("Today", () => timelineCalendar.today()));
 
-    // Views
-    const monthBtn = makeBtn("Month", () => calendar.changeView("dayGridMonth"));
-    const weekBtn = makeBtn("Week", () => calendar.changeView("timeGridWeek"));
-    const dayBtn = makeBtn("Day", () => calendar.changeView("timeGridDay"));
-
-    // Assemble
-    leftControls.appendChild(prevBtn);
-    leftControls.appendChild(nextBtn);
-    leftControls.appendChild(todayBtn);
-
-    rightControls.appendChild(monthBtn);
-    rightControls.appendChild(weekBtn);
-    rightControls.appendChild(dayBtn);
-
-    toolbar.appendChild(leftControls);
-    toolbar.appendChild(titleWrapper);
-    toolbar.appendChild(rightControls);
-    controlsEl.appendChild(toolbar);
-
-    // Keep title updated
-    calendar.on("datesSet", function () {
-      titleSpan.textContent = calendar.view.title;
-});
-
-
-    // --- Render today's appointments ---
+    // Today's appointments list
     function renderTodaysAppointments() {
-      listEl.innerHTML = ""; // clear
-      const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+      listEl.innerHTML = "";
+      const today = new Date().toISOString().split("T")[0];
 
-      const todaysEvents = calendar.getEvents().filter(ev => {
-        return ev.startStr.startsWith(today);
-      });
+      const todaysEvents = timelineCalendar.getEvents().filter(ev => ev.startStr.startsWith(today));
 
       if (todaysEvents.length === 0) {
         listEl.innerHTML = `<li class="text-gray-500 text-sm">No appointments today.</li>`;
@@ -129,11 +132,44 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       }
     }
-    
-    // Run once & hook events
+
     renderTodaysAppointments();
-    calendar.on("eventAdd", renderTodaysAppointments);
-    calendar.on("eventRemove", renderTodaysAppointments);
-    calendar.on("eventChange", renderTodaysAppointments);
+    timelineCalendar.on("eventAdd", renderTodaysAppointments);
+    timelineCalendar.on("eventRemove", renderTodaysAppointments);
+    timelineCalendar.on("eventChange", renderTodaysAppointments);
   }
+});
+
+// Modal utilities
+function openModal(id) {
+  const modal = document.getElementById(id);
+  const content = modal.querySelector("div");
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+
+  setTimeout(() => {
+    content.classList.remove("opacity-0", "scale-95");
+    content.classList.add("opacity-100", "scale-100");
+  }, 10);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal(id);
+  });
+}
+
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  const content = modal.querySelector("div");
+
+  content.classList.remove("opacity-100", "scale-100");
+  content.classList.add("opacity-0", "scale-95");
+
+  setTimeout(() => modal.classList.add("hidden"), 200);
+}
+
+// Close buttons
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("close-followup-btn").addEventListener("click", () => closeModal("followup-modal"));
+  document.getElementById("close-reschedule-btn").addEventListener("click", () => closeModal("reschedule-modal"));
 });

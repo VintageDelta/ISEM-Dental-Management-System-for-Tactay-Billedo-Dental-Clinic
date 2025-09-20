@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ==========================
   // Choose Registered → Show Appointment Modal
-  // ==========================
+
   registeredBtn.addEventListener("click", () => {
     // Close choose modal
     chooseContent.classList.remove("opacity-100", "scale-100");
@@ -98,4 +98,39 @@ document.addEventListener("DOMContentLoaded", function () {
       setTimeout(() => appointmentModal.classList.add("hidden"), 200);
     }
   });
+
+  // ========== Modal Utility ==========
+function openModal(id) {
+  const modal = document.getElementById(id);
+  const content = modal.querySelector("div");
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+
+  setTimeout(() => {
+    content.classList.remove("opacity-0", "scale-95");
+    content.classList.add("opacity-100", "scale-100");
+  }, 10);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeModal(id);
+    }
+  });
+}
+
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  const content = modal.querySelector("div");
+
+  content.classList.remove("opacity-100", "scale-100");
+  content.classList.add("opacity-0", "scale-95");
+
+  setTimeout(() => modal.classList.add("hidden"), 200);
+}
+
+// Close buttons
+document.getElementById("close-followup-btn").addEventListener("click", () => closeModal("followup-modal"));
+document.getElementById("close-reschedule-btn").addEventListener("click", () => closeModal("reschedule-modal"));
+
 });

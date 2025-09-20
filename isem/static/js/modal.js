@@ -25,6 +25,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (type) showForm(type);
     popup.classList.remove("hidden");
     popup.classList.add("flex");
+
+
     requestAnimationFrame(() => {
       popupContent.classList.remove("opacity-0", "scale-95");
       popupContent.classList.add("opacity-100", "scale-100");
@@ -39,14 +41,18 @@ document.addEventListener("DOMContentLoaded", () => {
       openPopup(financialUrl, "financial")
     );
 
+
   const closePopup = () => {
     popupContent.classList.remove("opacity-100", "scale-100");
     popupContent.classList.add("opacity-0", "scale-95");
+
+
     setTimeout(() => {
       popup.classList.remove("flex");
       popup.classList.add("hidden");
     }, 200);
   };
+
 
   closeBtn.addEventListener("click", closePopup);
   popup.addEventListener("click", (e) => {
