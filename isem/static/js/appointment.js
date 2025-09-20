@@ -99,7 +99,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // ========== Modal Utility ==========
+  document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("close-followup-btn")
+    .addEventListener("click", () => closeModal("followup-modal"));
+
+  document.getElementById("close-reschedule-btn")
+    .addEventListener("click", () => closeModal("reschedule-modal"));
+  });
+
+});
+
+// ========== Modal Utility ==========
 function openModal(id) {
   const modal = document.getElementById(id);
   const content = modal.querySelector("div");
@@ -113,9 +123,7 @@ function openModal(id) {
   }, 10);
 
   modal.addEventListener("click", (e) => {
-    if (e.target === modal) {
-      closeModal(id);
-    }
+    if (e.target === modal) closeModal(id);
   });
 }
 
@@ -129,8 +137,15 @@ function closeModal(id) {
   setTimeout(() => modal.classList.add("hidden"), 200);
 }
 
-// Close buttons
-document.getElementById("close-followup-btn").addEventListener("click", () => closeModal("followup-modal"));
-document.getElementById("close-reschedule-btn").addEventListener("click", () => closeModal("reschedule-modal"));
+// ========== Attach close button listeners safely ==========
+document.addEventListener("DOMContentLoaded", () => {
+  const followBtn = document.getElementById("close-followup-btn");
+  if (followBtn) {
+    followBtn.addEventListener("click", () => closeModal("followup-modal"));
+  }
 
+  const reschedBtn = document.getElementById("close-reschedule-btn");
+  if (reschedBtn) {
+    reschedBtn.addEventListener("click", () => closeModal("reschedule-modal"));
+  }
 });

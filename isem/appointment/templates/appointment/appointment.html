@@ -70,6 +70,7 @@
         class="flex flex-col items-center justify-center w-48 h-48 bg-white border-2 border-green-500 rounded-xl shadow-md hover:shadow-xl hover:bg-green-50 transition">
         <div
           class="flex items-center justify-center w-16 h-16 rounded-full bg-green-500 text-white text-4xl font-bold">
+          R
         </div>
         <span class="mt-4 text-xl font-medium text-gray-700">Registered</span>
       </button>
@@ -102,7 +103,6 @@
       <!-- Dentist Name -->
       <input type="text" id="dentist_name" name="dentist_name" placeholder="Dentist Name"
         class="w-full border rounded-md p-2 text-sm">
-
       <!-- Location -->
       <div>
         <select id="location" name="location" required
@@ -112,7 +112,6 @@
           <option value="Magsingal">Magsingal</option>
         </select>
       </div>
-
       <!-- Date Time -->
       <div>
         <div class="flex gap-2">
@@ -122,7 +121,6 @@
           class="flex-1 border rounded-md p-2 text-sm">
         </div>
       </div>
-    
       <!-- Service -->
       <div>
         <select name="servicetype" id="servicetype" required
@@ -134,23 +132,19 @@
             <option value="Other">Other</option>
         </select>   
       </div>
-
       <!-- Reason for Visist -->
       <textarea name="reason" id="reason" placeholder="Reason for Visit" rows="3"
         class="w-full border rounded-md p-2 text-sm"></textarea>
-      
       <!-- ID -->
       <div>
         <input type="id" id="id_no" name="id_no" placeholder="ID No." required
           class="w-full border rounded-md p-2 text-sm" required>
       </div>
-
       <!-- Email -->
       <div>
         <input type="email" id="email" name="email" placeholder="Email" required
           class="w-full border rounded-md p-2 text-sm" required>
       </div>
-
       <!-- Actions -->
       <div class="flex justify-end gap-2 pt-3">
         <button type="button" id="close-appointment-btn"
@@ -165,10 +159,54 @@
 <!-- Follow Up Modal -->
 <div id="followup-modal"
   class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
-  <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md text-center">
-    <h2 class="text-xl font-semibold text-gray-800 text-center">Appointment information</h2>
-    <button id="close-followup"
-      class="mt-6 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Close</button>
+  <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-3xl">
+    <h2 class="text-xl font-semibold text-gray-800 text-center mb-6">
+      Appointment Information
+    </h2>
+
+    <div class="flex gap-6">
+      <!-- Left Side: Appointment Info -->
+      <div id="followup-details" class="flex-1 space-y-3 text-left">
+        <p><span class="font-semibold">Dentist:</span> <span id="detail-dentist"></span></p>
+        <p><span class="font-semibold">Location:</span> <span id="detail-location"></span></p>
+        <p><span class="font-semibold">Preferred Date:</span> <span id="detail-date"></span></p>
+        <p><span class="font-semibold">Preferred Time:</span> <span id="detail-time"></span></p>
+        <p><span class="font-semibold">Service Type:</span> <span id="detail-service"></span></p>
+        <p><span class="font-semibold">Reason for Visit:</span> <span id="detail-reason"></span></p>
+      </div>
+
+      <!-- Right Side: Status Buttons -->
+      <div class="flex flex-col gap-2 items-end ml-auto">
+        <button
+          class="w-32 px-3 py-1 text-sm bg-gray-400 text-white rounded-md hover:bg-gray-500">
+          Not Yet Arrived
+        </button>
+        <button
+          class="w-32 px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600">
+          Arrived
+        </button>
+        <button
+          class="w-32 px-3 py-1 text-sm bg-yellow-500 text-white rounded-md hover:bg-yellow-600">
+          On Going
+        </button>
+        <button
+          class="w-32 px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600">
+          Done
+        </button>
+        <button
+          class="w-32 px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600">
+          Cancel Appointment
+        </button>
+      </div>
+    </div>
+
+    <!-- Close Button at Bottom -->
+    <div class="flex justify-end pt-6">
+      <button id="close-followup-btn"
+        class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700">
+        Close
+      </button>
+    </div>
   </div>
 </div>
 
@@ -177,8 +215,10 @@
   class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
   <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
     <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">Finding best time</h2>
-    <button id="close-reschedule"
-      class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Close</button>
+    <div class="flex justify-end gap-2 pt-3">
+      <button id="close-reschedule-btn"
+        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Close</button>
+    </div>
   </div>
 </div>
 

@@ -12,7 +12,14 @@ document.addEventListener('DOMContentLoaded', function () {
       aspectRatio: 1.4,
       expandRows: true,
       handleWindowResize: true,
-      headerToolbar: { left: "prev today", center: "title", right: "next" },
+      headerToolbar: { 
+        left: "prev today", 
+        center: "title", 
+        right: "next" 
+      },
+      buttonText: {
+        today: 'Today',
+      },
       events: eventsUrl,
       eventDidMount: function (info) {
         info.el.classList.add(
@@ -22,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       titleFormat: { year: 'numeric', month: 'short' },
 
-      // 👇 add this
+      // updates the timeline with the clidked date
       dateClick: function(info) {
         timelineCalendar.changeView("timeGridDay", info.date); // jump to date
       }
@@ -35,9 +42,14 @@ document.addEventListener('DOMContentLoaded', function () {
       height: "auto",
       expandRows: true,
       headerToolbar: {
-        left: "prev,next",
+        left: "prev,next today",
         center: "title",
-        right: "today,timeGridDay,timeGridWeek"
+        right: "timeGridDay,timeGridWeek"
+      },
+      buttonText: {
+        today: 'Today',
+        day: 'Day',
+        week: 'Week',
       },
       slotMinTime: "07:00:00",
       slotMaxTime: "20:00:00",
@@ -48,47 +60,56 @@ document.addEventListener('DOMContentLoaded', function () {
       events: eventsUrl,
       titleFormat: { year: 'numeric', month: 'short', day: 'numeric' }, // smaller title
       eventContent: function(arg) {
-        // Title
-        const title = document.createElement("div");
-        title.textContent = arg.event.title;
-        title.className = "truncate text-sm font-semibold text-gray-800";
+      const title = document.createElement("div");
+      title.textContent = arg.event.title;
+      title.className = "truncate text-sm font-semibold text-gray-800";
 
-        // Only show buttons in Day view
-        if (arg.view.type === "timeGridDay") {
-          const btnContainer = document.createElement("div");
-          btnContainer.className = "mt-2 flex gap-2";
+      if (arg.view.type === "timeGridDay") {
+        const btnContainer = document.createElement("div");
+        btnContainer.className = "mt-2 flex gap-2";
 
-          const followBtn = document.createElement("button");
-          followBtn.textContent = "Follow up";
-          followBtn.className =
-            "px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600";
-          followBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            openModal("followup-modal");
-          });
+        // Follow up button
+        const followBtn = document.createElement("button");
+        followBtn.textContent = "Follow up";
+        followBtn.className =
+          "px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600";
+        followBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
 
-          const rescheduleBtn = document.createElement("button");
-          rescheduleBtn.textContent = "Reschedule";
-          rescheduleBtn.className =
-            "px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600";
-          rescheduleBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            openModal("reschedule-modal");
-          });
+          // Fill modal fields from extendedProps
+          document.getElementById("detail-dentist").textContent = arg.event.extendedProps.dentist || "N/A";
+          document.getElementById("detail-location").textContent = arg.event.extendedProps.location || "N/A";
+          document.getElementById("detail-date").textContent = arg.event.extendedProps.date || "N/A";
+          document.getElementById("detail-time").textContent = arg.event.extendedProps.time || "N/A";
+          document.getElementById("detail-service").textContent = arg.event.extendedProps.service || "N/A";
+          document.getElementById("detail-reason").textContent = arg.event.extendedProps.reason || "N/A";
 
-          btnContainer.appendChild(followBtn);
-          btnContainer.appendChild(rescheduleBtn);
+          openModal("followup-modal");
+        });
 
-          const container = document.createElement("div");
-          container.className = "flex flex-col";
-          container.appendChild(title);
-          container.appendChild(btnContainer);
+        // Reschedule button
+        const rescheduleBtn = document.createElement("button");
+        rescheduleBtn.textContent = "Reschedule";
+        rescheduleBtn.className =
+          "px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600";
+        rescheduleBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openModal("reschedule-modal");
+        });
 
-          return { domNodes: [container] };
-        }
+        btnContainer.appendChild(followBtn);
+        btnContainer.appendChild(rescheduleBtn);
 
-        return { domNodes: [title] };
+        const container = document.createElement("div");
+        container.className = "flex flex-col";
+        container.appendChild(title);
+        container.appendChild(btnContainer);
+
+        return { domNodes: [container] };
       }
+
+      return { domNodes: [title] };
+    }
     });
     timelineCalendar.render();
 
@@ -127,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
               ${ev.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
             </p>
             <p class="font-medium text-gray-800">${ev.title}</p>
-          `;
+          `
           listEl.appendChild(li);
         });
       }
@@ -138,38 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
     timelineCalendar.on("eventRemove", renderTodaysAppointments);
     timelineCalendar.on("eventChange", renderTodaysAppointments);
   }
+
+  
 });
 
-// Modal utilities
-function openModal(id) {
-  const modal = document.getElementById(id);
-  const content = modal.querySelector("div");
-
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-
-  setTimeout(() => {
-    content.classList.remove("opacity-0", "scale-95");
-    content.classList.add("opacity-100", "scale-100");
-  }, 10);
-
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeModal(id);
-  });
-}
-
-function closeModal(id) {
-  const modal = document.getElementById(id);
-  const content = modal.querySelector("div");
-
-  content.classList.remove("opacity-100", "scale-100");
-  content.classList.add("opacity-0", "scale-95");
-
-  setTimeout(() => modal.classList.add("hidden"), 200);
-}
-
-// Close buttons
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("close-followup-btn").addEventListener("click", () => closeModal("followup-modal"));
-  document.getElementById("close-reschedule-btn").addEventListener("click", () => closeModal("reschedule-modal"));
-});
