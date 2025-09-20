@@ -1,6 +1,20 @@
 from django.db import models
 
-# Create your models here.
+# table for Dentist
+class Dentist(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+# table for services
+class Service(models.Model):
+    service_name = models.CharField(max_length=255)
+    duration = models.TimeField()
+
+    def __str__(self):
+        return self.service_name
+    
 class Appointment(models.Model):
     
     dentist_name = models.CharField(max_length=255, null=True, blank=True)

@@ -101,8 +101,15 @@
 
       {% csrf_token %}
       <!-- Dentist Name -->
-      <input type="text" id="dentist_name" name="dentist_name" placeholder="Dentist Name"
-        class="w-full border rounded-md p-2 text-sm">
+      <div>
+        <select id="dentist_name" name="dentist" required
+          class="w-full border rounded-md p-2 text-sm">
+          <option value="" disabled selected>Select Dentist</option>
+          {% for dentist in dentists %}
+            <option value="{{ dentist.id }}">{{ dentist.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
       <!-- Location -->
       <div>
         <select id="location" name="location" required
@@ -123,14 +130,13 @@
       </div>
       <!-- Service -->
       <div>
-        <select name="servicetype" id="servicetype" required
-          class="w-full border rounded-md p-2 text-sm" >
-            <option value="" disabled selected>Select Service Type</option>
-            <option value="Cleaning">Cleaning</option>
-            <option value="Extraction">Extraction</option>
-            <option value="Filling">Filling</option>
-            <option value="Other">Other</option>
-        </select>   
+        <select name="service" id="servicetype" required
+          class="w-full border rounded-md p-2 text-sm">
+          <option value="" disabled selected>Select Service Type</option>
+          {% for service in services %}
+            <option value="{{ service.id }}">{{ service.service_name }}</option>
+          {% endfor %}
+        </select>
       </div>
       <!-- Reason for Visist -->
       <textarea name="reason" id="reason" placeholder="Reason for Visit" rows="3"
