@@ -36,7 +36,7 @@
               <a href="{% url 'userprofile:homepage' %}">Home</a>
             </li>
 
-            {% if user.is_staff %}
+            {% if user.is_staff or user.is_superuser %}
             <li
               class="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 p-2 rounded"
             >
@@ -69,6 +69,14 @@
             >
               <span class="material-icons">receipt_long</span>
               <a href="{% url 'billing:list' %}">Billing Records</a>
+            </li>
+            {% endif %}
+            {% if user.is_superuser %}
+            <li
+              class="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 p-2 rounded"
+            >
+              <span class="material-icons">admin_panel_settings</span>
+              <a href="{% url 'userprofile:admin_dashboard' %}">Admin Dashboard</a>
             </li>
             {% endif %}
           </ul>

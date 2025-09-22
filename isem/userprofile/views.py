@@ -3,9 +3,24 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout as auth_logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
-from django.contrib import messages 
+from django.contrib import messages
+from django.contrib.auth.views import LoginView as Loginview
 
 # Create your views here.
+class RoleBasedLoginView(Loginview):
+    template_name = 'userprofile/sign-in.html'
+    def get_success_url(self):
+        user = self.request.user
+        if user.is_superuser:
+            return '/user/admin/dashboard/'
+        elif user.is_staff:
+            return '/dashboard/'
+        else:
+            return '/user/homepage/' 
+        
+def admin_dashboard(request):
+    return render(request, 'userprofile/admin/admin-dashboard.html')
+
 def signin(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -74,4 +89,9 @@ def is_patient(user):
 # @login_required
 # @user_passes_test(is_patient)
 def homepage(request):
-    return render(request, 'userprofile/homepage.html')
+    if request.user.is_superuser:
+        return redirect('userprofile:admin_dashboard')
+    elif request.user.is_staff:
+        return redirect('dashboard:index')
+    else:
+        return render(request, 'userprofile/homepage.html')
