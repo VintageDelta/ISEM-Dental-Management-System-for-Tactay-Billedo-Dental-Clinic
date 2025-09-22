@@ -1,9 +1,13 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .models import Dentist, Service, Appointment
+from datetime import datetime
 #appoitnmetn form diffy name
 from .forms import AppointmentForm
+from .utils import find_next_available_slot
 
+
+# POSTTTT Saves yo shi in the database FRFR
 def appointment_page(request):
     dentists = Dentist.objects.all()
     services = Service.objects.all()
@@ -12,66 +16,77 @@ def appointment_page(request):
         dentist_id = request.POST.get("dentist")
         service_id = request.POST.get("service")
         location = request.POST.get("location")
-        date = request.POST.get("date")
-        time = request.POST.get("time")
+        date_str = request.POST.get("date")
+        time_str = request.POST.get("time") 
         reason = request.POST.get("reason")
         email = request.POST.get("email")
         id_no = request.POST.get("id_no")
 
-        # fetch dentist and service from DB
         dentist = Dentist.objects.get(id=dentist_id) if dentist_id else None
         service = Service.objects.get(id=service_id) if service_id else None
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        preferred_time = datetime.strptime(time_str, "%H:%M").time()
 
+        # Call greedy algorithm with preferred time
+        start_time, end_time = find_next_available_slot(dentist, service, date_obj, preferred_time)
+
+        if not start_time:
+            # Optional: handle "no available slot"
+            return render(request, "appointment/appointment.html", {
+                "dentists": dentists,
+                "services": services,
+                "error": "No available slots for this day."
+            })
+
+        # Save appointment with computed slot
+    try:
         Appointment.objects.create(
             dentist_name=dentist.name if dentist else None,
             location=location,
-            date=date,
-            time=time,
-            servicetype=service.service_name if service else None,
+            date=date_obj,
+            time=start_time,
+            end_time=end_time,
+            preferred_date=date_obj,
+            preferred_time=preferred_time,
+            servicetype=service if service else None,
             reason=reason,
             email=email,
             id_no=id_no,
         )
-        return redirect("appointment:list")
+        print("Appointment saved!")
+    except Exception as e:
+        print("Error saving appointment:", e)
+
+
 
     return render(request, "appointment/appointment.html", {
         "dentists": dentists,
         "services": services
     })
-        
-# def appointment_events(request):
-#     events = []
-#     for appt in Appointment.objects.all():
-#         events.append({
-#             "title": f"{appt.servicetype}",
-#             "start": f"{appt.date}T{appt.time}",
-#             "extendedProps": {
-#                 "dentist": appt.dentist_name,
-#                 "location": appt.location,
-#                 "date": str(appt.date),
-#                 "time": str(appt.time),
-#                 "service": appt.servicetype,
-#                 "reason": appt.reason,
-#             }
-#         })
-#     return JsonResponse(events, safe=False)
 
+
+# Mainly for Displaying Sruff, REQUEST
 def events(request):
     appointments = Appointment.objects.all()
     events = []
     for a in appointments:
         events.append({
             "id": a.id,
-            "title": f"{a.servicetype} - {a.dentist_name or 'N/A'}",
-            "start": f"{a.date}T{a.time}",
+            "title": f"{a.servicetype.service_name} - {a.dentist_name or 'N/A'}",
+            "start": f"{a.date.strftime('%Y-%m-%d')}T{a.time.strftime('%H:%M:%S')}",
+            "end": f"{a.date.strftime('%Y-%m-%d')}T{a.end_time.strftime('%H:%M:%S')}" if a.end_time else None,
             "extendedProps": {
                 "dentist": a.dentist_name,
                 "location": a.location,
                 "date": a.date.strftime("%Y-%m-%d"),
                 "time": a.time.strftime("%I:%M %p"),
-                "service": a.servicetype,
+                "service": a.servicetype.service_name,
                 "reason": a.reason,
+                # preferred Date/time of the Patient hek yeee
+                "preferred_date": a.preferred_date.strftime("%Y-%m-%d") if a.preferred_date else None,
+                "preferred_time": a.preferred_time.strftime("%I:%M %p") if a.preferred_time else None,
             }
         })
     return JsonResponse(events, safe=False)
+
 

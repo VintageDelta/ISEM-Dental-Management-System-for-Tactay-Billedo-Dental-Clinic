@@ -59,71 +59,93 @@ document.addEventListener('DOMContentLoaded', function () {
       allDaySlot: false,
       events: eventsUrl,
       titleFormat: { year: 'numeric', month: 'short', day: 'numeric' }, // smaller title
+      
       eventContent: function(arg) {
-      // Title
-      const title = document.createElement("div");
-      title.textContent = arg.event.title;
-      title.className = "truncate text-sm font-semibold text-white-800";
+    // Title
+    const title = document.createElement("div");
+    title.textContent = arg.event.title;
+    title.className = "truncate text-sm font-semibold text-white-800";
 
-      // Time
-      const time = document.createElement("div");
-      time.textContent =
-        arg.event.extendedProps.time ||
-        arg.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      time.className = "text-large text-white-500";
+    // Time range (start → end)
+    const startTime = arg.event.start
+      ? arg.event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : "";
+    const endTime = arg.event.end
+      ? arg.event.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : "";
 
-      if (arg.view.type === "timeGridDay") {
-        const btnContainer = document.createElement("div");
-        btnContainer.className = "mt-1 flex gap-1";
+    const time = document.createElement("div");
+    time.textContent = endTime ? `${startTime} - ${endTime}` : startTime;
+    time.className = "text-sm text-white-500";
 
-        // Follow up button
-        const followBtn = document.createElement("button");
-        followBtn.textContent = "Follow up";
-        followBtn.className =
-          "px-2 py-0.5 text-xs bg-green-500 text-white rounded hover:bg-green-600";
-        followBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          document.getElementById("detail-dentist").textContent = arg.event.extendedProps.dentist || "N/A";
-          document.getElementById("detail-location").textContent = arg.event.extendedProps.location || "N/A";
-          document.getElementById("detail-date").textContent = arg.event.extendedProps.date || "N/A";
-          document.getElementById("detail-time").textContent = arg.event.extendedProps.time || "N/A";
-          document.getElementById("detail-service").textContent = arg.event.extendedProps.service || "N/A";
-          document.getElementById("detail-reason").textContent = arg.event.extendedProps.reason || "N/A";
-          openModal("followup-modal");
-        });
+    if (arg.view.type === "timeGridDay") {
+      const btnContainer = document.createElement("div");
+      btnContainer.className = "mt-1 flex gap-1";
 
-        // Reschedule button
-        const rescheduleBtn = document.createElement("button");
-        rescheduleBtn.textContent = "Reschedule";
-        rescheduleBtn.className =
-          "px-2 py-0.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600";
-        rescheduleBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          openModal("reschedule-modal");
-        });
+      // Follow up button
+      const followBtn = document.createElement("button");
+      followBtn.textContent = "Follow up";
+      followBtn.className =
+        "px-2 py-0.5 text-xs bg-green-500 text-white rounded hover:bg-green-600";
+      followBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        document.getElementById("detail-dentist").textContent = arg.event.extendedProps.dentist || "N/A";
+        document.getElementById("detail-location").textContent = arg.event.extendedProps.location || "N/A";
+        document.getElementById("detail-date").textContent = arg.event.extendedProps.preferred_date || "N/A";
+        document.getElementById("detail-time").textContent = arg.event.extendedProps.preferred_time || "N/A";
+        document.getElementById("detail-service").textContent = arg.event.extendedProps.service || "N/A";
+        document.getElementById("detail-reason").textContent = arg.event.extendedProps.reason || "N/A";
+        openModal("followup-modal");
+      });
 
-        btnContainer.appendChild(followBtn);
-        btnContainer.appendChild(rescheduleBtn);
+      // Reschedule button
+      const rescheduleBtn = document.createElement("button");
+      rescheduleBtn.textContent = "Reschedule";
+      rescheduleBtn.className =
+        "px-2 py-0.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600";
+      rescheduleBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
 
-        // Put title first → time below → buttons last
-        const container = document.createElement("div");
-        container.className = "flex flex-col overflow-visible";
-        container.appendChild(title);
-        container.appendChild(time);
-        container.appendChild(btnContainer);
+        const start = arg.event.start;
+        const dateOptions = { weekday: "long", month: "short", day: "numeric" };
+        const formattedDate = start.toLocaleDateString("en-US", dateOptions).toUpperCase();
+        const timeOptions = { hour: "numeric", minute: "2-digit" };
+        const formattedTime = start.toLocaleTimeString("en-US", timeOptions);
 
-        return { domNodes: [container] };
-      }
+        document.getElementById("reschedule-date-display").innerHTML = `
+          <div class="px-4 py-2 bg-blue-100 text-blue-800 font-semibold rounded-full w-fit">
+            ${formattedDate}
+          </div>
+          <div class="px-4 py-2 bg-green-100 text-green-800 font-medium rounded-full w-fit">
+            ${formattedTime}
+          </div>
+        `;
+        openModal("reschedule-modal");
+      });
 
-      // For week/month view → title first, then time
+      btnContainer.appendChild(followBtn);
+      btnContainer.appendChild(rescheduleBtn);
+
       const container = document.createElement("div");
       container.className = "flex flex-col overflow-visible";
       container.appendChild(title);
       container.appendChild(time);
+      container.appendChild(btnContainer);
 
       return { domNodes: [container] };
     }
+
+    // For week/month view → title first, then time
+    const container = document.createElement("div");
+    container.className = "flex flex-col overflow-visible";
+    container.appendChild(title);
+    container.appendChild(time);
+
+    return { domNodes: [container] };
+  }
+
     });
+
     timelineCalendar.render();
 
     // External controls (Week, Day, Today)

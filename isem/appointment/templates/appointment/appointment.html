@@ -219,11 +219,33 @@
 <!-- Reschedule Modal -->
 <div id="reschedule-modal"
   class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
-  <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
-    <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">Finding best time</h2>
-    <div class="flex justify-end gap-2 pt-3">
+  <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md text-center">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Finding Best Time</h2>
+
+    <!-- Date + Time Display -->
+    <div id="reschedule-date-display" 
+        class="flex flex-col items-center gap-2 mb-6">
+      <!-- JS will inject pills here -->
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-center gap-3">
+      <button id="try-again-btn"
+        class="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600">
+        Try Again
+      </button>
+      <button id="confirm-reschedule-btn"
+        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+        Reschedule
+      </button>
+    </div>
+
+    <!-- Close Button -->
+    <div class="flex justify-end pt-6">
       <button id="close-reschedule-btn"
-        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Close</button>
+        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+        Close
+      </button>
     </div>
   </div>
 </div>
