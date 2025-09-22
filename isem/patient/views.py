@@ -2,6 +2,7 @@ from sys import path
 from django.contrib import messages                 
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required, user_passes_test
 
 from .models import Patient, MedicalHistory, FinancialHistory
 
@@ -114,3 +115,4 @@ def add_financial_history(request, patient_id):
         )
         return redirect("patient:financial_history", patient_id=patient_id)
     return render(request, "patient/medical_history.html", {"patient": patient})
+
