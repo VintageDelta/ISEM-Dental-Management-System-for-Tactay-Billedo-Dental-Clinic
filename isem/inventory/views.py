@@ -17,14 +17,14 @@ def inventory_add(request):
         print("POST DATA:", request.POST)  # <-- debug
         form = InventoryItemForm(request.POST)
         if form.is_valid():
-            print("FORM IS VALID")  # <-- debug
+            print("FORM IS VALID") 
             item = form.save(commit=False)
             item.update_status()
             item.save()
-            print("ITEM SAVED:", item)  # <-- debug
+            print("ITEM SAVED:", item)  
             return redirect('inventory:list')
         else:
-            print("FORM ERRORS:", form.errors)  # <-- debug
+            print("FORM ERRORS:", form.errors)  
 
     return redirect('inventory:list')
 
@@ -34,7 +34,7 @@ def inventory_edit(request, pk):
     item = get_object_or_404(InventoryItem, pk=pk)
 
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
-        # AJAX request → return JSON
+        
         return JsonResponse({
             "id": item.id,
             "item_name": item.item_name,
@@ -46,7 +46,7 @@ def inventory_edit(request, pk):
         })
 
     if request.method == "POST":
-        # handle form submission (update the item)
+        # (update the item)
         item.item_name = request.POST.get("item_name")
         item.category = request.POST.get("category")
         item.description = request.POST.get("description")
@@ -55,9 +55,9 @@ def inventory_edit(request, pk):
         item.status = request.POST.get("status")
         item.save()
 
-        return redirect("inventory:list")  # adjust to your inventory list URL name
+        return redirect("inventory:list")  
 
-    # fallback if someone goes directly to /edit/
+    # fallback
     return render(request, "inventory/edit.html", {"item": item})
 # DELETE
 def inventory_delete(request, pk):
@@ -70,3 +70,15 @@ def inventory_delete(request, pk):
             return JsonResponse({"success": False, "message": "Item already deleted."}, status=404)
     return JsonResponse({"success": False, "message": "Invalid request"}, status=400)
 
+def inventory_view(request, pk):
+    
+    item = get_object_or_404(InventoryItem, pk=pk)
+    return JsonResponse({
+        "id": item.id,
+        "item_name": item.item_name,
+        "category": item.category,
+        "description": item.description,
+        "stock": item.stock,
+        "expiry_date": item.expiry_date.strftime("%Y-%m-%d") if item.expiry_date else "",
+        "status": item.status,
+    })

@@ -109,6 +109,11 @@
               </td>
               <td class="py-3 px-4 text-right">
                 <div class="flex justify-end gap-2">
+                  <a href="#" 
+                  class="text-gray-500 hover:text-gray-700 view-btn" 
+                  data-id="{{ item.pk }}">
+                    <i class="uil uil-eye"></i>
+                  </a>
                   <a
                     href="#"
                     class="edit-btn text-gray-500 hover:text-gray-700 edit-btn"
@@ -138,7 +143,7 @@
         </table>
       </div>
 
-      <!-- Pagination (placeholder) -->
+      <!-- Pagination-->
       <div class="flex justify-between items-center border-t pt-4 mt-4">
         <div class="flex space-x-2 text-sm">
           <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100"
@@ -165,7 +170,7 @@
   </div>
 </div>
 
-<!-- Inventory Modal (shared for Add & Edit) -->
+<!-- Inventory Modal (Add & Edit) -->
 <div
   id="inventory-modal"
   class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
@@ -311,6 +316,34 @@
     </button>
   </div>
 </div>
+<!-- View Modal -->
+
+<div id="inventory-view-modal"
+     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="w-full h-full flex items-center justify-center">
+    <div id="inventory-view-content"
+         class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
+      <h2 class="text-lg font-semibold mb-4 text-center">Item Details</h2>
+
+      <div class="space-y-2 text-sm text-gray-700">
+        <p><strong>Name:</strong> <span id="view-item-name"></span></p>
+        <p><strong>Category:</strong> <span id="view-category"></span></p>
+        <p><strong>Description:</strong> <span id="view-description"></span></p>
+        <p><strong>Stock:</strong> <span id="view-stock"></span></p>
+        <p><strong>Expiry Date:</strong> <span id="view-expiry-date"></span></p>
+        <p><strong>Status:</strong> <span id="view-status"></span></p>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-4">
+        <button id="close-view-btn"
+                class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
   {% endblock %} {% block extra_js %}
   <script>
   const modal = document.getElementById("inventory-modal");
@@ -482,6 +515,93 @@
         alert("An error occurred. Please try again.");
       });
   });
+</script>
+<!-- View Script-->
+
+<script>
+// View Modal Elements
+const viewModal = document.getElementById("inventory-view-modal");
+const viewContent = document.getElementById("inventory-view-content");
+const closeViewBtn = document.getElementById("close-view-btn");
+
+// View Modal Fields
+const viewItemName = document.getElementById("view-item-name");
+const viewCategory = document.getElementById("view-category");
+const viewDescription = document.getElementById("view-description");
+const viewStock = document.getElementById("view-stock");
+const viewExpiryDate = document.getElementById("view-expiry-date");
+const viewStatus = document.getElementById("view-status");
+
+// View buttons event listeners
+document.querySelectorAll(".view-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const itemId = btn.dataset.id;
+        
+        // Fetch item data from your Django view
+        fetch(`{% url 'inventory:view' 0 %}`.replace('0', itemId), {
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+        })
+        .then((res) => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then((data) => {
+            // Populate modal with item data
+            viewItemName.textContent = data.item_name;
+            viewCategory.textContent = data.category;
+            viewDescription.textContent = data.description || 'No description';
+            viewStock.textContent = data.stock;
+            viewExpiryDate.textContent = data.expiry_date || 'No expiry date';
+            
+            // Format status with proper styling
+            viewStatus.innerHTML = formatStatusBadge(data.status);
+            
+            // Show modal with animation
+            viewModal.classList.remove("hidden");
+            viewModal.style.display = "flex";
+            setTimeout(() => {
+                viewContent.classList.remove("opacity-0", "scale-95");
+                viewContent.classList.add("opacity-100", "scale-100");
+            }, 10);
+        })
+        .catch((error) => {
+            console.error('Error fetching inventory item:', error);
+            alert('Failed to load item details. Please try again.');
+        });
+    });
+});
+
+// Close view modal
+closeViewBtn.addEventListener("click", () => {
+    viewContent.classList.remove("opacity-100", "scale-100");
+    viewContent.classList.add("opacity-0", "scale-95");
+    setTimeout(() => {
+        viewModal.classList.add("hidden");
+        viewModal.style.display = "none";
+    }, 200);
+});
+
+// Close modal when clicking outside
+viewModal.addEventListener("click", (e) => {
+    if (e.target === viewModal) {
+        closeViewBtn.click();
+    }
+});
+
+// Format status with appropriate styling
+function formatStatusBadge(status) {
+    const statusMap = {
+        'low_stock': '<span class="px-2 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded">Low Stock</span>',
+        'out_of_stock': '<span class="px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded">Out of Stock</span>',
+        'expired': '<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded">Expired</span>',
+        'available': '<span class="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded">Available</span>'
+    };
+    
+    return statusMap[status] || `<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded">${status}</span>`;
+}
 </script>
 
   {% endblock %}
