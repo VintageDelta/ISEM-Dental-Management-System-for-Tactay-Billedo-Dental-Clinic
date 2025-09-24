@@ -39,30 +39,30 @@ def appointment_page(request):
             })
 
         # Save appointment with computed slot
-    try:
-        Appointment.objects.create(
-            dentist_name=dentist.name if dentist else None,
-            location=location,
-            date=date_obj,
-            time=start_time,
-            end_time=end_time,
-            preferred_date=date_obj,
-            preferred_time=preferred_time,
-            servicetype=service if service else None,
-            reason=reason,
-            email=email,
-            id_no=id_no,
-        )
-        print("Appointment saved!")
-    except Exception as e:
-        print("Error saving appointment:", e)
+        try:
+            Appointment.objects.create(
+                dentist_name=dentist.name if dentist else None,
+                location=location,
+                date=date_obj,
+                time=start_time,
+                end_time=end_time,
+                preferred_date=date_obj,
+                preferred_time=preferred_time,
+                servicetype=service if service else None,
+                reason=reason,
+                email=email,
+                id_no=id_no,
+            )
+            print("Appointment saved!")
+        except Exception as e:
+            print("Error saving appointment:", e)
 
 
 
-    return render(request, "appointment/appointment.html", {
-        "dentists": dentists,
-        "services": services
-    })
+        return render(request, "appointment/appointment.html", {
+            "dentists": dentists,
+            "services": services
+        })
 
 
 # Mainly for Displaying Sruff, REQUEST
