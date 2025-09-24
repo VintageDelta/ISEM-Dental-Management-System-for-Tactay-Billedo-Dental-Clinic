@@ -1,10 +1,11 @@
-import re
-from django.shortcuts import render, redirect
+from datetime import timezone
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout as auth_logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib import messages
 from django.contrib.auth.views import LoginView as Loginview
+from django.db import models
 
 # Create your views here.
 class RoleBasedLoginView(Loginview):
@@ -18,9 +19,6 @@ class RoleBasedLoginView(Loginview):
         else:
             return '/user/homepage/' 
         
-def admin_dashboard(request):
-    return render(request, 'userprofile/admin/admin-dashboard.html')
-
 def signin(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -45,6 +43,7 @@ def signup(request):
         password1 = request.POST.get("password1")
         password2 = request.POST.get("password2")
         terms = request.POST.get("terms")
+        role = request.POST.get("role")
 
         if not terms:
             messages.error(request, "You must agree to the terms and conditions.") 
@@ -63,15 +62,57 @@ def signup(request):
             messages.error(request, "Email already exists.")
             return redirect("userprofile:signup")
         
-        #user_creation
-        user = User.objects.create_user(username=username, email=email, password=password1)
-        user.first_name = first_name
-        user.last_name = last_name
-        user.save()
-        messages.success(request, "Account created successfully. Please sign in.")
+        #user creation role based
+        if role == "patient":
+            user = User.objects.create_user(
+                username=username, email=email, password=password1,
+                first_name=first_name, last_name=last_name
+            )
+            patient_group = Group.objects.get(name='Patient')
+            user.groups.add(patient_group)
+            messages.success(request, "Account created successfully. Please sign in.")
+
+        elif role == "staff":
+            user = User.objects.create_user(
+                username=username, email=email, password=password1,
+                first_name=first_name, last_name=last_name,
+                is_active=False,   
+                is_staff=False     
+            )
+            staff_group = Group.objects.get(name='Staff')
+            user.groups.add(staff_group)
+            messages.success(request,
+                "Staff request submitted. An admin must approve your account before you can log in."
+            )
+
         return redirect("userprofile:signin")
-    
+
     return render(request, 'userprofile/sign-up.html')
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_dashboard(request):
+    pending_staff = User.objects.filter(is_staff=False, is_active=False)
+    decline_staff = User.objects.filter(is_staff=False, is_active=False)
+    return render(request, 'userprofile/admin/admin-dashboard.html',
+                   {'pending_staff': pending_staff})
+
+def approve_staff(request, user_id):
+    user = get_object_or_404(User, pk=user_id)
+    user.is_active = True
+    user.is_staff = True
+    user.save()
+    messages.success(request, f"{user.username} has been approved as staff.")
+    return redirect('userprofile:admin_dashboard')  
+
+def decline_staff(request, user_id):
+    user = get_object_or_404(User, pk=user_id)
+    user.is_active = False
+    user.is_staff = False
+    user.save()
+    messages.success(request, f"{user.username} has been declined as staff.")
+    return redirect('userprofile:admin_dashboard')
+
+
 
 def profile(request):
     if not request.user.is_authenticated:
@@ -95,3 +136,6 @@ def homepage(request):
         return redirect('dashboard:index')
     else:
         return render(request, 'userprofile/homepage.html')
+    
+
+            

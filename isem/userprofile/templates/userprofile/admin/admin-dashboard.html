@@ -16,5 +16,39 @@
     Box 4
   </div>
 </div>
-<!-- Add extra managing features here -->
-{% endblock %}
+<h1 class="text-2xl font-semibold mt-10 mb-4">Pending Staff Requests</h1>
+
+{% if pending_staff %}
+<div class="bg-white shadow-md rounded-xl p-6">
+  <ul class="divide-y divide-gray-200">
+    {% for user in pending_staff %}
+    <li class="flex items-center justify-between py-4">
+      <!-- User Info -->
+      <div>
+        <p class="text-lg font-medium text-gray-900">{{ user.username }}</p>
+        <p class="text-sm text-gray-500">{{ user.email }}</p>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex space-x-3">
+        <a
+          href="{% url 'userprofile:approve_staff' user.id %}"
+          class="inline-block px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+        >
+          Approve
+        </a>
+
+        <a
+          href="{% url 'userprofile:decline_staff' user.id %}"
+          class="inline-block px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+        >
+          Decline
+        </a>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% else %}
+<p class="text-center text-gray-600 italic">No pending staff requests.</p>
+{% endif %}{% endblock %}
