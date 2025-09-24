@@ -17,6 +17,14 @@ class Service(models.Model):
         return self.service_name
     
 class Appointment(models.Model):
+    STATUS_CHOICES = [
+        ("not_arrived", "Not Yet Arrived"),
+        ("arrived", "Arrived"),
+        ("ongoing", "On Going"),
+        ("done", "Done"),
+        ("cancelled", "Cancelled"),
+    ]
+
     dentist_name = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=20, null=False)
     date = models.DateField(null=False, blank=False)
@@ -27,22 +35,24 @@ class Appointment(models.Model):
     servicetype = models.ForeignKey(Service, on_delete=models.CASCADE)
     reason = models.TextField()
     email = models.EmailField(null=False, blank=False)
-    id_no = models.CharField(max_length=255,null=False, blank=False)
-    
+    id_no = models.CharField(max_length=255, null=False, blank=False)
+
+    # NEW FIELD
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="not_arrived"
+    )
+
     def save(self, *args, **kwargs):
         if self.time and self.servicetype and self.date:
+            from datetime import datetime, timedelta
             start_datetime = datetime.combine(self.date, self.time)
-
-            # Convert minutes → timedelta
             end_datetime = start_datetime + timedelta(minutes=self.servicetype.duration)
-
-            # Ensure no microseconds
-            end_datetime = end_datetime.replace(microsecond=0)
-
             self.end_time = end_datetime.time()
-
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.dentist_name} - {self.date} {self.time}"
+        return f"{self.dentist_name} - {self.date} {self.time} [{self.get_status_display()}]"
+
     

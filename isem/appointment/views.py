@@ -5,6 +5,23 @@ from datetime import datetime
 #appoitnmetn form diffy name
 from .forms import AppointmentForm
 from .utils import find_next_available_slot
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
+from django.http import JsonResponse
+
+@csrf_exempt
+@require_POST
+def update_status(request, appointment_id):
+    try:
+        data = json.loads(request.body)
+        status = data.get("status")
+        appointment = Appointment.objects.get(id=appointment_id)
+        appointment.status = status
+        appointment.save()
+        return JsonResponse({"success": True, "status": status})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
 # POSTTTT Saves yo shi in the database FRFR
@@ -37,7 +54,7 @@ def appointment_page(request):
                 "services": services,
                 "error": "No available slots for this day."
             })
-
+        
         # Save appointment with computed slot
         try:
             Appointment.objects.create(
@@ -57,12 +74,15 @@ def appointment_page(request):
         except Exception as e:
             print("Error saving appointment:", e)
 
-
-
         return render(request, "appointment/appointment.html", {
             "dentists": dentists,
             "services": services
         })
+    
+    return render(request, "appointment/appointment.html", {
+        "dentists": dentists,
+        "services": services
+    })
 
 
 # Mainly for Displaying Sruff, REQUEST
@@ -70,11 +90,20 @@ def events(request):
     appointments = Appointment.objects.all()
     events = []
     for a in appointments:
+        # pick color based on status
+        color_map = {
+            "not_arrived": "gray",
+            "arrived": "blue",
+            "ongoing": "yellow",
+            "done": "green",
+            "cancelled": "red",
+        }
         events.append({
             "id": a.id,
             "title": f"{a.servicetype.service_name} - {a.dentist_name or 'N/A'}",
             "start": f"{a.date.strftime('%Y-%m-%d')}T{a.time.strftime('%H:%M:%S')}",
             "end": f"{a.date.strftime('%Y-%m-%d')}T{a.end_time.strftime('%H:%M:%S')}" if a.end_time else None,
+            "color": color_map.get(a.status, "gray"),
             "extendedProps": {
                 "dentist": a.dentist_name,
                 "location": a.location,
@@ -82,11 +111,12 @@ def events(request):
                 "time": a.time.strftime("%I:%M %p"),
                 "service": a.servicetype.service_name,
                 "reason": a.reason,
-                # preferred Date/time of the Patient hek yeee
+                "status": a.status,
                 "preferred_date": a.preferred_date.strftime("%Y-%m-%d") if a.preferred_date else None,
                 "preferred_time": a.preferred_time.strftime("%I:%M %p") if a.preferred_time else None,
             }
         })
     return JsonResponse(events, safe=False)
+
 
 
