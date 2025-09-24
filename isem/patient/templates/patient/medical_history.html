@@ -14,6 +14,7 @@
   >
     Financial History
   </button>
+  {% if user.is_staff or user.is_superuser %}
   <button
     id="add-medical-btn"
     class="items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
@@ -26,6 +27,7 @@
   >
     + Add Record
   </button>
+  {% endif %}
 </div>
 
 <!-- === MEDICAL TAB CONTENT === -->

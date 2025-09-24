@@ -79,7 +79,7 @@ def signup(request):
                 is_active=False,   
                 is_staff=False     
             )
-            staff_group = Group.objects.get(name='Staff')
+            staff_group, created = Group.objects.get_or_create(name='Staff')
             user.groups.add(staff_group)
             messages.success(request,
                 "Staff request submitted. An admin must approve your account before you can log in."

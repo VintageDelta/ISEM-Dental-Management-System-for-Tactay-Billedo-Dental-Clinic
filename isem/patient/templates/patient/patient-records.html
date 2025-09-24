@@ -43,7 +43,7 @@ Records {% endblock %} {% block content %}
             />
           </div>
         </div>
-
+        {%if user.is_staff or user.is_superuser%}
         <!-- Add Patient Button -->
         <div class="flex gap-2 mt-4 md:mt-0">
           <button
@@ -53,6 +53,7 @@ Records {% endblock %} {% block content %}
             <i class="la la-plus"></i> Add Patient
           </button>
         </div>
+        {%endif%}
       </div>
 
       <!-- Patient Table -->
@@ -94,6 +95,7 @@ Records {% endblock %} {% block content %}
               <td class="py-3 px-4">{{ patient.age }}</td>
               <td class="py-3 px-4">{{ patient.occupation }}</td>
               <td class="py-3 px-4 text-right">
+                {% if user.is_staff or user.is_superuser%}
                 <div class="flex justify-end gap-2">
                   <a
                     href="#"
@@ -108,6 +110,7 @@ Records {% endblock %} {% block content %}
                     ><i class="uil uil-trash-alt text-xl"></i>
                   </a>
                 </div>
+                {%endif%}
               </td>
             </tr>
             {% empty %}

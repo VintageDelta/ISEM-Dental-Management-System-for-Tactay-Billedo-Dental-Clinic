@@ -16,8 +16,7 @@ def patient_records(request):
         occupation = request.POST.get("occupation")
         email = request.POST.get("email")
 
-        is_guest = request.POST.get("is_guest") == "true"  # hidden field from JS
-
+        is_guest = request.POST.get("is_guest") == "true"  
         if not is_guest:
             # Registered patient: check for existing email
             if email and Patient.objects.filter(email=email).exists():
@@ -33,7 +32,7 @@ def patient_records(request):
                 is_guest=False
             )
         else:
-            # Guest patient: Unique Temporary ID generation
+            # Guest patient: temporary ID
             total = Patient.objects.filter(is_guest=True).count() + 1
             temp_id = f"P-{total:06d}-T"
             Patient.objects.create(
@@ -42,15 +41,18 @@ def patient_records(request):
                 telephone=telephone,
                 age=age,
                 occupation=occupation,
-                email=email,  # can be blank
+                email=email,  
                 is_guest=True,
                 guest_id=temp_id
             )
 
-        return redirect("patient:list")  # redirect after saving
-
-    patients = Patient.objects.all()
-    return render(request, "patient/patient-records.html", {"patients": patients})
+        return redirect("patient:list")
+    if request.user.is_staff or request.user.is_superuser:
+         patients = Patient.objects.all()
+         return render(request, "patient/patient-records.html", {"patients": patients})
+    else:
+        patient = get_object_or_404(Patient, email=request.user.email)
+    return render(request, "patient/medical_history.html", {"patient": patient})
 
 
 def delete_patient(request, pk):
@@ -97,7 +99,7 @@ def add_medical_history(request, patient_id):
 
 def financial_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
-    # Assuming a FinancialHistory model with a foreign key to Patient
+    
     history = patient.financial_history.all()
     return render(request, "patient/medical_history.html", {"patient": patient, "history": history})
 

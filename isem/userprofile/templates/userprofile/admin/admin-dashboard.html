@@ -2,20 +2,7 @@
 <!--prettier ignore-->
 {%block content %}
 <h1 class="text-2xl font-bold">Admin Dashboard</h1>
-<div class="grid grid-cols-2 gap-6 p-6">
-  <div class="bg-white border rounded-lg h-40 flex items-center justify-center">
-    Box 1
-  </div>
-  <div class="bg-white border rounded-lg h-40 flex items-center justify-center">
-    Box 2
-  </div>
-  <div class="bg-white border rounded-lg h-40 flex items-center justify-center">
-    Box 3
-  </div>
-  <div class="bg-white border rounded-lg h-40 flex items-center justify-center">
-    Box 4
-  </div>
-</div>
+
 <h1 class="text-2xl font-semibold mt-10 mb-4">Pending Staff Requests</h1>
 
 {% if pending_staff %}
@@ -25,7 +12,9 @@
     <li class="flex items-center justify-between py-4">
       <!-- User Info -->
       <div>
-        <p class="text-lg font-medium text-gray-900">{{ user.username }}</p>
+        <p class="text-lg font-medium text-gray-900">
+          {{ user.first_name }} {{ user.last_name }}
+        </p>
         <p class="text-sm text-gray-500">{{ user.email }}</p>
       </div>
 
