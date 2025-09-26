@@ -94,7 +94,8 @@ def admin_dashboard(request):
     pending_staff = User.objects.filter(is_staff=False, is_active=False)
     decline_staff = User.objects.filter(is_staff=False, is_active=False)
     return render(request, 'userprofile/admin/admin-dashboard.html',
-                   {'pending_staff': pending_staff})
+                   {'pending_staff': pending_staff,
+                    'all_users': User.objects.all(),})
 
 def approve_staff(request, user_id):
     user = get_object_or_404(User, pk=user_id)

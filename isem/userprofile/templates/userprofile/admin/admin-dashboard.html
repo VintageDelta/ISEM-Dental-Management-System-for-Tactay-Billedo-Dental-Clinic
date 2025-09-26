@@ -1,43 +1,372 @@
-{% extends "core/base.html" %} {% block title %}Admin Dashboard{% endblock %}
-<!--prettier ignore-->
-{%block content %}
-<h1 class="text-2xl font-bold">Admin Dashboard</h1>
+{% extends "core/base.html" %} {% load static %} {% block content %}
 
-<h1 class="text-2xl font-semibold mt-10 mb-4">Pending Staff Requests</h1>
-
-{% if pending_staff %}
-<div class="bg-white shadow-md rounded-xl p-6">
-  <ul class="divide-y divide-gray-200">
-    {% for user in pending_staff %}
-    <li class="flex items-center justify-between py-4">
-      <!-- User Info -->
-      <div>
-        <p class="text-lg font-medium text-gray-900">
-          {{ user.first_name }} {{ user.last_name }}
-        </p>
-        <p class="text-sm text-gray-500">{{ user.email }}</p>
-      </div>
-
-      <!-- Action buttons -->
-      <div class="flex space-x-3">
-        <a
-          href="{% url 'userprofile:approve_staff' user.id %}"
-          class="inline-block px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
-        >
-          Approve
-        </a>
-
-        <a
-          href="{% url 'userprofile:decline_staff' user.id %}"
-          class="inline-block px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
-        >
-          Decline
-        </a>
-      </div>
-    </li>
-    {% endfor %}
-  </ul>
+<!-- Main Tab -->
+<div class="flex items-center space-x-4 mb-6">
+  <button
+    id="userTab"
+    class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none"
+  >
+    User
+  </button>
+  <button
+    id="clinicTab"
+    class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
+  >
+    Clinic
+  </button>
 </div>
-{% else %}
-<p class="text-center text-gray-600 italic">No pending staff requests.</p>
-{% endif %}{% endblock %}
+
+<!--USERRRR-->
+<div id="userSection">
+  <!-- Sub-tabs -->
+  <div class="flex items-center space-x-4 mb-4">
+    <button
+      id="userAllTab"
+      class="px-4 py-2 rounded-lg bg-green-600 text-white font-medium shadow hover:bg-green-700 focus:outline-none"
+    >
+      All
+    </button>
+    <button
+      id="userRequestTab"
+      class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
+    >
+      Request
+    </button>
+  </div>
+
+  <!-- All Users Table -->
+  <div id="userAllContent">
+    <div class="mb-3">
+      <input
+        type="text"
+        placeholder="Search users…"
+        class="w-full max-w-sm border rounded-md p-2 text-sm"
+      />
+    </div>
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Username
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Email
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Role
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for user in all_users %}
+          <tr class="hover:bg-gray-100">
+            <td class="px-4 py-2">{{ user.first_name }} {{user.last_name}}</td>
+            <td class="px-4 py-2">{{ user.email }}</td>
+            <td class="px-4 py-2">
+              {% if user.is_superuser %}Admin {% elif user.is_staff %} Staff
+              <!--prettier ignore-->
+              {%else %} Patient
+              <!--prettier ignore-->
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="px-4 py-6 text-center text-gray-500">
+              No users found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Request -->
+  <div id="userRequestContent" class="hidden">
+    <div class="mb-3">
+      <input
+        type="text"
+        placeholder="Search staff requests…"
+        class="w-full max-w-sm border rounded-md p-2 text-sm"
+      />
+    </div>
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Username
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Email
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Action
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for user in pending_staff %}
+          <tr class="hover:bg-gray-100">
+            <td class="px-4 py-2">
+              {{ user.first_name }} {{ user.last_name }}
+            </td>
+            <td class="px-4 py-2">{{ user.email }}</td>
+            <td class="px-4 py-2">
+              <a
+                href="{% url 'userprofile:approve_staff' user.id %}"
+                class="inline-block px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
+                >Approve</a
+              >
+              <a
+                href="{% url 'userprofile:decline_staff' user.id %}"
+                class="inline-block px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700"
+                >Decline</a
+              >
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="px-4 py-6 text-center text-gray-500">
+              No pending staff requests.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<!-- CLINIC CLINIC CLINIC-->
+<div id="clinicSection" class="hidden">
+  <div class="flex items-center space-x-4 mb-4">
+    <button
+      id="dentistTab"
+      class="px-4 py-2 rounded-lg bg-green-600 text-white font-medium shadow hover:bg-green-700 focus:outline-none"
+    >
+      Dentist
+    </button>
+    <button
+      id="serviceTab"
+      class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
+    >
+      Service
+    </button>
+    <button
+      id="branchTab"
+      class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
+    >
+      Branch
+    </button>
+  </div>
+
+  <!-- Dentist -->
+  <div id="dentistContent">
+    <div class="mb-3">
+      <input
+        type="text"
+        placeholder="Search dentist…"
+        class="w-full max-w-sm border rounded-md p-2 text-sm"
+      />
+    </div>
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Name
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Specialty
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for d in dentists %}
+          <tr class="hover:bg-gray-100">
+            <td class="px-4 py-2">{{ d.name }}</td>
+            <td class="px-4 py-2">{{ d.specialty }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="2" class="px-4 py-6 text-center text-gray-500">
+              No dentists found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Service -->
+  <div id="serviceContent" class="hidden">
+    <div class="mb-3">
+      <input
+        type="text"
+        placeholder="Search services…"
+        class="w-full max-w-sm border rounded-md p-2 text-sm"
+      />
+    </div>
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Service
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Price
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for s in services %}
+          <tr class="hover:bg-gray-100">
+            <td class="px-4 py-2">{{ s.name }}</td>
+            <td class="px-4 py-2">{{ s.price }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="2" class="px-4 py-6 text-center text-gray-500">
+              No services found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Branch -->
+  <div id="branchContent" class="hidden">
+    <div class="mb-3">
+      <input
+        type="text"
+        placeholder="Search branches…"
+        class="w-full max-w-sm border rounded-md p-2 text-sm"
+      />
+    </div>
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Branch Name
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Location
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for b in branches %}
+          <tr class="hover:bg-gray-100">
+            <td class="px-4 py-2">{{ b.name }}</td>
+            <td class="px-4 py-2">{{ b.location }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="2" class="px-4 py-6 text-center text-gray-500">
+              No branches found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block extra_js %}
+<script>
+  //Main tab
+  const userTab = document.getElementById("userTab");
+  const clinicTab = document.getElementById("clinicTab");
+  const userSection = document.getElementById("userSection");
+  const clinicSection = document.getElementById("clinicSection");
+
+  userTab.addEventListener("click", () => {
+    userSection.classList.remove("hidden");
+    clinicSection.classList.add("hidden");
+    userTab.classList.replace("bg-gray-200", "bg-blue-600");
+    userTab.classList.replace("text-gray-700", "text-white");
+    clinicTab.classList.replace("bg-blue-600", "bg-gray-200");
+    clinicTab.classList.replace("text-white", "text-gray-700");
+  });
+  clinicTab.addEventListener("click", () => {
+    clinicSection.classList.remove("hidden");
+    userSection.classList.add("hidden");
+    clinicTab.classList.replace("bg-gray-200", "bg-blue-600");
+    clinicTab.classList.replace("text-gray-700", "text-white");
+    userTab.classList.replace("bg-blue-600", "bg-gray-200");
+    userTab.classList.replace("text-white", "text-gray-700");
+  });
+  // User tabssssss
+  const userAllTab = document.getElementById("userAllTab");
+  const userRequestTab = document.getElementById("userRequestTab");
+  const userAllContent = document.getElementById("userAllContent");
+  const userRequestContent = document.getElementById("userRequestContent");
+
+  userAllTab.addEventListener("click", () => {
+    userAllContent.classList.remove("hidden");
+    userRequestContent.classList.add("hidden");
+    userAllTab.classList.replace("bg-gray-200", "bg-green-600");
+    userAllTab.classList.replace("text-gray-700", "text-white");
+    userRequestTab.classList.replace("bg-green-600", "bg-gray-200");
+    userRequestTab.classList.replace("text-white", "text-gray-700");
+  });
+  userRequestTab.addEventListener("click", () => {
+    userRequestContent.classList.remove("hidden");
+    userAllContent.classList.add("hidden");
+    userRequestTab.classList.replace("bg-gray-200", "bg-green-600");
+    userRequestTab.classList.replace("text-gray-700", "text-white");
+    userAllTab.classList.replace("bg-green-600", "bg-gray-200");
+    userAllTab.classList.replace("text-white", "text-gray-700");
+  });
+
+  //clinic tabsssssssssssssss
+  const dentistTab = document.getElementById("dentistTab");
+  const serviceTab = document.getElementById("serviceTab");
+  const branchTab = document.getElementById("branchTab");
+  const dentistContent = document.getElementById("dentistContent");
+  const serviceContent = document.getElementById("serviceContent");
+  const branchContent = document.getElementById("branchContent");
+
+  dentistTab.addEventListener("click", () => {
+    dentistContent.classList.remove("hidden");
+    serviceContent.classList.add("hidden");
+    branchContent.classList.add("hidden");
+    dentistTab.classList.replace("bg-gray-200", "bg-green-600");
+    dentistTab.classList.replace("text-gray-700", "text-white");
+    serviceTab.classList.replace("bg-green-600", "bg-gray-200");
+    serviceTab.classList.replace("text-white", "text-gray-700");
+    branchTab.classList.replace("bg-green-600", "bg-gray-200");
+    branchTab.classList.replace("text-white", "text-gray-700");
+  });
+  serviceTab.addEventListener("click", () => {
+    serviceContent.classList.remove("hidden");
+    dentistContent.classList.add("hidden");
+    branchContent.classList.add("hidden");
+    serviceTab.classList.replace("bg-gray-200", "bg-green-600");
+    serviceTab.classList.replace("text-gray-700", "text-white");
+    dentistTab.classList.replace("bg-green-600", "bg-gray-200");
+    dentistTab.classList.replace("text-white", "text-gray-700");
+    branchTab.classList.replace("bg-green-600", "bg-gray-200");
+    branchTab.classList.replace("text-white", "text-gray-700");
+  });
+  branchTab.addEventListener("click", () => {
+    branchContent.classList.remove("hidden");
+    dentistContent.classList.add("hidden");
+    serviceContent.classList.add("hidden");
+    branchTab.classList.replace("bg-gray-200", "bg-green-600");
+    branchTab.classList.replace("text-gray-700", "text-white");
+    dentistTab.classList.replace("bg-green-600", "bg-gray-200");
+    dentistTab.classList.replace("text-white", "text-gray-700");
+    serviceTab.classList.replace("bg-green-600", "bg-gray-200");
+    serviceTab.classList.replace("text-white", "text-gray-700");
+  });
+</script>
+{% endblock %}

@@ -108,8 +108,8 @@
           class="flex items-center space-x-2 focus:outline-none hover:opacity-80">
       <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
       <div class="text-left">
-        <p class="font-semibold">Username</p>
-        <p class="text-xs text-gray-500">Admin</p>
+        <p class="font-semibold">{{ user.first_name }}</p>
+        <p class="text-xs text-gray-500">{%if user.is_superuser%}Admin {% elif user.is_staff %} Staff {% else %} Patient {% endif %}</p>
       </div>
       <span class="material-icons text-gray-500">expand_more</span>
   </button>
