@@ -6,6 +6,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib import messages
 from django.contrib.auth.views import LoginView as Loginview
 from django.db import models
+from patient.models import Patient
 
 # Create your views here.
 class RoleBasedLoginView(Loginview):
@@ -68,8 +69,20 @@ def signup(request):
                 username=username, email=email, password=password1,
                 first_name=first_name, last_name=last_name
             )
-            patient_group = Group.objects.get(name='Patient')
+            patient_group, created = Group.objects.get_or_create(name='Patient')
             user.groups.add(patient_group)
+
+            Patient.objects.create(
+                user=user,
+                name=f"{first_name} {last_name}",
+                email=email,
+                address="",
+                telephone="",
+                age=0,
+                occupation="",
+                is_guest=False
+            )
+            
             messages.success(request, "Account created successfully. Please sign in.")
 
         elif role == "staff":
