@@ -131,6 +131,32 @@ def decline_staff(request, user_id):
 def profile(request):
     if not request.user.is_authenticated:
         return redirect("userprofile:signin")
+    
+    if request.method == "POST":
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        email = request.POST.get("email")
+        password1 = request.POST.get("password1")
+        password2 = request.POST.get("password2")
+
+        user = request.user
+        if first_name:
+            user.first_name = first_name
+        if last_name:
+            user.last_name = last_name
+        if user.username:
+                user.username = user.username
+        if email:
+            if User.objects.filter(email=email).exclude(pk=user.pk).exists():
+                messages.error(request, "Email already exists.")
+                return redirect("userprofile:profile")
+            user.email = email
+        else:
+                
+                return redirect("userprofile:profile")
+        user.save()
+        messages.success(request, "Profile updated successfully.")
+        return redirect("userprofile:profile")
     return render(request, 'userprofile/profile.html')
 
 def logout(request):
