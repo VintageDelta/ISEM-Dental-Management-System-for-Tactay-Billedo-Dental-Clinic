@@ -94,7 +94,7 @@ def events(request):
         color_map = {
             "not_arrived": "gray",
             "arrived": "blue",
-            "ongoing": "yellow",
+            "ongoing": "gold",
             "done": "green",
             "cancelled": "red",
         }
