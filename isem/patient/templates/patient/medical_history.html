@@ -14,6 +14,12 @@
   >
     Financial History
   </button>
+  <button
+    id="odontogramTab"
+    class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
+  >
+    Odontogram
+  </button>
   {% if user.is_staff or user.is_superuser %}
   <button
     id="add-medical-btn"
@@ -123,6 +129,36 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
+</div>
+<!-- === ODONTOGRAM TAB CONTENT === -->
+<div id="odontogramContent" class="space-y-4 hidden">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Teeth Diagram -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-4 text-center">Odontogram</h2>
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+        {% for tooth_num in tooth_num %}
+        <button
+          class="w-10 h-10 flex items-center justify-center border rounded hover:bg-blue-100 text-sm"
+          onclick="selectTooth('{{ tooth_num }}')"
+        >
+          {{ tooth_num }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Right side for the seleciton -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <div id="tooth-history">
+        <p class="text-gray-500 text-center">
+          Select a tooth to view its history
+        </p>
+      </div>
+    </div>
+
   </div>
 </div>
 <!-- Add Record Popup -->
@@ -288,10 +324,12 @@
   const financialTab = document.getElementById("financialTab");
   const medicalContent = document.getElementById("medicalContent");
   const financialContent = document.getElementById("financialContent");
-
+  const odontogramTab = document.getElementById("odontogramTab");
+  const odontogramContent = document.getElementById("odontogramContent"); 
   medicalTab.addEventListener("click", () => {
     medicalContent.classList.remove("hidden");
     financialContent.classList.add("hidden");
+    odontogramContent.classList.add("hidden");
     medicalTab.classList.replace("bg-gray-200", "bg-blue-600");
     medicalTab.classList.replace("text-gray-700", "text-white");
     financialTab.classList.replace("bg-blue-600", "bg-gray-200");
@@ -301,12 +339,26 @@
   financialTab.addEventListener("click", () => {
     financialContent.classList.remove("hidden");
     medicalContent.classList.add("hidden");
+    odontogramContent.classList.add("hidden");
     financialTab.classList.replace("bg-gray-200", "bg-blue-600");
     financialTab.classList.replace("text-gray-700", "text-white");
     medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
     medicalTab.classList.replace("text-white", "text-gray-700");
+  
+  odontogramTab.addEventListener("click", () => {
+    odontogramContent.classList.remove("hidden");
+    medicalContent.classList.add("hidden");
+    financialContent.classList.add("hidden");
+    odontogramTab.classList.replace("bg-gray-200", "bg-blue-600");
+    odontogramTab.classList.replace("text-gray-700", "text-white");
+    medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
+    medicalTab.classList.replace("text-white", "text-gray-700");
+    financialTab.classList.replace("bg-blue-600", "bg-gray-200");
+    financialTab.classList.replace("text-white", "text-gray-700");
   });
+    });
 </script>
+
 <script>
   const medicalUrl = "{% url 'patient:add_medical_history' patient.id %}";
   const financialUrl = "{% url 'patient:add_financial_history' patient.id %}";

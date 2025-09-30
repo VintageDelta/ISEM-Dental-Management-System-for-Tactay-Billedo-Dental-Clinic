@@ -79,7 +79,8 @@ def update_patient(request):
 def medical_history(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
     history = patient.medical_history.all() 
-    return render(request, "patient/medical_history.html", {"patient": patient, "history": history})
+    tooth_num = range(1, 33)
+    return render(request, "patient/medical_history.html", {"patient": patient, "history": history, "tooth_num": tooth_num  })
 
 def add_medical_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
@@ -101,7 +102,8 @@ def financial_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     
     history = patient.financial_history.all()
-    return render(request, "patient/medical_history.html", {"patient": patient, "history": history})
+    tooth_num = range(1, 33)
+    return render(request, "patient/medical_history.html", {"patient": patient, "history": history, "tooth_num": tooth_num})
 
 def add_financial_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)

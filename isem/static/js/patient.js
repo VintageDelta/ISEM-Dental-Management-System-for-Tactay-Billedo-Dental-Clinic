@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
   document.querySelectorAll(".delete-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
+      e.stopPropagation();
       patientToDelete = btn.dataset.id;
       openModal(deleteModal, deleteContent);
     });
@@ -107,12 +108,6 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 
-  // if (chooseModal) {
-  //   chooseModal.addEventListener("click", (e) => {
-  //     if (e.target === chooseModal) closeModal(chooseModal, chooseContent);
-  //   });
-  // }
-
   // ==== EDIT BUTTON ====
   const editModal = document.getElementById("edit-modal");
   const editContent = document.getElementById("edit-modal-content");
@@ -121,23 +116,24 @@ document.addEventListener("DOMContentLoaded", function () {
   document.querySelectorAll(".uil-edit").forEach((icon) => {
     icon.parentElement.addEventListener("click", (e) => {
       e.preventDefault();
+      e.stopPropagation();
       const btn = icon.parentElement;
 
       closeAllModals();
 
       document.getElementById("edit-id").value = btn.dataset.id;
       document.getElementById("edit-name").value =
-        btn.closest("tr").children[1].innerText;
-      document.getElementById("edit-email").value =
         btn.closest("tr").children[2].innerText;
-      document.getElementById("edit-address").value =
+      document.getElementById("edit-email").value =
         btn.closest("tr").children[3].innerText;
-      document.getElementById("edit-telephone").value =
+      document.getElementById("edit-address").value =
         btn.closest("tr").children[4].innerText;
-      document.getElementById("edit-age").value =
+      document.getElementById("edit-telephone").value =
         btn.closest("tr").children[5].innerText;
-      document.getElementById("edit-occupation").value =
+      document.getElementById("edit-age").value =
         btn.closest("tr").children[6].innerText;
+      document.getElementById("edit-occupation").value =
+        btn.closest("tr").children[7].innerText;
 
       openModal(editModal, editContent);
     });
