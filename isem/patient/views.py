@@ -4,9 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
 
-from .models import Patient, MedicalHistory, FinancialHistory
-
-
+from .models import Patient, MedicalHistory, FinancialHistory, Odontogram
 def patient_records(request):
     if request.method == "POST":
         name = request.POST.get("name")
@@ -119,4 +117,109 @@ def add_financial_history(request, patient_id):
         )
         return redirect("patient:financial_history", patient_id=patient_id)
     return render(request, "patient/medical_history.html", {"patient": patient})
+TOOTH_NAMES = {
+  1: "Upper Right Third Molar (Wisdom Tooth)",
+  2: "Upper Right Second Molar",
+  3: "Upper Right First Molar",
+  4: "Upper Right Second Premolar",
+  5: "Upper Right First Premolar",
+  6: "Upper Right Canine (Cuspid)",
+  7: "Upper Right Lateral Incisor",
+  8: "Upper Right Central Incisor",
+  9: "Upper Left Central Incisor",
+  10: "Upper Left Lateral Incisor",
+  11: "Upper Left Canine (Cuspid)",
+  12: "Upper Left First Premolar",
+  13: "Upper Left Second Premolar",
+  14: "Upper Left First Molar",
+  15: "Upper Left Second Molar",
+  16: "Upper Left Third Molar (Wisdom Tooth)",
 
+  17: "Lower Left Third Molar (Wisdom Tooth)",
+  18: "Lower Left Second Molar",
+  19: "Lower Left First Molar",
+  20: "Lower Left Second Premolar",
+  21: "Lower Left First Premolar",
+  22: "Lower Left Canine (Cuspid)",
+  23: "Lower Left Lateral Incisor",
+  24: "Lower Left Central Incisor",
+  25: "Lower Right Central Incisor",
+  26: "Lower Right Lateral Incisor",
+  27: "Lower Right Canine (Cuspid)",
+  28: "Lower Right First Premolar",
+  29: "Lower Right Second Premolar",
+  30: "Lower Right First Molar",
+  31: "Lower Right Second Molar",
+  32: "Lower Right Third Molar (Wisdom Tooth)"
+}
+def odontogram(request, patient_id):
+    patient = get_object_or_404(Patient, pk=patient_id)
+    tooth_num = range(1, 33)
+    tooth_names = TOOTH_NAMES
+
+    return render(request, "patient/medical_history.html", {"patient": patient, "tooth_num": tooth_num, "tooth_name": tooth_names})
+
+def add_odontogram(request, patient_id):
+    patient = get_object_or_404(Patient, pk=patient_id)
+    if request.method == "POST":
+        Odontogram.objects.create(
+            patient=patient,
+            tooth_number=request.POST.get("tooth_number"),
+            condition=request.POST.get("condition"),
+        )
+        return redirect("patient:odontogram", patient_id=patient_id)
+    return render(request, "patient/medical_history.html", {"patient": patient})
+
+def odontogram_history(request, patient_id):
+    patient = get_object_or_404(Patient, pk=patient_id)
+    odontogram = Odontogram.objects.filter(patient=patient, tooth_number=request.POST.get("tooth_number")).first()
+    if odontogram: {
+        "date": odontogram.date,
+        "condition": odontogram.condition,
+        "treatment": odontogram.treatment,
+        "dentist": odontogram.dentist,
+        "status": odontogram.status,
+        "notes": odontogram.notes,
+    }
+    else:
+        data = None
+    return JsonResponse({"data": data})
+
+def update_odontogram(request, patient_id):
+    patient = get_object_or_404(Patient, pk=patient_id)
+    if request.method == "POST":
+        tooth_number = request.POST.get("tooth_number")
+        date = request.POST.get("date")
+        condition = request.POST.get("condition")
+        treatment = request.POST.get("treatment")
+        dentist = request.POST.get("dentist")
+        status = request.POST.get("status")
+        notes = request.POST.get("notes")
+
+        odontogram, _ = Odontogram.objects.get_or_create(
+            patient=patient,
+            tooth_number=tooth_number,
+            defaults={
+                "date": date,
+                "condition": condition,
+                "treatment": treatment,
+                "dentist": dentist,
+                "status": status,
+                "notes": notes,
+            }
+        )
+
+        return JsonResponse({
+            "success" : True,
+            "data": {
+                "tooth_name": tooth_number,
+                "date": odontogram.date,
+                "condition": odontogram.condition,
+                "treatment": odontogram.treatment,
+                "dentist": odontogram.dentist,
+                "status": odontogram.status,
+                "notes": odontogram.notes,
+            }
+        })
+
+    return JsonResponse({"success": False, "error": "Invalid request method."}, status=400)

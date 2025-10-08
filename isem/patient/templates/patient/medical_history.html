@@ -317,6 +317,8 @@
 
 </div>
 
+
+
 {% endblock %} {% block extra_js %}
 <script src="{% static 'js/modal.js' %}"></script>
 <script>
@@ -326,10 +328,13 @@
   const financialContent = document.getElementById("financialContent");
   const odontogramTab = document.getElementById("odontogramTab");
   const odontogramContent = document.getElementById("odontogramContent"); 
+  
   medicalTab.addEventListener("click", () => {
     medicalContent.classList.remove("hidden");
     financialContent.classList.add("hidden");
     odontogramContent.classList.add("hidden");
+    odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
+    odontogramTab.classList.replace("text-white", "text-gray-700");
     medicalTab.classList.replace("bg-gray-200", "bg-blue-600");
     medicalTab.classList.replace("text-gray-700", "text-white");
     financialTab.classList.replace("bg-blue-600", "bg-gray-200");
@@ -340,6 +345,8 @@
     financialContent.classList.remove("hidden");
     medicalContent.classList.add("hidden");
     odontogramContent.classList.add("hidden");
+    odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
+    odontogramTab.classList.replace("text-white", "text-gray-700");
     financialTab.classList.replace("bg-gray-200", "bg-blue-600");
     financialTab.classList.replace("text-gray-700", "text-white");
     medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
@@ -363,4 +370,69 @@
   const medicalUrl = "{% url 'patient:add_medical_history' patient.id %}";
   const financialUrl = "{% url 'patient:add_financial_history' patient.id %}";
 </script>
+
+<script>
+function selectTooth(tooth_num) {
+  tooth_num = Number(tooth_num);
+  console.log("Selected Tooth:", tooth_num);
+  const toothNames = {
+      1: "Upper Right Third Molar (Wisdom Tooth)",
+      2: "Upper Right Second Molar",
+      3: "Upper Right First Molar",
+      4: "Upper Right Second Premolar",
+      5: "Upper Right First Premolar",
+      6: "Upper Right Canine",
+      7: "Upper Right Lateral Incisor",
+      8: "Upper Right Central Incisor",
+      9: "Upper Left Central Incisor",
+      10: "Upper Left Lateral Incisor",
+      11: "Upper Left Canine",
+      12: "Upper Left First Premolar",
+      13: "Upper Left Second Premolar",
+      14: "Upper Left First Molar",
+      15: "Upper Left Second Molar",
+      16: "Upper Left Third Molar (Wisdom Tooth)",
+      17: "Lower Left Third Molar (Wisdom Tooth)",
+      18: "Lower Left Second Molar",
+      19: "Lower Left First Molar",
+      20: "Lower Left Second Premolar",
+      21: "Lower Left First Premolar",
+      22: "Lower Left Canine",
+      23: "Lower Left Lateral Incisor",
+      24: "Lower Left Central Incisor",
+      25: "Lower Right Central Incisor",
+      26: "Lower Right Lateral Incisor",
+      27: "Lower Right Canine",
+      28: "Lower Right First Premolar",
+      29: "Lower Right Second Premolar",
+      30: "Lower Right First Molar",
+      31: "Lower Right Second Molar",
+      32: "Lower Right Third Molar (Wisdom Tooth)", 
+};
+
+document.querySelectorAll('.w-10').forEach(btn => {
+  btn.classList.remove('bg-blue-500', 'text-white');
+  btn.classList.add('border-gray-300', 'hover:bg-blue-100', 'text-black');
+});
+
+const selectedBtn = document.querySelector(`button[onclick="selectTooth('${tooth_num}')"]`);
+selectedBtn.classList.add('bg-blue-500', 'text-white');
+
+const historyDiv = document.getElementById("tooth-history");
+const toothName = toothNames[tooth_num];
+
+ historyDiv.innerHTML = `
+      <h3 class="text-lg font-semibold mb-2 text-center">Tooth ${tooth_num}: ${toothName}</h3>
+      <div class="space-y-2 text-sm">
+        <p><strong>Date of Operation:</strong> <span class="text-gray-500">-</span></p>
+        <p><strong>Condition:</strong> <span class="text-gray-500">-</span></p>
+        <p><strong>Treatment:</strong> <span class="text-gray-500">-</span></p>
+        <p><strong>Dentist:</strong> <span class="text-gray-500">-</span></p>
+        <p><strong>Status:</strong> <span class="text-gray-500">-</span></p>
+        <p><strong>Notes:</strong> <span class="text-gray-500">-</span></p>
+      </div>
+      `;
+    }
+</script>
+
 {% endblock %}

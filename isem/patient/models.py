@@ -40,7 +40,17 @@ class FinancialHistory(models.Model):
     type = models.CharField(max_length=100, null=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     balance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+class Odontogram(models.Model):
+    patient = models.ForeignKey(Patient, related_name="odontograms", on_delete=models.CASCADE)
+    tooth_number = models.PositiveIntegerField()
+    date = models.DateField(auto_now_add=True)
+    condition = models.CharField(max_length=255)
+    treatment = models.CharField(max_length=255, blank=True, null=True)
+    dentist = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=100, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
     
 
 def __str__(self):
-        return f"Financial Record {self.number} for {self.patient.name}"
+        return f"Odontogram for {self.patient.name} - Tooth {self.tooth_number}"
