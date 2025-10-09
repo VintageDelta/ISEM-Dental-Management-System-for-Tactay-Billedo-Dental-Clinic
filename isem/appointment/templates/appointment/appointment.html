@@ -168,27 +168,75 @@
 <!-- Reschedule Modal -->
 <div id="reschedule-modal"
   class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
-  <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md text-center">
-    <h2 class="text-xl font-semibold text-gray-800 mb-4">Finding Best Time</h2>
-    <!-- Date + Time Display -->
-    <div id="reschedule-date-display" 
-        class="flex flex-col items-center gap-2 mb-6">
-      <!-- Time and Date Display will be here With the power of JS! -->
-    </div>
-    <!-- Action Buttons -->
-    <div class="flex justify-center gap-3">
-      <button id="try-again-btn" class="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"> Try Again </button>
-      <button id="confirm-reschedule-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"> Reschedule </button>
-    </div>
-    <!-- Close Button -->
-    <div class="flex justify-end pt-6">
-      <button id="close-reschedule-btn"
-        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
-        Close
-      </button>
-    </div>
+  <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">
+      Reschedule Appointment
+    </h2>
+
+    <form id="reschedule-form" class="space-y-4">
+      {% csrf_token %}
+      
+      <!-- Dentist Name -->
+      <div>
+        <select id="resched-dentist" name="dentist" required
+          class="w-full border rounded-md p-2 text-sm">
+          <option value="" disabled selected>Select Dentist</option>
+          {% for dentist in dentists %}
+            <option value="{{ dentist.id }}">{{ dentist.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Location -->
+      <div>
+        <select id="resched-location" name="location" required
+          class="w-full border rounded-md p-2 text-sm">
+          <option value="" disabled selected>Select location</option>
+          <option value="Vigan">Vigan</option>
+          <option value="Magsingal">Magsingal</option>
+        </select>
+      </div>
+
+      <!-- Date + Time -->
+      <div class="flex gap-2">
+        <input type="date" id="resched-date" name="date"
+          class="flex-1 border rounded-md p-2 text-sm" required>
+        <input type="time" id="resched-time" name="time"
+          class="flex-1 border rounded-md p-2 text-sm" required>
+      </div>
+
+      <!-- Service -->
+      <div>
+        <select id="resched-service" name="service" required
+          class="w-full border rounded-md p-2 text-sm">
+          <option value="" disabled selected>Select Service</option>
+          {% for service in services %}
+            <option value="{{ service.id }}">{{ service.service_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Reason -->
+      <textarea id="resched-reason" name="reason" rows="3"
+        class="w-full border rounded-md p-2 text-sm"></textarea>
+
+      <!-- Currently Scheduled -->
+      <div class="bg-gray-100 p-3 rounded-md text-sm text-gray-700">
+        <p><strong>Current Schedule:</strong></p>
+        <p id="resched-current-time" class="mt-1"></p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-2 pt-3">
+        <button type="button" id="close-reschedule-btn"
+          class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+        <button type="submit"
+          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Changes</button>
+      </div>
+    </form>
   </div>
 </div>
+
 
 {% endblock %}
 
