@@ -38,14 +38,26 @@
       <i class="la la-plus"></i> Create Appointment
     </button>
 
-    <!-- Calendar card -->
-    <div class="bg-white p-5 md:p-6 rounded-xl shadow flex flex-col w-[700px]">
-      <div id="calendar" class="w-full"></div>
+
+
+<!-- Calendar card -->
+<div class="bg-white p-5 md:p-6 rounded-xl shadow flex flex-col w-[700px]">
+  <!-- Drop down Branch Select-->
+    <div class="mb-4">
+        <label class="font-semibold">Select Branch:</label>
+        <select id="branch-filter"
+                class="border p-2 rounded-md text-sm">
+            <option value="">All Branches</option>
+            <option value="Vigan">Vigan</option>
+            <option value="Santo Domingo">Santo Domingo</option>
+        </select>
     </div>
+    
+    <div id="calendar" class="w-full"></div>
   </div>
+</div>
 
 <div class="bg-white p-5 md:p-6 rounded-xl shadow w-full">  
-
   <!-- Timeline calendar -->
   <div id="timeline-calendar" class="w-full mb-4"></div>
 
@@ -57,10 +69,20 @@
 
 </div>
 
+<!-- Success Modal -->
+<div id="success-modal"
+     class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center transform transition-all duration-200 opacity-0 scale-95">
+    <h2 class="text-lg font-semibold mb-2">Success!</h2>
+    <p class="mb-4">Appointment has been successfully created.</p>
+    <button id="close-success-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">OK</button>
+  </div>
+</div>
+
 
 <!-- Add Appointment Modal -->
 <div id="appointment-modal"
-  class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+  class="modal-content fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
   <div id="appointment-modal-content"
     class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
     <h2 class="text-lg font-semibold mb-4 text-center">Add Appointment</h2>
@@ -83,40 +105,70 @@
           class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select location</option>
           <option value="Vigan">Vigan</option>
-          <option value="Magsingal">Magsingal</option>
+          <option value="Santo Domingo">Santo Domingo</option>
         </select>
       </div>
       <!-- Date Time -->
-      <div>
-        <div class="flex gap-2">
-          <input type="date" id="date" name="date" required 
-          class="flex-1 border rounded-md p-2 text-sm">
-          <input type="time" id="time" name="time" required 
-          class="flex-1 border rounded-md p-2 text-sm">
-        </div>
-      </div>
-      <!-- Service -->
-      <div>
-        <select name="service" id="servicetype" required
-          class="w-full border rounded-md p-2 text-sm">
-          <option value="" disabled selected>Select Service Type</option>
-          {% for service in services %}
-            <option value="{{ service.id }}">{{ service.service_name }}</option>
-          {% endfor %}
+      <div class="flex gap-2">
+        <input type="date" id="date" name="date" required class="flex-1 border rounded-md p-2 text-sm">
+
+        <!-- AM/PM -->
+        <select id="ampm" class="border rounded-md p-2 text-sm flex-1" disabled>
+            <option value="">AM/PM</option>
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+        </select>
+
+
+        <!-- Hour -->
+        <select id="hour" class="border rounded-md p-2 text-sm flex-1" disabled>
+            <option value="">Hour</option>
+        </select>
+
+        <!-- Minute -->
+        <select id="minute" class="border rounded-md p-2 text-sm flex-1" disabled>
+            <option value="">Min</option>
+            <option value="00">00</option>
+            <option value="05">05</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+            <option value="25">25</option>
+            <option value="30">30</option>
+            <option value="35">35</option>
+            <option value="40">40</option>
+            <option value="45">45</option>
+            <option value="50">50</option>
+            <option value="55">55</option>
         </select>
       </div>
-      <!-- Reason for Visist -->
+
+<input type="hidden" name="time" id="time_hidden">
+<p id="time-error" class="text-red-600 text-sm"></p>
+      <!-- Service (Checkboxes instead of multi-select) -->
+      <div>
+        <p class="font-semibold mb-1">Select Services:</p>
+        <div class="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
+          {% for service in services %}
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="services" value="{{ service.id }}" class="h-4 w-4 accent-blue-600">
+              <span>{{ service.service_name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+      <!-- Reason for Visit -->
       <textarea name="reason" id="reason" placeholder="Reason for Visit" rows="3"
         class="w-full border rounded-md p-2 text-sm"></textarea>
       <!-- ID -->
       <div>
         <input type="id" id="id_no" name="id_no" placeholder="ID No." required
-          class="w-full border rounded-md p-2 text-sm" required>
+          class="w-full border rounded-md p-2 text-sm">
       </div>
       <!-- Email -->
       <div>
         <input type="email" id="email" name="email" placeholder="Email" required
-          class="w-full border rounded-md p-2 text-sm" required>
+          class="w-full border rounded-md p-2 text-sm">
       </div>
       <!-- Actions -->
       <div class="flex justify-end gap-2 pt-3">
@@ -132,7 +184,7 @@
 <!-- Follow Up Modal -->
 <div id="followup-modal"
   class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
-  <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-3xl">
+  <div class="modal-content bg-white p-6 rounded-xl shadow-xl w-full max-w-3xl">
     <h2 class="text-xl font-semibold text-gray-800 text-center mb-6">
       Appointment Information
     </h2>
@@ -165,21 +217,37 @@
   </div>
 </div>
 
+
+{% comment %}
+  <!-- Service --> 
+   <div> 
+    <select id="resched-service" name="service" required 
+      class="w-full border rounded-md p-2 text-sm"> 
+        <option value="" disabled selected>Select Service
+        </option> 
+          {% for service in services %} 
+        <option value="{{ service.id }}">{{ service.service_name }}
+        </option> 
+          {% endfor %} 
+    </select> 
+  </div> 
+{% endcomment %}
+
+
 <!-- Reschedule Modal -->
-<div id="reschedule-modal"
-  class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
-  <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+<div id="reschedule-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
+  <!-- modal content container -->
+  <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md transform transition-all duration-200 opacity-0 scale-95">
     <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">
       Reschedule Appointment
     </h2>
 
     <form id="reschedule-form" class="space-y-4">
       {% csrf_token %}
-      
+
       <!-- Dentist Name -->
       <div>
-        <select id="resched-dentist" name="dentist" required
-          class="w-full border rounded-md p-2 text-sm">
+        <select id="resched-dentist" name="dentist" required class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select Dentist</option>
           {% for dentist in dentists %}
             <option value="{{ dentist.id }}">{{ dentist.name }}</option>
@@ -189,8 +257,7 @@
 
       <!-- Location -->
       <div>
-        <select id="resched-location" name="location" required
-          class="w-full border rounded-md p-2 text-sm">
+        <select id="resched-location" name="location" required class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select location</option>
           <option value="Vigan">Vigan</option>
           <option value="Magsingal">Magsingal</option>
@@ -199,26 +266,39 @@
 
       <!-- Date + Time -->
       <div class="flex gap-2">
-        <input type="date" id="resched-date" name="date"
-          class="flex-1 border rounded-md p-2 text-sm" required>
-        <input type="time" id="resched-time" name="time"
-          class="flex-1 border rounded-md p-2 text-sm" required>
+        <input type="date" id="resched-date" name="date" class="flex-1 border rounded-md p-2 text-sm" required>
+        <input type="time" id="resched-time" name="time" class="flex-1 border rounded-md p-2 text-sm" required>
       </div>
 
-      <!-- Service -->
+
+      <!-- Service (Checkboxes instead of multi-select) -->
       <div>
-        <select id="resched-service" name="service" required
-          class="w-full border rounded-md p-2 text-sm">
-          <option value="" disabled selected>Select Service</option>
+        <p class="font-semibold mb-1">Select Services:</p>
+        <div class="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
           {% for service in services %}
-            <option value="{{ service.id }}">{{ service.service_name }}</option>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="services" value="{{ service.id }}" class="h-4 w-4 accent-blue-600">
+              <span>{{ service.service_name }}</span>
+            </label>
           {% endfor %}
-        </select>
+        </div>
       </div>
+
+      <!-- Service --> 
+      <div> 
+        <select id="resched-service" name="service" required 
+          class="w-full border rounded-md p-2 text-sm"> 
+            <option value="" disabled selected>Select Service
+            </option> 
+              {% for service in services %} 
+            <option value="{{ service.id }}">{{ service.service_name }}
+            </option> 
+              {% endfor %} 
+        </select> 
+      </div> 
 
       <!-- Reason -->
-      <textarea id="resched-reason" name="reason" rows="3"
-        class="w-full border rounded-md p-2 text-sm"></textarea>
+      <textarea id="resched-reason" name="reason" rows="3" class="w-full border rounded-md p-2 text-sm"></textarea>
 
       <!-- Currently Scheduled -->
       <div class="bg-gray-100 p-3 rounded-md text-sm text-gray-700">
@@ -228,25 +308,38 @@
 
       <!-- Actions -->
       <div class="flex justify-end gap-2 pt-3">
-        <button type="button" id="close-reschedule-btn"
-          class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
-        <button type="submit"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Changes</button>
+        <button type="button" id="close-reschedule-btn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Changes</button>
       </div>
     </form>
   </div>
 </div>
 
-
+</div>
 {% endblock %}
 
 
 {% block extra_js %}
+
+{% if messages %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    {% for message in messages %}
+      showSuccessModal();  // <-- triggers your success popup
+    {% endfor %}
+  });
+</script>
+{% endif %}
+
+
 <script>
   // dont remove this, this should be in the Calendar.js but no, it dont work if its in therre!
   const eventsUrl = "{% url 'appointment:events' %}";
 </script>
+
+
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script src="{% static 'js/calendar.js' %}"></script>
 <script src="{% static 'js/appointment.js' %}"></script>
+
 {% endblock %}

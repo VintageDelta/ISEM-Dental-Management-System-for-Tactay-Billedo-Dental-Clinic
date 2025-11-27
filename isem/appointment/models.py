@@ -32,7 +32,7 @@ class Appointment(models.Model):
     end_time = models.TimeField(null=True, blank=True)
     preferred_date = models.DateField(null=True, blank=True)
     preferred_time = models.TimeField(null=True, blank=True)
-    servicetype = models.ForeignKey(Service, on_delete=models.CASCADE)
+    services = models.ManyToManyField(Service, related_name="appointments")
     reason = models.TextField()
     email = models.EmailField(null=False, blank=False)
     id_no = models.CharField(max_length=255, null=False, blank=False)
@@ -45,12 +45,15 @@ class Appointment(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if self.time and self.servicetype and self.date:
-            from datetime import datetime, timedelta
-            start_datetime = datetime.combine(self.date, self.time)
-            end_datetime = start_datetime + timedelta(minutes=self.servicetype.duration)
-            self.end_time = end_datetime.time()
         super().save(*args, **kwargs)
+
+        total_duration = sum(s.duration for s in self.services.all())
+
+        if self.time and self.date and total_duration > 0:
+            start_datetime = datetime.combine(self.date, self.time)
+            end_datetime = start_datetime + timedelta(minutes=total_duration)
+            self.end_time = end_datetime.time()
+            super().save(update_fields=["end_time"])
 
     def __str__(self):
         return f"{self.dentist_name} - {self.date} {self.time} [{self.get_status_display()}]"

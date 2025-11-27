@@ -1,3 +1,5 @@
+
+
 let currentEventId = null;
 let mainCalendar = null;
 let timelineCalendar = null;
@@ -8,6 +10,41 @@ document.addEventListener('DOMContentLoaded', function () {
   const timelineControlsEl = document.getElementById('timeline-controls');
   const listEl = document.getElementById('todays-appointments-list');
   const statusButtons = document.querySelectorAll("#followup-modal button");
+  const branchFilterEl = document.getElementById("branch-filter");
+  const eventsUrl = "/dashboard/appointment/events/";
+  
+
+
+  branchFilterEl.addEventListener("change", function () {
+    if (mainCalendar) mainCalendar.refetchEvents();
+    if (timelineCalendar) timelineCalendar.refetchEvents();
+
+    setTimeout(() => {
+      if (typeof renderTodaysAppointments === "function") {
+        renderTodaysAppointments();
+      }
+    }, 300);
+  });
+
+  document.getElementById("branch-filter").addEventListener("change", function() {
+    console.log("Selected branch:", this.value);
+});
+
+  function fetchEvents(info, successCallback, failureCallback) {
+    const branch = branchFilterEl.value;
+    let url = eventsUrl;
+    if (branch) url += `?branch=${branch}`;
+
+    console.log("FETCHING:", url);   // ← ADD THIS LINE
+
+    fetch(url)
+      .then(res => res.json())
+      .then(events => {
+        console.log("RECEIVED EVENTS:", events); // ← ADD THIS TOO
+        successCallback(events)
+      })
+      .catch(err => failureCallback(err));
+  }
 
   // Colormaps for Status
   const colorMap = {
@@ -73,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
       handleWindowResize: true,
       headerToolbar: { left: "prev today", center: "title", right: "next" },
       buttonText: { today: 'Today' },
-      events: eventsUrl,
+      events: fetchEvents,
 
       eventDidMount: function (info) {
         info.el.classList.add(
@@ -110,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
       slotLabelInterval: "01:00:00",
       slotEventOverlap: false,
       allDaySlot: false,
-      events: eventsUrl,
+      events: fetchEvents,
       titleFormat: { year: 'numeric', month: 'short', day: 'numeric' },
 
       // We DON'T rely on FullCalendars default styling 
@@ -210,6 +247,8 @@ document.addEventListener('DOMContentLoaded', function () {
             rescheduleBtn.style.borderRadius = "6px";
             rescheduleBtn.style.background = "#2563eb";
             rescheduleBtn.style.color = "#fff";
+
+            //resched btn handler
             rescheduleBtn.addEventListener("click", (e) => {
               e.stopPropagation();
               currentEventId = info.event.id;
@@ -221,7 +260,10 @@ document.addEventListener('DOMContentLoaded', function () {
               document.getElementById("resched-time").value = info.event.extendedProps.preferred_time
                 ? convertTo24Hour(info.event.extendedProps.preferred_time)
                 : "";
-              document.getElementById("resched-service").value = info.event.extendedProps.service_id || "";
+              const selectedServices = info.event.extendedProps.service_ids || [];
+              document.querySelectorAll('#resched-services-checkboxes input[type="checkbox"]').forEach(cb => {
+                  cb.checked = selectedServices.includes(parseInt(cb.value));
+              });
               document.getElementById("resched-reason").value = info.event.extendedProps.reason || "";
 
               // Show current scheduled time
@@ -261,6 +303,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
     });
+
+    //renders the calendar
     timelineCalendar.render();
 
 
@@ -340,6 +384,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 
+
 // --- Helper to get CSRF token from cookies ---
 function getCookie(name) {
   let cookieValue = null;
@@ -363,3 +408,8 @@ function convertTo24Hour(timeStr) {
   if (modifier === "AM" && hours === "12") hours = "00";
   return `${hours}:${minutes}`;
 }
+
+
+
+
+

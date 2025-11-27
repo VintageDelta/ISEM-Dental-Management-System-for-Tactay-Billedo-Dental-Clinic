@@ -6,6 +6,11 @@ app_name = 'appointment'
 
 urlpatterns = [
     path('', views.appointment_page, name='list'),
+    path("appointment/", views.appointment_page, name="appointment_page"),
     path("events/", views.events, name='events'),
-   path("update-status/<int:appointment_id>/", views.update_status, name="update_status"),
+    path("update-status/<int:appointment_id>/", views.update_status, name="update_status"),
+    path("get-booked-times/", views.get_booked_times, name="get_booked_times"),
+    path("reschedule/<int:appointment_id>/", views.reschedule_appointment, name="reschedule"),
+
+
 ]
