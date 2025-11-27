@@ -1,14 +1,15 @@
 from datetime import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout as auth_logout
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User, Group
 from django.contrib import messages
 from django.contrib.auth.views import LoginView as Loginview
 from django.db import models
 from patient.models import Patient
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import views as auth_views
 
-# Create your views here.
+
 class RoleBasedLoginView(Loginview):
     template_name = 'userprofile/sign-in.html'
     def get_success_url(self):
@@ -176,6 +177,3 @@ def homepage(request):
         return redirect('dashboard:index')
     else:
         return render(request, 'userprofile/homepage.html')
-    
-
-            

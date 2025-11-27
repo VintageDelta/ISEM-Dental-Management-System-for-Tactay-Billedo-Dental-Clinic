@@ -1,5 +1,7 @@
 {% extends 'core/base.html' %} {% load static %} {% block title %} Inventory
 {%endblock %} {% block content %}
+<p>Expiring count: {{ expiring_list|length }}</p>
+
 <div class="w-full">
   <div class="w-full">
     <div class="p-4 rounded-xl">
@@ -55,6 +57,19 @@
           </button>
         </div>
       </div>
+<!-- {% if expiring_items %}
+<div class="alert alert-warning mb-3 p-3 rounded shadow">
+    <strong>⚠ Expiry Alert:</strong> Some supplies are expired or about to expire.
+    <ul class="mt-2">
+        {% for item in expiring_items %}
+            <li>
+                <strong>{{ item.item_name }}</strong>
+                — expires on <b>{{ item.expiry_date }}</b>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %} -->
 
       <!-- Inventory Table -->
       <div class="overflow-x-auto">
@@ -343,6 +358,23 @@
     </div>
   </div>
 </div>
+<!-- Expiring Items Modal -->
+{% if expiring_list %}
+<div id="expiring-notification-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+  <div id="expiring-notification-content" class="bg-white p-6 rounded-lg shadow-lg transform transition-all duration-200 opacity-0 scale-95 text-center w-96">
+    <h3 class="text-lg font-semibold text-yellow-700 mb-2">Expiry Alert!  </h3>
+    <p class="text-gray-700 mb-4">The following items are expiring soon (within 7 days):</p>
+    <ul class="text-left list-disc list-inside text-gray-700 mb-4">
+      {% for item in expiring_list %}
+      <li><strong>{{ item.item_name }}</strong> — expires on <b>{{ item.expiry_date }}</b></li>
+      {% endfor %}
+    </ul>
+    <button id="close-expiring-notification-btn" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">OK</button>
+  </div>
+</div>
+{% endif %}
+
+
 
   {% endblock %} {% block extra_js %}
   <script>
@@ -468,7 +500,7 @@
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log("✅ Delete response:", data);
+        console.log("Delete response:", data);
 
         if (data.success) {
           // Close modal
@@ -601,6 +633,28 @@ function formatStatusBadge(status) {
     };
     
     return statusMap[status] || `<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded">${status}</span>`;
+}
+</script>
+<script>
+// Expiring Items Modal
+const expiringModal = document.getElementById("expiring-notification-modal");
+const expiringContent = document.getElementById("expiring-notification-content");
+const closeExpiringBtn = document.getElementById("close-expiring-notification-btn");
+
+if(expiringModal) {
+  // Show modal on page load
+  expiringModal.classList.remove("hidden");
+  setTimeout(() => {
+    expiringContent.classList.remove("opacity-0", "scale-95");
+    expiringContent.classList.add("opacity-100", "scale-100");
+  }, 10);
+
+  // Close button
+  closeExpiringBtn.addEventListener("click", () => {
+    expiringContent.classList.remove("opacity-100", "scale-100");
+    expiringContent.classList.add("opacity-0", "scale-95");
+    setTimeout(() => expiringModal.classList.add("hidden"), 200);
+  });
 }
 </script>
 

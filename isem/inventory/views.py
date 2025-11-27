@@ -1,3 +1,4 @@
+import datetime
 from pyexpat.errors import messages
 from urllib import request
 from django.shortcuts import render, get_object_or_404, redirect
@@ -9,8 +10,17 @@ from django.http import JsonResponse, HttpResponse
 def inventory_list(request):
     items = InventoryItem.objects.all().order_by('-created_at')
     form = InventoryItemForm()  # Empty form for adding new items
+
+    today = datetime.date.today()
+    upcoming = today + datetime.timedelta(days=7)
+
+    expiring_items = InventoryItem.objects.filter(expiry_date__gte=today,
+                                                  expiry_date__lte=upcoming,
+                                                  ).exclude(expiry_date= None)
     return render(request, 'inventory/inventory.html', {'items': items,
-                                                        'form': form})
+                                                        'form': form,
+                                                        'expiring_list': expiring_items,
+                                                        'has_expiring_items': expiring_items.exists()})
 
 def inventory_add(request):
     if request.method == 'POST':
@@ -51,7 +61,13 @@ def inventory_edit(request, pk):
         item.category = request.POST.get("category")
         item.description = request.POST.get("description")
         item.stock = request.POST.get("stock")
-        item.expiry_date = request.POST.get("expiry_date")
+
+        expiry = request.POST.get("expiry_date")
+        if expiry:
+            item.expiry_date=datetime.datetime.strptime(expiry, "%Y-%m-%d").date()
+        else:
+            item.expiry_date=None
+        # item.expiry_date = request.POST.get("expiry_date")
         item.status = request.POST.get("status")
         item.save()
 

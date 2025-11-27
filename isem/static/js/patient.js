@@ -66,47 +66,38 @@ document.addEventListener("DOMContentLoaded", function () {
   const addModalBtn = document.getElementById("add-modal-btn");
   const popupModal = document.getElementById("modal-popup");
   const popupContent = document.getElementById("popup-content");
-  const cancelChoose = document.getElementById("cancel-choose");
-  const btnRegistered = document.getElementById("choose-registered");
+  //const cancelChoose = document.getElementById("cancel-choose");
+  //const btnRegistered = document.getElementById("choose-registered");
   const btnGuest = document.getElementById("choose-guest");
-  const closeBtn = document.getElementById("close-popup-btn"); // <-- make sure this ID exists in your HTML
+  const closeBtn = document.getElementById("close-popup-btn");
 
   if (addModalBtn) {
     addModalBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       closeAllModals();
-      openModal(chooseModal, chooseContent);
-      setTimeout(() => {
-        const outsideClickHandler = (e) => {
-          if (e.target === chooseModal) {
-            closeModal(chooseModal, chooseContent);
-            chooseModal.removeEventListener("click", outsideClickHandler);
-          }
-        };
-        chooseModal.addEventListener("click", outsideClickHandler);
-      }, 0);
+      openModal(popupModal, popupContent);
     });
   }
 
-  if (btnRegistered) {
-    btnRegistered.addEventListener("click", () => {
-      closeModal(chooseModal, chooseContent);
-      setTimeout(() => openModal(popupModal, popupContent), 250);
-    });
-  }
+  // if (btnRegistered) {
+  //   btnRegistered.addEventListener("click", () => {
+  //     closeModal(chooseModal, chooseContent);
+  //     setTimeout(() => openModal(popupModal, popupContent), 250);
+  //   });
+  // }
 
-  if (btnGuest) {
-    btnGuest.addEventListener("click", () => {
-      closeModal(chooseModal, chooseContent);
-      setTimeout(() => openModal(popupModal, popupContent), 250);
-    });
-  }
+  // if (btnGuest) {
+  //   btnGuest.addEventListener("click", () => {
+  //     closeModal(chooseModal, chooseContent);
+  //     setTimeout(() => openModal(popupModal, popupContent), 250);
+  //   });
+  // }
 
-  if (cancelChoose) {
-    cancelChoose.addEventListener("click", () =>
-      closeModal(chooseModal, chooseContent)
-    );
-  }
+  // if (cancelChoose) {
+  //   cancelChoose.addEventListener("click", () =>
+  //     closeModal(chooseModal, chooseContent)
+  //   );
+  // }
 
   // ==== EDIT BUTTON ====
   const editModal = document.getElementById("edit-modal");
