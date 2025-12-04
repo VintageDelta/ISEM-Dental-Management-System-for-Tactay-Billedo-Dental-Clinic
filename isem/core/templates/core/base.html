@@ -9,12 +9,9 @@
       href="https://unicons.iconscout.com/release/v4.0.8/css/line.css"
       rel="stylesheet"
     />
-
     <script src="https://cdn.tailwindcss.com"></script>
-
     {% block extra_css %}{% endblock %}
 </head>
-
   <body class="bg-gray-100">
     <div class="flex min-h-screen">
       <!-- Sidebar -->
@@ -35,7 +32,6 @@
               <span class="material-icons">home</span>
               <a href="{% url 'userprofile:homepage' %}">Home</a>
             </li>
-
             {% if user.is_staff or user.is_superuser %}
             <li
               class="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 p-2 rounded"
@@ -83,7 +79,6 @@
         </nav>
       </aside>  
      
-
       <!-- Main Content -->
       <div class="flex-1 flex flex-col">
         <!-- Top Bar -->
@@ -113,7 +108,6 @@
       </div>
       <span class="material-icons text-gray-500">expand_more</span>
   </button>
-
   <!-- Dropdown -->
   <div id="userDropdown"
        class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg">
@@ -124,7 +118,6 @@
   </div>
 </div>
         </header>
-
         <!-- Dashboard Content -->
         <main class="p-6">
           {% block content %}
@@ -139,24 +132,19 @@
         </main>
       </div>
     </div>
-
     <!-- Google Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
    {% block extra_js %}
-
 
 {% endblock %}
    <script>
 document.addEventListener('DOMContentLoaded', function () {
     const btn = document.getElementById('userMenuButton');
     const menu = document.getElementById('userDropdown');
-
     btn.addEventListener('click', function (e) {
         e.stopPropagation();              
         menu.classList.toggle('hidden');   
     });
-
     // Close dropdown when clicking anywhere else
     document.addEventListener('click', function () {
         menu.classList.add('hidden');
@@ -164,5 +152,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 </body>
-
 </html>

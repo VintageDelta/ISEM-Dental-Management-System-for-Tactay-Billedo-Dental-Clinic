@@ -28,46 +28,47 @@
   </div>
 </div>
 
-<!-- Main grid -->
-<div class="grid grid-cols-1 lg:grid-cols-[700px_auto] gap-4 mt-6 items-start">
+<!-- Main layout: calendar + timeline -->
+<div class="flex flex-wrap gap-4 mt-6 items-start">
   <!-- Calendar section -->
-  <div class="flex flex-col">
+  <div class="flex flex-col flex-1 min-w-[320px] max-w-[700px]">
     <!-- Create appointment button (full width, outside card) -->
     <button id="create-appointment-btn"
-      class="w-[700px] mb-3 px-3 py-2 text-sm bg-green-600 text-white rounded-md flex items-center justify-center gap-1 hover:bg-green-700 transition">
+      class="w-full mb-3 px-3 py-2 text-sm bg-green-600 text-white rounded-md flex items-center justify-center gap-1 hover:bg-green-700 transition">
       <i class="la la-plus"></i> Create Appointment
     </button>
 
-
-
-<!-- Calendar card -->
-<div class="bg-white p-5 md:p-6 rounded-xl shadow flex flex-col w-[700px]">
-  <!-- Drop down Branch Select-->
-    <div class="mb-4">
+    <!-- Calendar card -->
+    <div class="bg-white p-5 md:p-6 rounded-xl shadow flex flex-col w-full">
+      <!-- Drop down Branch Select-->
+      <div class="mb-4">
         <label class="font-semibold">Select Branch:</label>
         <select id="branch-filter"
                 class="border p-2 rounded-md text-sm">
-            <option value="">All Branches</option>
-            <option value="Vigan">Vigan</option>
-            <option value="Santo Domingo">Santo Domingo</option>
+          <option value="">All Branches</option>
+          <option value="Vigan">Vigan</option>
+          <option value="Santo Domingo">Santo Domingo</option>
         </select>
+      </div>
+      
+      <div id="calendar" class="w-full"></div>
     </div>
-    
-    <div id="calendar" class="w-full"></div>
+  </div>
+
+  <!-- Timeline + list section -->
+  <div class="flex-1 min-w-[320px]">
+    <div class="bg-white p-5 md:p-6 rounded-xl shadow w-full">
+      <!-- Timeline calendar -->
+      <div id="timeline-calendar" class="w-full mb-4"></div>
+
+      <!-- Timeline list -->
+      <div class="relative pl-4 border-l border-gray-300 max-h-[600px] overflow-y-auto">
+        <ul id="todays-appointments-list" class="space-y-6"></ul>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="bg-white p-5 md:p-6 rounded-xl shadow w-full">  
-  <!-- Timeline calendar -->
-  <div id="timeline-calendar" class="w-full mb-4"></div>
-
-  <!-- Timeline list -->
-  <div class="relative pl-4 border-l border-gray-300 max-h-[600px] overflow-y-auto">
-    <ul id="todays-appointments-list" class="space-y-6"></ul>
-  </div>
-</div>
-
-</div>
 
 <!-- Success Modal -->
 <div id="success-modal"
@@ -109,62 +110,92 @@
         </select>
       </div>
       <!-- Date Time -->
-      <div class="flex gap-2">
-        <input type="date" id="date" name="date" required class="flex-1 border rounded-md p-2 text-sm">
+      <div class="flex flex-wrap gap-2">
+        <input type="date" id="date" name="date" required
+              class="w-full sm:flex-1 border rounded-md p-2 text-sm">
 
         <!-- AM/PM -->
-        <select id="ampm" class="border rounded-md p-2 text-sm flex-1" disabled>
-            <option value="">AM/PM</option>
-            <option value="AM">AM</option>
-            <option value="PM">PM</option>
+        <select id="ampm"
+                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+                disabled>
+          <option value="">am/pm</option>
+          <option value="AM">am</option>
+          <option value="PM">pm</option>
         </select>
 
-
         <!-- Hour -->
-        <select id="hour" class="border rounded-md p-2 text-sm flex-1" disabled>
-            <option value="">Hour</option>
+        <select id="hour"
+                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+                disabled>
+          <option value="">Hour</option>
         </select>
 
         <!-- Minute -->
-        <select id="minute" class="border rounded-md p-2 text-sm flex-1" disabled>
-            <option value="">Min</option>
-            <option value="00">00</option>
-            <option value="05">05</option>
-            <option value="10">10</option>
-            <option value="15">15</option>
-            <option value="20">20</option>
-            <option value="25">25</option>
-            <option value="30">30</option>
-            <option value="35">35</option>
-            <option value="40">40</option>
-            <option value="45">45</option>
-            <option value="50">50</option>
-            <option value="55">55</option>
+        <select id="minute"
+                class="w-full sm:flex-1 border rounded-md p-2 text-sm"
+                disabled>
+          <option value="">Min</option>
+          <option value="00">00</option>
+          <option value="05">05</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20">20</option>
+          <option value="25">25</option>
+          <option value="30">30</option>
+          <option value="35">35</option>
+          <option value="40">40</option>
+          <option value="45">45</option>
+          <option value="50">50</option>
+          <option value="55">55</option>
         </select>
       </div>
 
+
 <input type="hidden" name="time" id="time_hidden">
 <p id="time-error" class="text-red-600 text-sm"></p>
-      <!-- Service (Checkboxes instead of multi-select) -->
+
+      <!-- Service (Checkboxes + search + selected box) -->
       <div>
-        <p class="font-semibold mb-1">Select Services:</p>
-        <div class="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
+        <p class="font-semibold mb-1">Select Service:</p>
+
+        <!-- Search bar -->
+        <input
+          type="text"
+          id="service-search"
+          placeholder="Search services..."
+          class="w-full mb-2 border rounded-md p-2 text-sm"
+        >
+
+        <!-- Checkboxes list -->
+        <div
+          id="services-checkboxes"
+          class="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2"
+        >
           {% for service in services %}
             <label class="flex items-center gap-2">
-              <input type="checkbox" name="services" value="{{ service.id }}" class="h-4 w-4 accent-blue-600">
+              <input
+                type="checkbox"
+                name="services"
+                value="{{ service.id }}"
+                class="h-4 w-4 accent-blue-600 service-checkbox"
+              >
               <span>{{ service.service_name }}</span>
             </label>
           {% endfor %}
         </div>
+
+        <!-- Selected services box -->
+        <div class="mt-2 border rounded-md p-2 text-xs">
+          <p id="selected-services-empty" class="text-gray-500">
+            No services selected.
+          </p>
+          <div
+            id="selected-services-tags"
+            class="mt-1 flex flex-wrap gap-1"
+          ></div>
+        </div>
       </div>
-      <!-- Reason for Visit -->
-      <textarea name="reason" id="reason" placeholder="Reason for Visit" rows="3"
-        class="w-full border rounded-md p-2 text-sm"></textarea>
-      <!-- ID -->
-      <div>
-        <input type="id" id="id_no" name="id_no" placeholder="ID No." required
-          class="w-full border rounded-md p-2 text-sm">
-      </div>
+
       <!-- Email -->
       <div>
         <input type="email" id="email" name="email" placeholder="Email" required
@@ -188,7 +219,7 @@
     <h2 class="text-xl font-semibold text-gray-800 text-center mb-6">
       Appointment Information
     </h2>
-    <div class="flex gap-6">
+    <div class="flex flex-col gap-6 md:flex-row">
       <!-- Left Side: Appointment Info -->
       <div id="followup-details" class="flex-1 space-y-3 text-left">
         <p><span class="font-semibold">Dentist:</span> <span id="detail-dentist"></span></p>
@@ -196,10 +227,9 @@
         <p><span class="font-semibold">Preferred Date:</span> <span id="detail-date"></span></p>
         <p><span class="font-semibold">Preferred Time:</span> <span id="detail-time"></span></p>
         <p><span class="font-semibold">Service Type:</span> <span id="detail-service"></span></p>
-        <p><span class="font-semibold">Reason for Visit:</span> <span id="detail-reason"></span></p>
       </div>
       <!-- Right Side: Status Buttons -->
-      <div class="flex flex-col gap-2 items-end ml-auto">
+      <div class="flex flex-col gap-2 items-stretch md:items-end md:ml-auto">
         <button class="w-32 px-3 py-1 text-sm bg-gray-400 text-white rounded-md hover:bg-gray-500"> Not Yet Arrived </button>
         <button class="w-32 px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"> Arrived </button>
         <button class="w-32 px-3 py-1 text-sm bg-yellow-500 text-white rounded-md hover:bg-yellow-600"> On Going </button>
@@ -217,26 +247,8 @@
   </div>
 </div>
 
-
-{% comment %}
-  <!-- Service --> 
-   <div> 
-    <select id="resched-service" name="service" required 
-      class="w-full border rounded-md p-2 text-sm"> 
-        <option value="" disabled selected>Select Service
-        </option> 
-          {% for service in services %} 
-        <option value="{{ service.id }}">{{ service.service_name }}
-        </option> 
-          {% endfor %} 
-    </select> 
-  </div> 
-{% endcomment %}
-
-
 <!-- Reschedule Modal -->
 <div id="reschedule-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
-  <!-- modal content container -->
   <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md transform transition-all duration-200 opacity-0 scale-95">
     <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">
       Reschedule Appointment
@@ -260,45 +272,108 @@
         <select id="resched-location" name="location" required class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select location</option>
           <option value="Vigan">Vigan</option>
-          <option value="Magsingal">Magsingal</option>
+          <option value="Santo Domingo">Santo Domingo</option>
         </select>
       </div>
 
-      <!-- Date + Time -->
-      <div class="flex gap-2">
-        <input type="date" id="resched-date" name="date" class="flex-1 border rounded-md p-2 text-sm" required>
-        <input type="time" id="resched-time" name="time" class="flex-1 border rounded-md p-2 text-sm" required>
+      <!-- Date + Time (same style as create) -->
+      <div class="flex flex-wrap gap-2">
+        <input type="date" id="resched-date" name="date"
+              class="w-full sm:flex-1 border rounded-md p-2 text-sm"
+              required>
+
+        <!-- AM/PM -->
+        <select id="resched-ampm"
+                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+                required>
+          <option value="">AM/PM</option>
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+
+        <!-- Hour -->
+        <select id="resched-hour"
+                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+                required>
+          <option value="">Hour</option>
+        </select>
+
+        <!-- Minute -->
+        <select id="resched-minute"
+                class="w-full sm:flex-1 border rounded-md p-2 text-sm"
+                required>
+          <option value="">Min</option>
+          <option value="00">00</option>
+          <option value="05">05</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20">20</option>
+          <option value="25">25</option>
+          <option value="30">30</option>
+          <option value="35">35</option>
+          <option value="40">40</option>
+          <option value="45">45</option>
+          <option value="50">50</option>
+          <option value="55">55</option>
+        </select>
       </div>
 
 
-      <!-- Service (Checkboxes instead of multi-select) -->
+      <input type="hidden" name="time" id="resched-time-hidden">
+
+      <!-- Service (same search + tags UI, but with resched- IDs) -->
       <div>
-        <p class="font-semibold mb-1">Select Services:</p>
-        <div class="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
+        <p class="font-semibold mb-1">Select Service:</p>
+
+        <!-- Search bar -->
+        <input
+          type="text"
+          id="resched-service-search"
+          placeholder="Search services..."
+          class="w-full mb-2 border rounded-md p-2 text-sm"
+        >
+
+        <!-- Checkboxes list -->
+        <div
+          id="resched-services-checkboxes"
+          class="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2"
+        >
           {% for service in services %}
             <label class="flex items-center gap-2">
-              <input type="checkbox" name="services" value="{{ service.id }}" class="h-4 w-4 accent-blue-600">
+              <input
+                type="checkbox"
+                name="services"
+                value="{{ service.id }}"
+                class="h-4 w-4 accent-blue-600 resched-service-checkbox"
+              >
               <span>{{ service.service_name }}</span>
             </label>
           {% endfor %}
         </div>
+
+        <!-- Selected services box -->
+        <div class="mt-2 border rounded-md p-2 text-xs">
+          <p id="resched-selected-services-empty" class="text-gray-500">
+            No services selected.
+          </p>
+          <div
+            id="resched-selected-services-tags"
+            class="mt-1 flex flex-wrap gap-1"
+          ></div>
+        </div>
       </div>
 
-      <!-- Service --> 
-      <div> 
-        <select id="resched-service" name="service" required 
-          class="w-full border rounded-md p-2 text-sm"> 
-            <option value="" disabled selected>Select Service
-            </option> 
-              {% for service in services %} 
-            <option value="{{ service.id }}">{{ service.service_name }}
-            </option> 
-              {% endfor %} 
-        </select> 
-      </div> 
-
-      <!-- Reason -->
-      <textarea id="resched-reason" name="reason" rows="3" class="w-full border rounded-md p-2 text-sm"></textarea>
+      <!-- Email (prefilled from appointment) -->
+      <div>
+        <input
+          type="email"
+          id="resched-email"
+          name="email"
+          placeholder="Email"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        >
+      </div>
 
       <!-- Currently Scheduled -->
       <div class="bg-gray-100 p-3 rounded-md text-sm text-gray-700">

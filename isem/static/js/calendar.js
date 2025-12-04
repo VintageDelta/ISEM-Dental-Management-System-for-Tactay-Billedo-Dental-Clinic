@@ -12,8 +12,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const statusButtons = document.querySelectorAll("#followup-modal button");
   const branchFilterEl = document.getElementById("branch-filter");
   const eventsUrl = "/dashboard/appointment/events/";
-  
-
 
   branchFilterEl.addEventListener("change", function () {
     if (mainCalendar) mainCalendar.refetchEvents();
@@ -110,16 +108,65 @@ document.addEventListener('DOMContentLoaded', function () {
       handleWindowResize: true,
       headerToolbar: { left: "prev today", center: "title", right: "next" },
       buttonText: { today: 'Today' },
+
       events: fetchEvents,
 
-      eventDidMount: function (info) {
-        info.el.classList.add(
-          'bg-blue-500', 'text-white', 'text-xs', 'font-medium',
-          'px-2', 'py-1', 'rounded-lg', 'shadow-sm', 'truncate'
-        );
+      events: fetchEvents,
+
+      eventContent: function(info) {
+        // Only customize in month view
+        if (info.view.type !== "dayGridMonth") {
+          return {}; // default rendering in other views (if any)
+        }
+
+        const calendar = info.view.calendar;
+        const allEvents = calendar.getEvents();
+        const dateStr = info.event.startStr.split("T")[0];
+
+        // All events that start on this same day
+        const sameDayEvents = allEvents.filter(ev => ev.startStr.startsWith(dateStr));
+        const count = sameDayEvents.length;
+
+        // Only render for the earliest event of that day
+        sameDayEvents.sort((a, b) => a.start - b.start);
+        if (sameDayEvents[0].id !== info.event.id) {
+          return { domNodes: [] }; // hide this event row
+        }
+
+        // Create a small badge like "3 appointments"
+        const badge = document.createElement("div");
+        badge.style.display = "inline-block";
+        badge.style.padding = "2px 6px";
+        badge.style.borderRadius = "9999px";
+        badge.style.fontSize = "0.7rem";
+        badge.style.fontWeight = "600";
+        badge.style.backgroundColor = "#3B82F6"; // blue
+        badge.style.color = "white";
+        badge.textContent = `${count} Appt${count > 1 ? "s" : ""}`;
+
+        return { domNodes: [badge] };
       },
+
       titleFormat: { year: 'numeric', month: 'short' },
+
       dateClick: function(info) {
+        // 1) remove previous selection (if any)
+        const prev = mainCalendarEl.querySelector('.fc-daygrid-day[data-selected="true"]');
+        if (prev) {
+          prev.style.backgroundColor = "";
+          prev.style.borderRadius = "";
+          prev.style.boxShadow = "";
+          prev.dataset.selected = "false";
+        }
+
+        // 2) highlight this clicked day cell
+        const cell = info.dayEl;
+        cell.style.backgroundColor = "#e5e7eb";   // Tailwind gray-200
+        cell.style.borderRadius = "0.375rem";     // Tailwind rounded-md
+        cell.style.boxShadow = "inset 0 0 0 2px #9ca3af"; // like ring-2 ring-gray-400
+        cell.dataset.selected = "true";
+
+        // 3) keep your existing behavior: sync timeline view
         const current = timelineCalendar.view.currentStart.toISOString().split("T")[0];
         const clicked = info.date.toISOString().split("T")[0];
 
@@ -127,6 +174,9 @@ document.addEventListener('DOMContentLoaded', function () {
           timelineCalendar.changeView("timeGridDay", info.date);
         }
       }
+
+
+
     });
     mainCalendar.render();
 
@@ -150,158 +200,199 @@ document.addEventListener('DOMContentLoaded', function () {
       events: fetchEvents,
       titleFormat: { year: 'numeric', month: 'short', day: 'numeric' },
 
-      // We DON'T rely on FullCalendars default styling 
+      //added
+      eventMinHeight: 40,
+
       eventDidMount: function(info) {
-        try {
-          // debug (open console to see)
-          // console.log("eventDidMount:", info.event.id, info.event.extendedProps.status);
+        info.el.style.backgroundColor = "transparent";
+        info.el.style.border = "none";
+        info.el.style.boxShadow = "none";
+        info.el.style.padding = "0";
+      },
 
-          const status = info.event.extendedProps && info.event.extendedProps.status
-            ? info.event.extendedProps.status
-            : "not_arrived";
-          const base = colorMap[status] || "#9CA3AF";
-          const tinted = base + "33";
+      //displaying of cards and buttons
+eventContent: function(info) {
+        const status = info.event.extendedProps && info.event.extendedProps.status
+          ? info.event.extendedProps.status
+          : "not_arrived";
+        const base = colorMap[status] || "#9CA3AF";
+        const tinted = hexToRgba(base, 0.3);
 
-          // CARD deets css here cuz why not?
-          const wrapper = document.createElement("div");
-          wrapper.style.display = "flex";
-          wrapper.style.alignItems = "flex-start";
-          wrapper.style.width = "100%";
-          wrapper.style.height = "100%";
-          wrapper.style.boxSizing = "border-box";
-          wrapper.style.padding = "6px 8px";
-          wrapper.style.borderRadius = "8px";
-          wrapper.style.overflow = "hidden";
-          wrapper.style.backgroundColor = tinted;
-          wrapper.style.minHeight = "60px"; // height of the Card
-          wrapper.style.cursor = "pointer";
+        // Outer card
+        const wrapper = document.createElement("div");
+        wrapper.style.display = "flex";
+        wrapper.style.alignItems = "stretch";
+        wrapper.style.width = "100%";
+        wrapper.style.height = "100%";
+        wrapper.style.boxSizing = "border-box";
+        wrapper.style.padding = "6px 8px";
+        wrapper.style.borderRadius = "8px";
+        wrapper.style.overflow = "hidden";
+        wrapper.style.backgroundColor = tinted;
+        wrapper.style.minHeight = "40px";
+        wrapper.style.cursor = "pointer";
 
-          const stripe = document.createElement("div");
-          stripe.style.width = "6px";
-          stripe.style.height = "100%";
-          stripe.style.flex = "0 0 6px";
-          stripe.style.borderRadius = "6px 0 0 6px";
-          stripe.style.marginRight = "8px";
-          stripe.style.backgroundColor = base;
-          stripe.style.pointerEvents = "none";
+        const stripe = document.createElement("div");
+        stripe.style.width = "6px";
+        stripe.style.height = "100%";
+        stripe.style.flex = "0 0 6px";
+        stripe.style.borderRadius = "6px 0 0 6px";
+        stripe.style.marginRight = "8px";
+        stripe.style.backgroundColor = base;
+        stripe.style.pointerEvents = "none";
 
-          const content = document.createElement("div");
-          content.style.flex = "1";
-          content.style.minWidth = "0"; 
-          content.style.color = "#0f172a";
+        // Main content: vertical (title on top, time+buttons at bottom)
+        const content = document.createElement("div");
+        content.style.flex = "1";
+        content.style.minWidth = "0";
+        content.style.color = "#0f172a";
+        content.style.display = "flex";
+        content.style.flexDirection = "column";
+        content.style.alignItems = "flex-start";
+        content.style.justifyContent = "space-between";
 
-          const title = document.createElement("div");
-          title.textContent = info.event.title || "";
-          title.style.whiteSpace = "nowrap";
-          title.style.overflow = "hidden";
-          title.style.textOverflow = "ellipsis";
-          title.style.fontSize = "0.9rem";
-          title.style.fontWeight = "600";
-          title.style.marginBottom = "2px";
+        // Title (top-left)
+        const title = document.createElement("div");
+        title.textContent = info.event.title || "";
+        title.style.whiteSpace = "nowrap";
+        title.style.overflow = "hidden";
+        title.style.textOverflow = "ellipsis";
+        title.style.fontSize = "0.9rem";
+        title.style.fontWeight = "600";
+        title.style.marginBottom = "0px"; //was 2
 
-          const startTime = info.event.start
-            ? info.event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-            : "";
-          const endTime = info.event.end
-            ? info.event.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-            : "";
-          const time = document.createElement("div");
-          time.textContent = endTime ? `${startTime} - ${endTime}` : startTime;
-          time.style.fontSize = "0.75rem";
-          time.style.color = "#475569";
-          time.style.marginBottom = "4px";
+        // Bottom row: time (left) + buttons (right)
+        const bottomRow = document.createElement("div");
+        bottomRow.style.display = "flex";
+        bottomRow.style.alignItems = "center";
+        bottomRow.style.justifyContent = "space-between";
+        bottomRow.style.width = "100%";
+        bottomRow.style.gap = "4px"; //was 8
 
-          content.appendChild(title);
-          content.appendChild(time);
+        // Time (bottom-left)
+        const startTime = info.event.start
+          ? info.event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          : "";
+        const endTime = info.event.end
+          ? info.event.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          : "";
+        const time = document.createElement("div");
+        time.textContent = endTime ? `${startTime} - ${endTime}` : startTime;
+        time.style.fontSize = "0.75rem";
+        time.style.color = "#475569";
 
-          // Add buttons if in day view
-          if (info.view && info.view.type === "timeGridDay") {
-            const btnContainer = document.createElement("div");
-            btnContainer.style.marginTop = "6px";
-            btnContainer.style.display = "flex";
-            btnContainer.style.gap = "6px";
+        // Buttons (bottom-right)
+        const btnRow = document.createElement("div");
+        btnRow.style.display = "flex";
+        btnRow.style.flexShrink = "0";
+        btnRow.style.gap = "2px"; //was 4
+        btnRow.style.flexWrap = "wrap";
+        btnRow.style.justifyContent = "flex-end";
 
-            const followBtn = document.createElement("button");
-            followBtn.textContent = "Follow up";
-            followBtn.style.padding = "4px 8px";
-            followBtn.style.fontSize = "0.7rem";
-            followBtn.style.borderRadius = "6px";
-            followBtn.style.background = "#16a34a";
-            followBtn.style.color = "#fff";
-            followBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              currentEventId = info.event.id;
-              document.getElementById("detail-dentist").textContent = info.event.extendedProps.dentist || "N/A";
-              document.getElementById("detail-location").textContent = info.event.extendedProps.location || "N/A";
-              document.getElementById("detail-date").textContent = info.event.extendedProps.preferred_date || "N/A";
-              document.getElementById("detail-time").textContent = info.event.extendedProps.preferred_time || "N/A";
-              document.getElementById("detail-service").textContent = info.event.extendedProps.service || "N/A";
-              document.getElementById("detail-reason").textContent = info.event.extendedProps.reason || "N/A";
-              openModal("followup-modal");
-            });
+        if (info.view && info.view.type === "timeGridDay") {
+          const followBtn = document.createElement("button");
+          followBtn.textContent = "Follow up";
+          followBtn.style.padding = "4px 8px";
+          followBtn.style.fontSize = "0.7rem";
+          followBtn.style.borderRadius = "6px";
+          followBtn.style.background = "#16a34a";
+          followBtn.style.color = "#fff";
+          followBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            currentEventId = info.event.id;
+            document.getElementById("detail-dentist").textContent = info.event.extendedProps.dentist || "N/A";
+            document.getElementById("detail-location").textContent = info.event.extendedProps.location || "N/A";
+            document.getElementById("detail-date").textContent = info.event.extendedProps.preferred_date || "N/A";
+            document.getElementById("detail-time").textContent = info.event.extendedProps.preferred_time || "N/A";
+            document.getElementById("detail-service").textContent = info.event.extendedProps.service || "N/A";
+            openModal("followup-modal");
+          });
 
-            const rescheduleBtn = document.createElement("button");
-            rescheduleBtn.textContent = "Reschedule";
-            rescheduleBtn.style.padding = "4px 8px";
-            rescheduleBtn.style.fontSize = "0.7rem";
-            rescheduleBtn.style.borderRadius = "6px";
-            rescheduleBtn.style.background = "#2563eb";
-            rescheduleBtn.style.color = "#fff";
+          const rescheduleBtn = document.createElement("button");
+          rescheduleBtn.textContent = "Reschedule";
+          rescheduleBtn.style.padding = "4px 8px";
+          rescheduleBtn.style.fontSize = "0.7rem";
+          rescheduleBtn.style.borderRadius = "6px";
+          rescheduleBtn.style.background = "#2563eb";
+          rescheduleBtn.style.color = "#fff";
 
-            //resched btn handler
-            rescheduleBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              currentEventId = info.event.id;
+          rescheduleBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            currentEventId = info.event.id;
 
-              // Prefill form fields
-              document.getElementById("resched-dentist").value = info.event.extendedProps.dentist_id || "";
-              document.getElementById("resched-location").value = info.event.extendedProps.location || "";
-              document.getElementById("resched-date").value = info.event.extendedProps.preferred_date || "";
-              document.getElementById("resched-time").value = info.event.extendedProps.preferred_time
-                ? convertTo24Hour(info.event.extendedProps.preferred_time)
-                : "";
-              const selectedServices = info.event.extendedProps.service_ids || [];
-              document.querySelectorAll('#resched-services-checkboxes input[type="checkbox"]').forEach(cb => {
-                  cb.checked = selectedServices.includes(parseInt(cb.value));
+            const props = info.event.extendedProps || {};
+
+            document.getElementById("resched-dentist").value = props.dentist_id || "";
+            document.getElementById("resched-location").value = props.location || "";
+            document.getElementById("resched-date").value = props.preferred_date || props.date || "";
+            document.getElementById("resched-email").value = props.email || "";
+
+            const prefTime = props.preferred_time || props.time;
+            if (prefTime) {
+              const [timePart, ampm] = prefTime.split(" ");
+              let [hh, mm] = timePart.split(":");
+              document.getElementById("resched-ampm").value = ampm || "";
+              const hourSel = document.getElementById("resched-hour");
+              hourSel.innerHTML = '<option value="">Hour</option>';
+
+              if (ampm === "AM") {
+                ["7", "8", "9", "10", "11"].forEach(h => {
+                  const opt = document.createElement("option");
+                  opt.value = h;
+                  opt.textContent = h;
+                  hourSel.appendChild(opt);
+                });
+              } else if (ampm === "PM") {
+                ["12", "1", "2", "3", "4", "5"].forEach(h => {
+                  const opt = document.createElement("option");
+                  opt.value = h;
+                  opt.textContent = h;
+                  hourSel.appendChild(opt);
+                });
+              }
+
+              if (hh && hh.startsWith("0")) hh = hh.substring(1);
+              hourSel.value = hh || "";
+              document.getElementById("resched-minute").value = mm || "";
+            }
+
+            const selectedServices = props.service_ids || [];
+            document.querySelectorAll('#resched-services-checkboxes input.resched-service-checkbox')
+              .forEach(cb => {
+                cb.checked = selectedServices.includes(parseInt(cb.value));
               });
-              document.getElementById("resched-reason").value = info.event.extendedProps.reason || "";
 
-              // Show current scheduled time
-              const start = info.event.start;
-              const formatted = start.toLocaleString("en-US", { 
-                weekday: "long", month: "short", day: "numeric", 
-                hour: "numeric", minute: "2-digit" 
-              });
-              document.getElementById("resched-current-time").textContent = formatted;
+            if (typeof refreshReschedSelectedServiceTags === "function") {
+              refreshReschedSelectedServiceTags();
+            }
 
-              openModal("reschedule-modal");
+            const start = info.event.start;
+            const formatted = start.toLocaleString("en-US", {
+              weekday: "long", month: "short", day: "numeric",
+              hour: "numeric", minute: "2-digit"
             });
+            document.getElementById("resched-current-time").textContent = formatted;
 
+            openModal("reschedule-modal");
+          });
 
-            btnContainer.appendChild(followBtn);
-            btnContainer.appendChild(rescheduleBtn);
-            content.appendChild(btnContainer);
-          }
-
-          wrapper.appendChild(stripe);
-          wrapper.appendChild(content);
-
-          // Replace inner content of the FC-generated node with our card
-          info.el.innerHTML = "";
-          // remove FC default backgrounds that might override
-          info.el.style.background = "transparent";
-          info.el.style.border = "none";
-          info.el.style.padding = "0";
-          info.el.style.boxShadow = "none";
-          // make the outer container allow our card to stretch
-          info.el.style.display = "flex";
-          info.el.style.alignItems = "stretch";
-
-          info.el.appendChild(wrapper);
-        } catch (err) {
-          console.error("eventDidMount error:", err);
+          btnRow.appendChild(followBtn);
+          btnRow.appendChild(rescheduleBtn);
         }
+
+        bottomRow.appendChild(time);
+        bottomRow.appendChild(btnRow);
+
+        content.appendChild(title);
+        content.appendChild(bottomRow);
+
+        wrapper.appendChild(stripe);
+        wrapper.appendChild(content);
+
+        return { domNodes: [wrapper] };
       }
+
+
     });
 
     //renders the calendar
@@ -368,7 +459,6 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById("detail-date").textContent = ev.extendedProps.preferred_date || "N/A";
             document.getElementById("detail-time").textContent = ev.extendedProps.preferred_time || "N/A";
             document.getElementById("detail-service").textContent = ev.extendedProps.service || "N/A";
-            document.getElementById("detail-reason").textContent = ev.extendedProps.reason || "N/A";
             openModal("followup-modal");
           });
 
@@ -384,6 +474,16 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 
+function hexToRgba(hex, alpha) {
+  hex = hex.replace("#", "");
+  if (hex.length === 3) {
+    hex = hex.split("").map(ch => ch + ch).join("");
+  }
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 // --- Helper to get CSRF token from cookies ---
 function getCookie(name) {

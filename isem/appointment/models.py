@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import datetime, timedelta
+import uuid
 
 # table of Dentist
 class Dentist(models.Model):
@@ -33,9 +34,9 @@ class Appointment(models.Model):
     preferred_date = models.DateField(null=True, blank=True)
     preferred_time = models.TimeField(null=True, blank=True)
     services = models.ManyToManyField(Service, related_name="appointments")
-    reason = models.TextField()
+    reason = models.TextField(blank=True)
     email = models.EmailField(null=False, blank=False)
-    id_no = models.CharField(max_length=255, null=False, blank=False)
+
 
     # NEW FIELD
     status = models.CharField(
@@ -44,9 +45,15 @@ class Appointment(models.Model):
         default="not_arrived"
     )
 
+    @property
+    def display_id(self):
+        # Example: APT-000123
+        return f"APT-{self.id:06d}"
+    
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
+        # Compute end_time based on selected services
         total_duration = sum(s.duration for s in self.services.all())
 
         if self.time and self.date and total_duration > 0:

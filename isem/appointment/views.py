@@ -33,10 +33,8 @@ def appointment_page(request):
         dentist_id = request.POST.get("dentist")
         location = request.POST.get("location")
         date_str = request.POST.get("date")
-        time_str = request.POST.get("time") 
-        reason = request.POST.get("reason")
+        time_str = request.POST.get("time")
         email = request.POST.get("email")
-        id_no = request.POST.get("id_no")
 
         service_ids = request.POST.getlist("services")
         selected_services = Service.objects.filter(id__in=service_ids)
@@ -71,9 +69,7 @@ def appointment_page(request):
             end_time=end_time,
             preferred_date=date_obj,
             preferred_time=preferred_time,
-            reason=reason,
             email=email,
-            id_no=id_no,
         )
         appointment.services.set(selected_services)
 
@@ -90,12 +86,12 @@ def appointment_page(request):
     })
 
 
-# Mainly for Displaying Sruff, REQUEST
+# Mainly for pre-Displaying or-prefilling Sruff, REQUEST
 def events(request):
-    branch = request.GET.get("branch")  # ← NEW
+    branch = request.GET.get("branch")
     appointments = Appointment.objects.all()
 
-    if branch:  # filter only if a branch is selected
+    if branch:
         appointments = appointments.filter(location=branch)
 
     events = []
@@ -109,6 +105,8 @@ def events(request):
         }
 
         service_names = ", ".join([s.service_name for s in a.services.all()])
+        service_ids = list(a.services.values_list("id", flat=True))
+        dentist_obj = Dentist.objects.filter(name=a.dentist_name).first()
 
         events.append({
             "id": a.id,
@@ -118,11 +116,15 @@ def events(request):
             "color": color_map.get(a.status, "gray"),
             "extendedProps": {
                 "dentist": a.dentist_name,
+                "dentist_id": dentist_obj.id if dentist_obj else None,
                 "location": a.location,
                 "date": str(a.date),
                 "time": a.time.strftime("%I:%M %p"),
+                "preferred_date": str(a.preferred_date) if a.preferred_date else None,
+                "preferred_time": a.preferred_time.strftime("%I:%M %p") if a.preferred_time else None,
                 "service": service_names,
-                "reason": a.reason,
+                "service_ids": service_ids,
+                "email": a.email,
                 "status": a.status,
             }
         })
@@ -170,7 +172,6 @@ def reschedule_appointment(request, appointment_id):
     location = request.POST.get("location")
     date = request.POST.get("date")
     time_str = request.POST.get("time")
-    reason = request.POST.get("reason")
 
     service_ids = request.POST.getlist("services")
 
@@ -178,7 +179,6 @@ def reschedule_appointment(request, appointment_id):
     appt.location = location
     appt.date = date
     appt.time = time_str
-    appt.reason = reason
     appt.services.set(service_ids)
     appt.save()
 

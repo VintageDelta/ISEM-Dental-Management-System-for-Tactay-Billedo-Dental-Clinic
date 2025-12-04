@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize
   initTimeValidation();
+  initRescheduleForm();
 });
 
 // ===== Modal Helpers =====
@@ -88,12 +89,15 @@ function initTimeValidation() {
     timeError.textContent = ready ? "" : "Please select dentist, location, and date first.";
 
     if (ready) {
-      const booked = await fetchBookedTimes(dentistSelect.value, dateInput.value, locationSelect.value);
+      const booked = await fetchBookedTimes(
+        dentistSelect.value,
+        dateInput.value,
+        locationSelect.value
+      );
 
-      // Reset hour options
+      // Reset hour options (if they exist)
       Array.from(hourSelect.options).forEach(o => {
         o.disabled = false;
-        o.textContent = o.textContent.replace(" (Booked)", "");
       });
 
       // Disable booked hours
@@ -105,17 +109,44 @@ function initTimeValidation() {
           const hour12 = (h % 12) || 12;
           const opt = hourSelect.querySelector(`option[value="${hour12}"]`);
           if (opt) {
-            opt.disabled = true;
-            if (!opt.textContent.includes("Booked")) opt.textContent += " (Booked)";
+            opt.disabled = true; // browser will gray it out
           }
         }
       });
     }
   }
 
+  // When dentist/date/location change, (re)fetch and apply booked times
   dentistSelect.addEventListener("change", toggleTimeInputs);
   dateInput.addEventListener("change", toggleTimeInputs);
   locationSelect.addEventListener("change", toggleTimeInputs);
+
+  // When AM/PM changes, rebuild hours AND then reapply booked-time disabling
+  ampmSelect.addEventListener("change", function () {
+    const ampm = this.value;
+
+    // Reset hour dropdown
+    hourSelect.innerHTML = `<option value="">Hour</option>`;
+
+    if (ampm === "AM") {
+      // 7 AM to 11 AM
+      const hours = ["7", "8", "9", "10", "11"];
+      hours.forEach(h => {
+        hourSelect.innerHTML += `<option value="${h}">${h}</option>`;
+      });
+    }
+
+    if (ampm === "PM") {
+      // 12 PM to 5 PM
+      const hours = ["12", "1", "2", "3", "4", "5"];
+      hours.forEach(h => {
+        hourSelect.innerHTML += `<option value="${h}">${h}</option>`;
+      });
+    }
+
+    // After regenerating hour options, apply booked/disabled state
+    toggleTimeInputs();
+  });
 
   // Update hidden time input when user selects custom time
   [hourSelect, minuteSelect, ampmSelect].forEach(el => {
@@ -129,31 +160,85 @@ function initTimeValidation() {
   });
 
   toggleTimeInputs(); // initial
+
+    // ===== Service search + selected tags =====
+  const serviceSearchInput = document.getElementById("service-search");
+  const servicesContainer = document.getElementById("services-checkboxes");
+  const serviceCheckboxes = servicesContainer
+    ? servicesContainer.querySelectorAll('input.service-checkbox')
+    : [];
+  const selectedTagsContainer = document.getElementById("selected-services-tags");
+  const selectedEmptyText = document.getElementById("selected-services-empty");
+
+  function refreshSelectedServiceTags() {
+    if (!selectedTagsContainer || !selectedEmptyText) return;
+
+    selectedTagsContainer.innerHTML = "";
+
+    const checked = Array.from(serviceCheckboxes).filter(cb => cb.checked);
+
+    if (checked.length === 0) {
+      selectedEmptyText.classList.remove("hidden");
+      return;
+    }
+
+    selectedEmptyText.classList.add("hidden");
+
+    checked.forEach(cb => {
+      const label = cb.closest("label");
+      const nameEl = label ? label.querySelector("span") : null;
+      const name = nameEl ? nameEl.textContent.trim() : `Service ${cb.value}`;
+
+      // Create a pill/tag
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className =
+        "flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 " +
+        "rounded-full text-xs hover:bg-blue-200";
+
+      const text = document.createElement("span");
+      text.textContent = name;
+
+      const close = document.createElement("span");
+      close.textContent = "✕";
+      close.className = "text-[10px]";
+
+      pill.appendChild(text);
+      pill.appendChild(close);
+
+      // Clicking the pill unchecks the checkbox and refreshes
+      pill.addEventListener("click", () => {
+        cb.checked = false;
+        refreshSelectedServiceTags();
+      });
+
+      selectedTagsContainer.appendChild(pill);
+    });
+  }
+
+  // Hook checkboxes to refresh tags
+  Array.from(serviceCheckboxes).forEach(cb => {
+    cb.addEventListener("change", refreshSelectedServiceTags);
+  });
+
+  // Live search filter on services
+  if (serviceSearchInput && servicesContainer) {
+    serviceSearchInput.addEventListener("input", () => {
+      const q = serviceSearchInput.value.toLowerCase();
+
+      servicesContainer.querySelectorAll("label").forEach(label => {
+        const nameEl = label.querySelector("span");
+        const name = nameEl ? nameEl.textContent.toLowerCase() : "";
+        label.style.display = name.includes(q) ? "" : "none";
+      });
+    });
+  }
+
+  // Initial state
+  refreshSelectedServiceTags();
+
 }
 
-document.getElementById("ampm").addEventListener("change", function () {
-    const ampm = this.value;
-    const hour = document.getElementById("hour");
-    
-    // Reset hour dropdown
-    hour.innerHTML = `<option value="">Hour</option>`;
-
-    if (ampm === "AM") {
-        // 7 AM to 11 AM
-        const hours = ["7", "8", "9", "10", "11"];
-        hours.forEach(h => {
-            hour.innerHTML += `<option value="${h}">${h}</option>`;
-        });
-    }
-
-    if (ampm === "PM") {
-        // 12 PM to 5 PM
-        const hours = ["12", "1", "2", "3", "4", "5"];
-        hours.forEach(h => {
-            hour.innerHTML += `<option value="${h}">${h}</option>`;
-        });
-    }
-});
 
 // ===== Success Modal =====
 const successModal = document.getElementById("success-modal");
@@ -187,3 +272,119 @@ successModal?.addEventListener("click", e => {
   if (e.target === successModal) closeSuccessModal();
 });
 
+function to24Hour(hour, ampm) {
+  hour = parseInt(hour);
+  if (ampm === "PM" && hour < 12) return hour + 12;
+  if (ampm === "AM" && hour === 12) return 0;
+  return hour;
+}
+
+function initRescheduleForm() {
+  const hourSelect = document.getElementById("resched-hour");
+  const minuteSelect = document.getElementById("resched-minute");
+  const ampmSelect = document.getElementById("resched-ampm");
+  const timeHidden = document.getElementById("resched-time-hidden");
+
+  // Rebuild hours when AM/PM changes
+  ampmSelect?.addEventListener("change", function() {
+    const ampm = this.value;
+    hourSelect.innerHTML = '<option value="">Hour</option>';
+
+    if (ampm === "AM") {
+      ["7", "8", "9", "10", "11"].forEach(h => {
+        const opt = document.createElement("option");
+        opt.value = h;
+        opt.textContent = h;
+        hourSelect.appendChild(opt);
+      });
+    } else if (ampm === "PM") {
+      ["12", "1", "2", "3", "4", "5"].forEach(h => {
+        const opt = document.createElement("option");
+        opt.value = h;
+        opt.textContent = h;
+        hourSelect.appendChild(opt);
+      });
+    }
+  });
+
+  // Update hidden 24h time
+  [hourSelect, minuteSelect, ampmSelect].forEach(el => {
+    el?.addEventListener("change", () => {
+      const h = hourSelect.value;
+      const m = minuteSelect.value;
+      const ampm = ampmSelect.value;
+      if (!h || !m || !ampm) return;
+      timeHidden.value = `${String(to24Hour(h, ampm)).padStart(2, "0")}:${m}`;
+    });
+  });
+
+  // ===== Service search + selected tags for reschedule =====
+  const serviceSearchInput = document.getElementById("resched-service-search");
+  const servicesContainer = document.getElementById("resched-services-checkboxes");
+  const serviceCheckboxes = servicesContainer
+    ? servicesContainer.querySelectorAll('input.resched-service-checkbox')
+    : [];
+  const selectedTagsContainer = document.getElementById("resched-selected-services-tags");
+  const selectedEmptyText = document.getElementById("resched-selected-services-empty");
+
+  window.refreshReschedSelectedServiceTags = function() {
+    if (!selectedTagsContainer || !selectedEmptyText) return;
+
+    selectedTagsContainer.innerHTML = "";
+
+    const checked = Array.from(serviceCheckboxes).filter(cb => cb.checked);
+
+    if (checked.length === 0) {
+      selectedEmptyText.classList.remove("hidden");
+      return;
+    }
+
+    selectedEmptyText.classList.add("hidden");
+
+    checked.forEach(cb => {
+      const label = cb.closest("label");
+      const nameEl = label ? label.querySelector("span") : null;
+      const name = nameEl ? nameEl.textContent.trim() : `Service ${cb.value}`;
+
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className =
+        "flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 " +
+        "rounded-full text-xs hover:bg-blue-200";
+
+      const text = document.createElement("span");
+      text.textContent = name;
+
+      const close = document.createElement("span");
+      close.textContent = "✕";
+      close.className = "text-[10px]";
+
+      pill.appendChild(text);
+      pill.appendChild(close);
+
+      pill.addEventListener("click", () => {
+        cb.checked = false;
+        refreshReschedSelectedServiceTags();
+      });
+
+      selectedTagsContainer.appendChild(pill);
+    });
+  };
+
+  Array.from(serviceCheckboxes).forEach(cb => {
+    cb.addEventListener("change", refreshReschedSelectedServiceTags);
+  });
+
+  if (serviceSearchInput && servicesContainer) {
+    serviceSearchInput.addEventListener("input", () => {
+      const q = serviceSearchInput.value.toLowerCase();
+      servicesContainer.querySelectorAll("label").forEach(label => {
+        const nameEl = label.querySelector("span");
+        const name = nameEl ? nameEl.textContent.toLowerCase() : "";
+        label.style.display = name.includes(q) ? "" : "none";
+      });
+    });
+  }
+
+  refreshReschedSelectedServiceTags();
+}
