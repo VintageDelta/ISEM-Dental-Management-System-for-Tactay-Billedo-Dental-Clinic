@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+from appointment.models import Service
+
 
 class Patient(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='patient_patient', 
@@ -45,11 +47,12 @@ class Odontogram(models.Model):
     patient = models.ForeignKey(Patient, related_name="odontograms", on_delete=models.CASCADE)
     tooth_number = models.PositiveIntegerField()
     date = models.DateField(auto_now_add=True)
-    condition = models.CharField(max_length=255)
-    treatment = models.CharField(max_length=255, blank=True, null=True)
+    service = models.ManyToManyField(Service, blank=True)
+    # condition = models.CharField(max_length=255)
+    # treatment = models.CharField(max_length=255, blank=True, null=True)
     dentist = models.CharField(max_length=255, blank=True, null=True)
     status = models.CharField(max_length=100, blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
+    # notes = models.TextField(blank=True, null=True)
     
 
 def __str__(self):

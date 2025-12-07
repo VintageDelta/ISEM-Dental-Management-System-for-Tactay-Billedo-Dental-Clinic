@@ -5,19 +5,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeBtn = document.getElementById("close-popup-btn");
   const addMedBtn = document.getElementById("add-medical-btn");
   const addFinBtn = document.getElementById("add-financial-btn");
+  const addOdontogramBtn = document.getElementById("add-odontogram-btn");
+
   const medicalTab = document.getElementById("medicalTab");
   const financialTab = document.getElementById("financialTab");
+  const odontogramTab = document.getElementById("odontogramTab");
+
   const medicalForm = document.getElementById("medicalForm");
   const financialForm = document.getElementById("financialForm");
+  const odontogramForm = document.getElementById("odontogramForm");
 
   function showForm(type) {
-    if (!medicalForm || !financialForm) return;
+    if (!medicalForm || !financialForm || !odontogramForm) return;
     if (type === "medical") {
       medicalForm.classList.remove("hidden");
       financialForm.classList.add("hidden");
+      odontogramForm.classList.add("hidden");
     } else if (type === "financial") {
       financialForm.classList.remove("hidden");
       medicalForm.classList.add("hidden");
+      odontogramForm.classList.add("hidden");
+    } else if (type === "odontogram") {
+      odontogramForm.classList.remove("hidden");
+      medicalForm.classList.add("hidden");
+      financialForm.classList.add("hidden");
     }
   }
 
@@ -39,6 +50,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (addFinBtn)
     addFinBtn.addEventListener("click", () =>
       openPopup(financialUrl, "financial")
+    );
+  if (addOdontogramBtn)
+    addOdontogramBtn.addEventListener("click", () =>
+      openPopup(odontogramUrl, "odontogram")
     );
 
 
@@ -62,14 +77,27 @@ document.addEventListener("DOMContentLoaded", () => {
   medicalTab.addEventListener("click", () => {
     document.getElementById("medicalContent").classList.remove("hidden");
     document.getElementById("financialContent").classList.add("hidden");
+    document.getElementById("odontogramContent").classList.add("hidden");
     addMedBtn.classList.remove("hidden");
     addFinBtn.classList.add("hidden");
+    addOdontogramBtn.classList.add("hidden");
   });
 
   financialTab.addEventListener("click", () => {
     document.getElementById("financialContent").classList.remove("hidden");
     document.getElementById("medicalContent").classList.add("hidden");
+    document.getElementById("odontogramContent").classList.add("hidden");
     addFinBtn.classList.remove("hidden");
     addMedBtn.classList.add("hidden");
+    addOdontogramBtn.classList.add("hidden");
+  });
+
+  odontogramTab.addEventListener("click", () => {
+    document.getElementById("odontogramContent").classList.remove("hidden");
+    document.getElementById("medicalContent").classList.add("hidden");
+    document.getElementById("financialContent").classList.add("hidden");
+    addFinBtn.classList.add("hidden");
+    addMedBtn.classList.add("hidden");
+    addOdontogramBtn.classList.remove("hidden");
   });
 });

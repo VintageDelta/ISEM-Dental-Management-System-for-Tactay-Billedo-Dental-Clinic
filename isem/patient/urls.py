@@ -13,6 +13,7 @@ urlpatterns = [
     path("<int:patient_id>/financial_history/", views.financial_history, name="financial_history"),
     path("<int:patient_id>/add_financial_history/", views.add_financial_history, name="add_financial_history"),
     path("<int:patient_id>/odontogram/", views.odontogram, name="odontogram"),
+    path("<int:patient_id>/add_odontogram/", views.add_odontogram, name="add_odontogram"),
     path("<int:patient_id>/odontogram_history/", views.odontogram_history, name="odontogram_history"),
     path("<int:patient_id>/update_odontogram/", views.update_odontogram, name="update_odontogram"),
 ]

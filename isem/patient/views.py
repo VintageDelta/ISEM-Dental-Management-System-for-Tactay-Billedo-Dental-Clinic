@@ -3,8 +3,8 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
-
 from .models import Patient, MedicalHistory, FinancialHistory, Odontogram
+from appointment.models import Dentist, Service
 def patient_records(request):
     if request.method == "POST":
         name = request.POST.get("name")
@@ -50,7 +50,7 @@ def patient_records(request):
          return render(request, "patient/patient-records.html", {"patients": patients})
     else:
         patient = get_object_or_404(Patient, email=request.user.email)
-    return render(request, "patient/medical_history.html", {"patient": patient})
+    return medical_history(request, pk=patient.id)
 
 
 def delete_patient(request, pk):
@@ -78,7 +78,7 @@ def medical_history(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
     history = patient.medical_history.all() 
     tooth_num = range(1, 33)
-    return render(request, "patient/medical_history.html", {"patient": patient, "history": history, "tooth_num": tooth_num  })
+    return render(request, "patient/medical_history.html", {"patient": patient, "history": history, "tooth_num": tooth_num, "services": Service.objects.all(), "dentists": Dentist.objects.all()})
 
 def add_medical_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
@@ -157,15 +157,26 @@ def odontogram(request, patient_id):
     tooth_num = range(1, 33)
     tooth_names = TOOTH_NAMES
 
-    return render(request, "patient/medical_history.html", {"patient": patient, "tooth_num": tooth_num, "tooth_name": tooth_names})
+    services = Service.objects.all()
+    dentists = Dentist.objects.all()
+
+    return render(request, "patient/medical_history.html", {"patient": patient, "tooth_num": tooth_num, "tooth_name": tooth_names, "services": services, "dentists": dentists})
 
 def add_odontogram(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     if request.method == "POST":
+        print("POST DATA:", request.POST)
+        print("tooth_number getlist:", request.POST.getlist("tooth_number"))
+        tooth_number=request.POST.get("tooth_number")
+        services=request.POST.getlist("services")
+        dentists=request.POST.get("dentist"),
         Odontogram.objects.create(
             patient=patient,
-            tooth_number=request.POST.get("tooth_number"),
-            condition=request.POST.get("condition"),
+            tooth_number=tooth_number,
+            # services=services,
+            # dentists=dentists,
+            
+            
         )
         return redirect("patient:odontogram", patient_id=patient_id)
     return render(request, "patient/medical_history.html", {"patient": patient})

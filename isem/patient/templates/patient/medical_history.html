@@ -1,438 +1,525 @@
-{% extends "core/base.html" %} {% load static %} {% block content %}
+  {% extends "core/base.html" %} {% load static %} {% block content %}
 
-<!-- === TAB BUTTONS === -->
-<div class="flex items-center space-x-4 mb-6">
-  <button
-    id="medicalTab"
-    class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none"
-  >
-    Medical History
-  </button>
-  <button
-    id="financialTab"
-    class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
-  >
-    Billing History
-  </button>
-  <button
-    id="odontogramTab"
-    class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
-  >
-    Odontogram
-  </button>
-  {% if user.is_staff or user.is_superuser %}
-  <button
-    id="add-medical-btn"
-    class="items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
-  >
-    + Add Record
-  </button>
-  <button
-    id="add-financial-btn"
+  <!-- === TAB BUTTONS === -->
+  <div class="flex items-center space-x-4 mb-6">
+    <button
+      id="medicalTab"
+      class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none"
+    >
+      Medical History
+    </button>
+    <button
+      id="financialTab"
+      class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
+    >
+      Billing History
+    </button>
+    <button
+      id="odontogramTab"
+      class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
+    >
+      Odontogram
+    </button>
+    {% if user.is_staff or user.is_superuser %}
+    <button
+      id="add-medical-btn"
+      class="items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
+    >
+      + Add Record
+    </button>
+    <button
+      id="add-financial-btn"
+      class="hidden items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
+    >
+      + Add Record
+    </button>
+    <button
+    id="add-odontogram-btn"
     class="hidden items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
   >
     + Add Record
   </button>
-  {% endif %}
-</div>
-
-<!-- === MEDICAL TAB CONTENT === -->
-<div id="medicalContent" class="space-y-4">
-  <div class="overflow-x-auto bg-white shadow rounded-lg">
-    <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Dentist
-          </th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Reason
-          </th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Diagnosis
-          </th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Service
-          </th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Treatment
-          </th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Prescriptions
-          </th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        {% for record in history %}
-        <tr class="hover:bg-gray-100">
-          <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
-          <td class="px-4 py-2">{{ record.dentist }}</td>
-          <td class="px-4 py-2">{{ record.reason }}</td>
-          <td class="px-4 py-2">{{ record.diagnosis }}</td>
-          <td class="px-4 py-2">{{ record.service }}</td>
-          <td class="px-4 py-2">{{ record.treatment }}</td>
-          <td class="px-4 py-2">{{ record.prescriptions }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7" class="px-4 py-6 text-center text-gray-500">
-            No medical history records yet.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    {% endif %}
   </div>
-</div>
 
-<!-- === FINANCIAL TAB CONTENT === -->
-<div id="financialContent" class="space-y-4 hidden">
-  <div class="overflow-x-auto bg-white shadow rounded-lg">
-    <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Number
-          </th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Description
-          </th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">Time</th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">Type</th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Amount
-          </th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Balance
-          </th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        {% for record in history %}
-        <tr class="hover:bg-gray-100">
-          <td class="px-4 py-2">{{ record.number }}</td>
-          <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
-          <td class="px-4 py-2">{{ record.description }}</td>
-          <td class="px-4 py-2">{{ record.time|time:"H:i" }}</td>
-          <td class="px-4 py-2">{{ record.type }}</td>
-          <td class="px-4 py-2">{{ record.amount }}</td>
-          <td class="px-4 py-2">{{ record.balance }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7" class="px-4 py-6 text-center text-gray-500">
-            No financial history records yet.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-<!-- === ODONTOGRAM TAB CONTENT === -->
-<div id="odontogramContent" class="space-y-4 hidden">
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-    <!-- Odontogram -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <h2 class="text-lg font-semibold mb-4 text-center">Odontogram</h2>
-      <div class="grid grid-cols-1 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-        {% for tooth_num in tooth_num %}
-        <button
-          class="w-10 h-10 flex items-center justify-center border rounded hover:bg-blue-100 text-sm"
-          onclick="selectTooth('{{ tooth_num }}')"
-        >
-          {{ tooth_num }}
-        </button>
-        {% endfor %}
-      </div>
+  <!-- === MEDICAL TAB CONTENT === -->
+  <div id="medicalContent" class="space-y-4">
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Dentist
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Reason
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Diagnosis
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Service
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Treatment
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Prescriptions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for record in history %}
+          <tr class="hover:bg-gray-100">
+            <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
+            <td class="px-4 py-2">{{ record.dentist }}</td>
+            <td class="px-4 py-2">{{ record.reason }}</td>
+            <td class="px-4 py-2">{{ record.diagnosis }}</td>
+            <td class="px-4 py-2">{{ record.service }}</td>
+            <td class="px-4 py-2">{{ record.treatment }}</td>
+            <td class="px-4 py-2">{{ record.prescriptions }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-4 py-6 text-center text-gray-500">
+              No medical history records yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-
-    <!-- Show Selection-->
-    <div class="bg-white rounded-lg shadow p-6">
-      <div id="tooth-history">
-        <p class="text-gray-500 text-center">
-          Select a tooth to view its history
-        </p>
-      </div>
-    </div>
-
   </div>
-</div>
-<!-- Add Record Popup -->
-<div
-  id="modal-popup"
-  class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
->
+
+  <!-- === FINANCIAL TAB CONTENT === -->
+  <div id="financialContent" class="space-y-4 hidden">
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Number
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Description
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Time</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Type</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Amount
+            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">
+              Balance
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for record in history %}
+          <tr class="hover:bg-gray-100">
+            <td class="px-4 py-2">{{ record.number }}</td>
+            <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
+            <td class="px-4 py-2">{{ record.description }}</td>
+            <td class="px-4 py-2">{{ record.time|time:"H:i" }}</td>
+            <td class="px-4 py-2">{{ record.type }}</td>
+            <td class="px-4 py-2">{{ record.amount }}</td>
+            <td class="px-4 py-2">{{ record.balance }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-4 py-6 text-center text-gray-500">
+              No financial history records yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <!-- === ODONTOGRAM TAB CONTENT === -->
+  <div id="odontogramContent" class="space-y-4 hidden">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Odontogram -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold mb-4 text-center">Odontogram</h2>
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+          {% for tooth_num in tooth_num %}
+          <button
+            class="w-10 h-10 flex items-center justify-center border rounded hover:bg-blue-100 text-sm"
+            onclick="selectTooth('{{ tooth_num }}')"
+          >
+            {{ tooth_num }}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Show Selection-->
+      <div class="bg-white rounded-lg shadow p-6">
+        <div id="tooth-history">
+          <p class="text-gray-500 text-center">
+            Select a tooth to view its history
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- Add Record Popup -->
   <div
-    id="popup-content"
-    class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95"
+    id="modal-popup"
+    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
   >
-    <h2 class="text-lg font-semibold mb-4 text-center">Add Record</h2>
-    <!-- Medical History Form -->
-    <form
-      id="medicalForm"
-      method="post"
-      action="{% url 'patient:add_medical_history' patient.id %}"
-      class="space-y-3"
+    <div
+      id="popup-content"
+      class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95"
     >
-      {% csrf_token %}
-      <input
-        type="date"
-        name="date"
-        placeholder="Date"
-        required
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="text"
-        name="dentist"
-        placeholder="Dentist"
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="text"
-        name="reason"
-        placeholder="Reason"
-        required
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="text"
-        name="diagnosis"
-        placeholder="Diagnosis"
-        required
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="text"
-        name="service"
-        placeholder="Service"
-        required
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="text"
-        name="treatment"
-        placeholder="Treatment"
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="text"
-        name="prescriptions"
-        placeholder="Prescriptions"
-        class="w-full border rounded-md p-2 text-sm"
-      />
+      <h2 class="text-lg font-semibold mb-4 text-center">Add Record</h2>
+      <!-- Medical History Form -->
+      <form
+        id="medicalForm" 
+        method="post"
+        action="{% url 'patient:add_medical_history' patient.id %}"
+        class="space-y-3 hidden"
+      >
+        {% csrf_token %}
+        <input
+          type="date"
+          name="date"
+          placeholder="Date"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="text"
+          name="dentist"
+          placeholder="Dentist"
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="text"
+          name="reason"
+          placeholder="Reason"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="text"
+          name="diagnosis"
+          placeholder="Diagnosis"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="text"
+          name="service"
+          placeholder="Service"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="text"
+          name="treatment"
+          placeholder="Treatment"
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="text"
+          name="prescriptions"
+          placeholder="Prescriptions"
+          class="w-full border rounded-md p-2 text-sm"
+        />
 
-      <div class="flex justify-end gap-2 pt-3">
-        <button
-          type="button"
-          id="close-popup-btn"
-          class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          Save
-        </button>
+        <div class="flex justify-end gap-2 pt-3">
+          <button
+            type="button"
+            id="close-popup-btn"
+            class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+  <!-- Financial Form  -->
+      <form
+        id="financialForm"
+        method="post"
+        action="{% url 'patient:add_financial_history' patient.id %}"
+        class="space-y-3 hidden"
+      >
+        {% csrf_token %}
+        <input
+          type="number"
+          name="number"
+          placeholder="Number"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="date"
+          name="date" required
+          placeholder="Date"
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="text"
+          name="Description" 
+          placeholder="Description"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="time"
+          name="time"
+          placeholder="Time"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="text"
+          name="Type"
+          placeholder="Type"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="number"
+          name="Amount"
+          placeholder="Amount"
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="number"
+          name="Balance"
+          placeholder="Balance"
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <div class="flex justify-end gap-2 pt-3">
+          <button
+            type="button"
+            id="close-popup-btn"
+            class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+      <!-- Odontogram Form -->
+      <form
+        id="odontogramForm"
+        method="post"
+        action="{% url 'patient:add_odontogram' patient.id %}"
+        class="space-y-3 hidden"
+      >
+        {% csrf_token %}
+
+        <input
+          type="date"
+          name="date"
+          placeholder="Date of Operation"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="number"
+          min = '1'
+          max = '32'
+          name="tooth_number"
+          placeholder="Tooth Number (1-32)"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <!-- Service (Checkboxes instead of multi-select) -->
+  <label class="font-semibold">Select Services:</label>
+  <div class="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1">
+      {% for service in services %}
+      <label class="flex items-center space-x-2">
+          <input type="checkbox" name="services" value="{{ service.id }}" class="rounded border-gray-300">
+          <span>{{ service.service_name }}</span>
+      </label>
+      {% endfor %}
       </div>
-    </form>
-<!-- Financial Form  -->
-    <form
-      id="financialForm"
-      method="post"
-      action="{% url 'patient:add_financial_history' patient.id %}"
-      class="space-y-3"
-    >
-      {% csrf_token %}
-      <input
-        type="number"
-        name="number"
-        placeholder="Number"
-        required
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="date"
-        name="date" required
-        placeholder="Date"
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="text"
-        name="Description" 
-        placeholder="Description"
-        required
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="time"
-        name="time"
-        placeholder="Time"
-        required
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="text"
-        name="Type"
-        placeholder="Type"
-        required
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="number"
-        name="Amount"
-        placeholder="Amount"
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <input
-        type="number"
-        name="Balance"
-        placeholder="Balance"
-        class="w-full border rounded-md p-2 text-sm"
-      />
-      <div class="flex justify-end gap-2 pt-3">
-        <button
-          type="button"
-          id="close-popup-btn"
-          class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          Save
-        </button>
-      </div>
-    </form>
+        {% comment %} <!-- Service Name -->
+          <select id="resched-service" name="service" required class="w-full border rounded-md p-2 text-sm">
+            <option value="" disabled selected>Select Service</option>
+            {% for service in services %}
+              <option value="{{ service.id }}">{{ service.service_name }}</option>
+            {% endfor %}
+  </select> {% endcomment %}
+        <!-- Dentist Name -->
+          <select id="resched-dentist" name="dentist" required class="w-full border rounded-md p-2 text-sm">
+            <option value="" disabled selected>Select Dentist</option>
+            {% for dentist in dentists %}
+              <option value="{{ dentist.id }}">{{ dentist.name }}</option>
+            {% endfor %}
+          </select>
+        <input
+          type="text"
+          name="status"
+          placeholder="Status"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <div class="flex justify-end gap-2 pt-3">
+          <button
+            type="button"
+            id="close-popup-btn"
+            class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
-</div>
+    
+  </div>
 
 
 
-{% endblock %} {% block extra_js %}
-<script src="{% static 'js/modal.js' %}"></script>
-<script>
-  const medicalTab = document.getElementById("medicalTab");
-  const financialTab = document.getElementById("financialTab");
-  const medicalContent = document.getElementById("medicalContent");
-  const financialContent = document.getElementById("financialContent");
-  const odontogramTab = document.getElementById("odontogramTab");
-  const odontogramContent = document.getElementById("odontogramContent"); 
-  
-  medicalTab.addEventListener("click", () => {
-    medicalContent.classList.remove("hidden");
-    financialContent.classList.add("hidden");
-    odontogramContent.classList.add("hidden");
-    odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
-    odontogramTab.classList.replace("text-white", "text-gray-700");
-    medicalTab.classList.replace("bg-gray-200", "bg-blue-600");
-    medicalTab.classList.replace("text-gray-700", "text-white");
-    financialTab.classList.replace("bg-blue-600", "bg-gray-200");
-    financialTab.classList.replace("text-white", "text-gray-700");
-  });
+  {% endblock %} {% block extra_js %}
+  <script src="{% static 'js/modal.js' %}"></script>
+  <script>
+    const medicalTab = document.getElementById("medicalTab");
+    const financialTab = document.getElementById("financialTab");
+    const medicalContent = document.getElementById("medicalContent");
+    const financialContent = document.getElementById("financialContent");
+    const odontogramTab = document.getElementById("odontogramTab");
+    const odontogramContent = document.getElementById("odontogramContent"); 
+    
 
-  financialTab.addEventListener("click", () => {
-    financialContent.classList.remove("hidden");
-    medicalContent.classList.add("hidden");
-    odontogramContent.classList.add("hidden");
-    odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
-    odontogramTab.classList.replace("text-white", "text-gray-700");
-    financialTab.classList.replace("bg-gray-200", "bg-blue-600");
-    financialTab.classList.replace("text-gray-700", "text-white");
-    medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
-    medicalTab.classList.replace("text-white", "text-gray-700");
-  
-  odontogramTab.addEventListener("click", () => {
-    odontogramContent.classList.remove("hidden");
-    medicalContent.classList.add("hidden");
-    financialContent.classList.add("hidden");
-    odontogramTab.classList.replace("bg-gray-200", "bg-blue-600");
-    odontogramTab.classList.replace("text-gray-700", "text-white");
-    medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
-    medicalTab.classList.replace("text-white", "text-gray-700");
-    financialTab.classList.replace("bg-blue-600", "bg-gray-200");
-    financialTab.classList.replace("text-white", "text-gray-700");
-  });
+    medicalTab.addEventListener("click", () => {
+      medicalContent.classList.remove("hidden");
+      financialContent.classList.add("hidden");
+      odontogramContent.classList.add("hidden");
+
+      odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
+      odontogramTab.classList.replace("text-white", "text-gray-700");
+
+      medicalTab.classList.replace("bg-gray-200", "bg-blue-600");
+      medicalTab.classList.replace("text-gray-700", "text-white");
+
+      financialTab.classList.replace("bg-blue-600", "bg-gray-200");
+      financialTab.classList.replace("text-white", "text-gray-700");
     });
-</script>
 
-<script>
-  const medicalUrl = "{% url 'patient:add_medical_history' patient.id %}";
-  const financialUrl = "{% url 'patient:add_financial_history' patient.id %}";
-</script>
+    financialTab.addEventListener("click", () => {
+      financialContent.classList.remove("hidden");
+      medicalContent.classList.add("hidden");
+      odontogramContent.classList.add("hidden");
 
-<script>
-function selectTooth(tooth_num) {
-  tooth_num = Number(tooth_num);
-  console.log("Selected Tooth:", tooth_num);
-  const toothNames = {
-      1: "Upper Right Third Molar (Wisdom Tooth)",
-      2: "Upper Right Second Molar",
-      3: "Upper Right First Molar",
-      4: "Upper Right Second Premolar",
-      5: "Upper Right First Premolar",
-      6: "Upper Right Canine",
-      7: "Upper Right Lateral Incisor",
-      8: "Upper Right Central Incisor",
-      9: "Upper Left Central Incisor",
-      10: "Upper Left Lateral Incisor",
-      11: "Upper Left Canine",
-      12: "Upper Left First Premolar",
-      13: "Upper Left Second Premolar",
-      14: "Upper Left First Molar",
-      15: "Upper Left Second Molar",
-      16: "Upper Left Third Molar (Wisdom Tooth)",
-      17: "Lower Left Third Molar (Wisdom Tooth)",
-      18: "Lower Left Second Molar",
-      19: "Lower Left First Molar",
-      20: "Lower Left Second Premolar",
-      21: "Lower Left First Premolar",
-      22: "Lower Left Canine",
-      23: "Lower Left Lateral Incisor",
-      24: "Lower Left Central Incisor",
-      25: "Lower Right Central Incisor",
-      26: "Lower Right Lateral Incisor",
-      27: "Lower Right Canine",
-      28: "Lower Right First Premolar",
-      29: "Lower Right Second Premolar",
-      30: "Lower Right First Molar",
-      31: "Lower Right Second Molar",
-      32: "Lower Right Third Molar (Wisdom Tooth)", 
-};
+      odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
+      odontogramTab.classList.replace("text-white", "text-gray-700");
 
-document.querySelectorAll('.w-10').forEach(btn => {
-  btn.classList.remove('bg-blue-500', 'text-white');
-  btn.classList.add('border-gray-300', 'hover:bg-blue-100', 'text-black');
-});
+      financialTab.classList.replace("bg-gray-200", "bg-blue-600");
+      financialTab.classList.replace("text-gray-700", "text-white");
 
-const selectedBtn = document.querySelector(`button[onclick="selectTooth('${tooth_num}')"]`);
-selectedBtn.classList.add('bg-blue-500', 'text-white');
+      medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
+      medicalTab.classList.replace("text-white", "text-gray-700");
+    });
 
-const historyDiv = document.getElementById("tooth-history");
-const toothName = toothNames[tooth_num];
+    odontogramTab.addEventListener("click", () => {
+      odontogramContent.classList.remove("hidden");
+      medicalContent.classList.add("hidden");
+      financialContent.classList.add("hidden");
 
- historyDiv.innerHTML = `
-      <h3 class="text-lg font-semibold mb-2 text-center">Tooth ${tooth_num}: ${toothName}</h3>
-      <div class="space-y-2 text-sm">
-        <p><strong>Date of Operation:</strong> <span class="text-gray-500">-</span></p>
-        <p><strong>Condition:</strong> <span class="text-gray-500">-</span></p>
-        <p><strong>Treatment:</strong> <span class="text-gray-500">-</span></p>
-        <p><strong>Dentist:</strong> <span class="text-gray-500">-</span></p>
-        <p><strong>Status:</strong> <span class="text-gray-500">-</span></p>
-        <p><strong>Notes:</strong> <span class="text-gray-500">-</span></p>
-      </div>
-      `;
-    }
-</script>
+      odontogramTab.classList.replace("bg-gray-200", "bg-blue-600");
+      odontogramTab.classList.replace("text-gray-700", "text-white");
 
-{% endblock %}
+      medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
+      medicalTab.classList.replace("text-white", "text-gray-700");
+
+      financialTab.classList.replace("bg-blue-600", "bg-gray-200");
+      financialTab.classList.replace("text-white", "text-gray-700");
+    });
+  </script>
+
+  <script>
+    const medicalUrl = "{% url 'patient:add_medical_history' patient.id %}";
+    const financialUrl = "{% url 'patient:add_financial_history' patient.id %}";
+    const odontogramUrl = "{% url 'patient:add_odontogram' patient.id %}";
+  </script>
+
+  <script>
+  function selectTooth(tooth_num) {
+    tooth_num = Number(tooth_num);
+    console.log("Selected Tooth:", tooth_num);
+    const toothNames = {
+        1: "Upper Right Third Molar (Wisdom Tooth)",
+        2: "Upper Right Second Molar",
+        3: "Upper Right First Molar",
+        4: "Upper Right Second Premolar",
+        5: "Upper Right First Premolar",
+        6: "Upper Right Canine",
+        7: "Upper Right Lateral Incisor",
+        8: "Upper Right Central Incisor",
+        9: "Upper Left Central Incisor",
+        10: "Upper Left Lateral Incisor",
+        11: "Upper Left Canine",
+        12: "Upper Left First Premolar",
+        13: "Upper Left Second Premolar",
+        14: "Upper Left First Molar",
+        15: "Upper Left Second Molar",
+        16: "Upper Left Third Molar (Wisdom Tooth)",
+        17: "Lower Left Third Molar (Wisdom Tooth)",
+        18: "Lower Left Second Molar",
+        19: "Lower Left First Molar",
+        20: "Lower Left Second Premolar",
+        21: "Lower Left First Premolar",
+        22: "Lower Left Canine",
+        23: "Lower Left Lateral Incisor",
+        24: "Lower Left Central Incisor",
+        25: "Lower Right Central Incisor",
+        26: "Lower Right Lateral Incisor",
+        27: "Lower Right Canine",
+        28: "Lower Right First Premolar",
+        29: "Lower Right Second Premolar",
+        30: "Lower Right First Molar",
+        31: "Lower Right Second Molar",
+        32: "Lower Right Third Molar (Wisdom Tooth)", 
+  };
+
+  document.querySelectorAll('.w-10').forEach(btn => {
+    btn.classList.remove('bg-blue-500', 'text-white');
+    btn.classList.add('border-gray-300', 'hover:bg-blue-100', 'text-black');
+  });
+
+  const selectedBtn = document.querySelector(`button[onclick="selectTooth('${tooth_num}')"]`);
+  selectedBtn.classList.add('bg-blue-500', 'text-white');
+
+  const historyDiv = document.getElementById("tooth-history");
+  const toothName = toothNames[tooth_num];
+
+  historyDiv.innerHTML = `
+        <h3 class="text-lg font-semibold mb-2 text-center">Tooth ${tooth_num}: ${toothName}</h3>
+        <div class="space-y-2 text-sm">
+          <p><strong>Date of Operation:</strong> <span class="text-gray-500">-</span></p>
+          <p><strong>Service:</strong> <span class="text-gray-500">-</span></p>
+          <p><strong>Dentist:</strong> <span class="text-gray-500">-</span></p>
+          <p><strong>Status:</strong> <span class="text-gray-500">-</span></p>
+        </div>
+        `;
+      }
+  </script>
+  {% endblock %}
