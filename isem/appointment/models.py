@@ -1,6 +1,7 @@
 from django.db import models
 from datetime import datetime, timedelta
 import uuid
+from django.contrib.auth.models import User
 
 # table of Dentist
 class Dentist(models.Model):
@@ -26,6 +27,14 @@ class Appointment(models.Model):
         ("cancelled", "Cancelled"),
     ]
 
+    user = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="appointments",
+    )
+
     dentist_name = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=20, null=False)
     date = models.DateField(null=False, blank=False)
@@ -38,7 +47,6 @@ class Appointment(models.Model):
     email = models.EmailField(null=False, blank=False)
 
 
-    # NEW FIELD
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

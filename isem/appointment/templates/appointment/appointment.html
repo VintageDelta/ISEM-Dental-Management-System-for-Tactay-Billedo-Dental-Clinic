@@ -69,18 +69,6 @@
   </div>
 </div>
 
-
-<!-- Success Modal -->
-<div id="success-modal"
-     class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50">
-  <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center transform transition-all duration-200 opacity-0 scale-95">
-    <h2 class="text-lg font-semibold mb-2">Success!</h2>
-    <p class="mb-4">Appointment has been successfully created.</p>
-    <button id="close-success-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">OK</button>
-  </div>
-</div>
-
-
 <!-- Add Appointment Modal -->
 <div id="appointment-modal"
   class="modal-content fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
@@ -118,7 +106,7 @@
         <select id="ampm"
                 class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
                 disabled>
-          <option value="">am/pm</option>
+          <option value="" disabled selected >am/pm</option>
           <option value="AM">am</option>
           <option value="PM">pm</option>
         </select>
@@ -127,14 +115,14 @@
         <select id="hour"
                 class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
                 disabled>
-          <option value="">Hour</option>
+          <option value="" disabled selected >hour</option>
         </select>
 
         <!-- Minute -->
         <select id="minute"
                 class="w-full sm:flex-1 border rounded-md p-2 text-sm"
                 disabled>
-          <option value="">Min</option>
+          <option value="" disabled selected >Min</option>
           <option value="00">00</option>
           <option value="05">05</option>
           <option value="10">10</option>
@@ -206,7 +194,10 @@
         <button type="button" id="close-appointment-btn"
           class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
         <button type="submit"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button>
+          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 opacity-50 cursor-not-allowed"
+          disabled>
+          Save
+        </button>
       </div>
     </form>
   </div>
@@ -244,6 +235,32 @@
         Close
       </button>
     </div>
+  </div>
+</div>
+
+
+<!-- Success Modal -->
+<div id="success-modal"
+     class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center transform transition-all duration-200 opacity-0 scale-95">
+    <h2 class="text-lg font-semibold mb-2">Success!</h2>
+    <p class="mb-4">Appointment has been successfully created.</p>
+    <button id="close-success-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">OK</button>
+  </div>
+</div>
+
+<!-- Failed Modal -->
+<div id="failed-modal"
+     class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center transform transition-all duration-200 opacity-0 scale-95">
+    <h2 class="text-lg font-semibold mb-2 text-red-600">Failed</h2>
+    <p id="failed-message-text" class="mb-4 text-gray-700">
+      Something went wrong.
+    </p>
+    <button id="close-failed-btn"
+            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+      OK
+    </button>
   </div>
 </div>
 
@@ -286,7 +303,7 @@
         <select id="resched-ampm"
                 class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
                 required>
-          <option value="">AM/PM</option>
+          <option value="" disabled selected >AM/PM</option>
           <option value="AM">AM</option>
           <option value="PM">PM</option>
         </select>
@@ -295,14 +312,14 @@
         <select id="resched-hour"
                 class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
                 required>
-          <option value="">Hour</option>
+          <option value="" disabled selected >Hour</option>
         </select>
 
         <!-- Minute -->
         <select id="resched-minute"
                 class="w-full sm:flex-1 border rounded-md p-2 text-sm"
                 required>
-          <option value="">Min</option>
+          <option value="" disabled selected >Min</option>
           <option value="00">00</option>
           <option value="05">05</option>
           <option value="10">10</option>
@@ -400,7 +417,11 @@
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     {% for message in messages %}
-      showSuccessModal();  // <-- triggers your success popup
+      {% if message.tags == "success" %}
+        showSuccessModal();
+      {% elif message.tags == "error" %}
+        showFailedModal("{{ message|escapejs }}");
+      {% endif %}
     {% endfor %}
   });
 </script>

@@ -42,6 +42,12 @@ def appointment_page(request):
         dentist = Dentist.objects.get(id=dentist_id)
 
         date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+
+        # 🔒 Block any appointment date before today
+        if date_obj < datetime.now().date():
+            messages.error(request, "You cannot create an appointment in the past.")
+            return redirect("appointment:appointment_page")
+
         preferred_time = datetime.strptime(time_str, "%H:%M").time()
 
         total_minutes = sum(s.duration for s in selected_services)
@@ -53,15 +59,16 @@ def appointment_page(request):
             preferred_time,
             location=location
         )
-
+        
         if not start_time or not end_time:
-            return render(request, "appointment/appointment.html", {
-                "dentists": dentists,
-                "services": services,
-                "error": "No available time slot for the selected date and services."
-            })
+            messages.error(
+                request,
+                "No available time slot for the selected date and services."
+            )
+            return redirect("appointment:appointment_page")
 
         appointment = Appointment.objects.create(
+            user=request.user if request.user.is_authenticated else None,
             dentist_name=dentist.name,
             location=location,
             date=date_obj,
@@ -73,13 +80,9 @@ def appointment_page(request):
         )
         appointment.services.set(selected_services)
 
-        # ✅ Add success message
         messages.success(request, "Appointment successfully created!")
-
-        # Redirect to same page
         return redirect("appointment:appointment_page")
 
-    # GET request
     return render(request, "appointment/appointment.html", {
         "dentists": dentists,
         "services": services
@@ -89,7 +92,16 @@ def appointment_page(request):
 # Mainly for pre-Displaying or-prefilling Sruff, REQUEST
 def events(request):
     branch = request.GET.get("branch")
-    appointments = Appointment.objects.all()
+
+    # Base queryset: nothing if not logged in
+    if not request.user.is_authenticated:
+        appointments = Appointment.objects.none()
+    else:
+        # Admin/staff see all, normal users see only their own
+        if request.user.is_superuser or request.user.is_staff:
+            appointments = Appointment.objects.all()
+        else:
+            appointments = Appointment.objects.filter(user=request.user)
 
     if branch:
         appointments = appointments.filter(location=branch)

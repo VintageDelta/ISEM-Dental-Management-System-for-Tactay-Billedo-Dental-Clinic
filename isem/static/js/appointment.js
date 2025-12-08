@@ -236,6 +236,50 @@ function initTimeValidation() {
 
   // Initial state
   refreshSelectedServiceTags();
+    // --- Form-level validation: enable Save only when all required fields are filled ---
+  const addForm = document.querySelector("#appointment-modal form");
+  const addSaveBtn = addForm ? addForm.querySelector('button[type="submit"]') : null;
+
+  function validateAddForm() {
+    if (!addForm || !addSaveBtn) return;
+
+    const dentist = dentistSelect.value;
+    const location = locationSelect.value;
+    const date = dateInput.value;
+    const ampm = ampmSelect.value;
+    const hour = hourSelect.value;
+    const minute = minuteSelect.value;
+    const email = document.getElementById("email")?.value || "";
+
+    const anyServiceChecked = Array.from(
+      document.querySelectorAll("#services-checkboxes input.service-checkbox")
+    ).some(cb => cb.checked);
+
+    const timeOk = ampm && hour && minute;
+    const basicOk = dentist && location && date && email && anyServiceChecked && timeOk;
+
+    addSaveBtn.disabled = !basicOk;
+    addSaveBtn.classList.toggle("opacity-50", !basicOk);
+    addSaveBtn.classList.toggle("cursor-not-allowed", !basicOk);
+  }
+
+  // Revalidate whenever relevant fields change
+  [
+    dentistSelect,
+    locationSelect,
+    dateInput,
+    ampmSelect,
+    hourSelect,
+    minuteSelect,
+    document.getElementById("email"),
+    ...Array.from(document.querySelectorAll("#services-checkboxes input.service-checkbox"))
+  ].forEach(el => {
+    el && el.addEventListener("change", validateAddForm);
+    el && el.addEventListener("input", validateAddForm);
+  });
+
+  // Initial state
+  validateAddForm();
 
 }
 
@@ -272,6 +316,40 @@ successModal?.addEventListener("click", e => {
   if (e.target === successModal) closeSuccessModal();
 });
 
+
+// ===== Failed Modal =====
+const failedModal = document.getElementById("failed-modal");
+const closeFailedBtn = document.getElementById("close-failed-btn");
+const failedMessageText = document.getElementById("failed-message-text");
+
+function showFailedModal(message) {
+  if (!failedModal || !failedMessageText) return;
+
+  failedMessageText.textContent = message || "Something went wrong.";
+
+  failedModal.classList.remove("hidden");
+  setTimeout(() => {
+    failedModal.querySelector("div").classList.remove("opacity-0", "scale-95");
+    failedModal.querySelector("div").classList.add("opacity-100", "scale-100");
+  }, 10);
+}
+
+function closeFailedModal() {
+  if (!failedModal) return;
+
+  const content = failedModal.querySelector("div");
+  content.classList.remove("opacity-100", "scale-100");
+  content.classList.add("opacity-0", "scale-95");
+
+  setTimeout(() => failedModal.classList.add("hidden"), 200);
+}
+
+closeFailedBtn?.addEventListener("click", closeFailedModal);
+failedModal?.addEventListener("click", e => {
+  if (e.target === failedModal) closeFailedModal();
+}
+);
+
 function to24Hour(hour, ampm) {
   hour = parseInt(hour);
   if (ampm === "PM" && hour < 12) return hour + 12;
@@ -279,6 +357,8 @@ function to24Hour(hour, ampm) {
   return hour;
 }
 
+
+//reshed form
 function initRescheduleForm() {
   const hourSelect = document.getElementById("resched-hour");
   const minuteSelect = document.getElementById("resched-minute");
@@ -288,7 +368,7 @@ function initRescheduleForm() {
   // Rebuild hours when AM/PM changes
   ampmSelect?.addEventListener("change", function() {
     const ampm = this.value;
-    hourSelect.innerHTML = '<option value="">Hour</option>';
+    hourSelect.innerHTML = '<option value="" selected disabled >hour</option>';
 
     if (ampm === "AM") {
       ["7", "8", "9", "10", "11"].forEach(h => {
@@ -387,4 +467,48 @@ function initRescheduleForm() {
   }
 
   refreshReschedSelectedServiceTags();
+
+    // --- Reschedule form validation: enable Save Changes only when complete ---
+  const reschedForm = document.getElementById("reschedule-form");
+  const reschedSaveBtn = reschedForm ? reschedForm.querySelector('button[type="submit"]') : null;
+
+  function validateReschedForm() {
+    if (!reschedForm || !reschedSaveBtn) return;
+
+    const dentist = document.getElementById("resched-dentist")?.value || "";
+    const location = document.getElementById("resched-location")?.value || "";
+    const date = document.getElementById("resched-date")?.value || "";
+    const ampm = ampmSelect.value;
+    const hour = hourSelect.value;
+    const minute = minuteSelect.value;
+    const email = document.getElementById("resched-email")?.value || "";
+
+    const anyServiceChecked = Array.from(
+      document.querySelectorAll("#resched-services-checkboxes input.resched-service-checkbox")
+    ).some(cb => cb.checked);
+
+    const timeOk = ampm && hour && minute;
+    const basicOk = dentist && location && date && email && anyServiceChecked && timeOk;
+
+    reschedSaveBtn.disabled = !basicOk;
+    reschedSaveBtn.classList.toggle("opacity-50", !basicOk);
+    reschedSaveBtn.classList.toggle("cursor-not-allowed", !basicOk);
+  }
+
+  [
+    document.getElementById("resched-dentist"),
+    document.getElementById("resched-location"),
+    document.getElementById("resched-date"),
+    ampmSelect,
+    hourSelect,
+    minuteSelect,
+    document.getElementById("resched-email"),
+    ...Array.from(document.querySelectorAll("#resched-services-checkboxes input.resched-service-checkbox"))
+  ].forEach(el => {
+    el && el.addEventListener("change", validateReschedForm);
+    el && el.addEventListener("input", validateReschedForm);
+  });
+
+  validateReschedForm();
+
 }

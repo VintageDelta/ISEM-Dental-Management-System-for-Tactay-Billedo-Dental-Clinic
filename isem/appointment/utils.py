@@ -8,6 +8,13 @@ def find_next_available_slot(dentist, date, total_duration, preferred_time=None,
     current = datetime.combine(date, preferred_time) if preferred_time else clinic_start
 
     now = datetime.now()
+
+    # 🔒 Hard stop: never return a slot for a past date
+    if date < now.date():
+        print("Date is in the past, no slot allowed")
+        return None, None
+
+    # If today and chosen time is earlier than now, start from now
     if date == now.date() and current < now:
         current = now.replace(second=0, microsecond=0)
 
@@ -17,11 +24,10 @@ def find_next_available_slot(dentist, date, total_duration, preferred_time=None,
     print("Now:", now)
     print("Current starts at:", current)
 
-    # ✅ FIX: filter by location/branch
     existing = Appointment.objects.filter(
         dentist_name=dentist.name,
         date=date,
-        location=location    # << ADD THIS
+        location=location
     ).order_by("time")
 
     print("Existing appointments:", [(a.time, a.end_time) for a in existing])
