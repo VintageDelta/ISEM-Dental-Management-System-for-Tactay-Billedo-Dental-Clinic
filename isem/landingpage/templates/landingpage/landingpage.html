@@ -1,0 +1,228 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Landing Page</title>
+
+    <!-- Smooth Scroll -->
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-gray-800 relative scroll-mt-24" id="top">
+
+<!-- TOP NAVIGATION BAR -->
+<nav class="w-full bg-white/50 backdrop-blur-lg shadow-md px-8 py-4 flex items-center justify-between fixed top-0 left-0 z-50">
+
+    <!-- LEFT: LOGO -->
+    <div class="flex items-center gap-3">
+        <img src="{% static 'landingpage/logo.png' %}" class="w-40 h-12 object-contain">
+    </div>
+
+    <!-- CENTER: MENU LINKS -->
+    <div class="hidden md:flex gap-8 text-gray-700 font-medium">
+        <a href="#top" class="hover:text-green-600 transition">Home</a>
+        <a href="#about" class="hover:text-green-600 transition">About Us</a>
+        <a href="#services" class="hover:text-green-600 transition">Services</a>
+        <a href="#contact" class="hover:text-green-600 transition">Contact Us</a>
+    </div>
+
+    <!-- RIGHT: GUEST DROPDOWN -->
+    <div class="relative">
+        <button id="guestBtn" 
+                class="flex items-center gap-2 bg-white text-gray-800 px-4 py-2 rounded-lg shadow hover:bg-gray-100 transition">
+            
+            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold">
+                👤
+            </div>
+            Guest
+        </button>
+
+        <!-- DROPDOWN -->
+        <div id="guestDropdown"
+             class="hidden absolute right-0 mt-2 bg-white shadow-lg rounded-lg py-2 w-40 text-gray-700 flex flex-col space-y-1">
+            <a href="{% url 'userprofile:signin' %}" class="px-4 py-2 hover:bg-gray-100 rounded">Login</a>
+            <a href="{% url 'userprofile:signup' %}" class="px-4 py-2 hover:bg-gray-100 rounded">Register</a>
+        </div>
+    </div>
+</nav>
+
+<script>
+    const guestBtn = document.getElementById("guestBtn");
+    const guestDrop = document.getElementById("guestDropdown");
+
+    guestBtn.addEventListener("click", () => {
+        guestDrop.classList.toggle("hidden");
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!guestBtn.contains(e.target) && !guestDrop.contains(e.target)) {
+            guestDrop.classList.add("hidden");
+        }
+    });
+</script>
+
+
+<!-- HERO CAROUSEL SECTION -->
+<section class="relative w-full h-[420px] overflow-hidden mt-20">
+    <div id="carousel" class="flex h-full transition-transform duration-1000">
+        <img src="{% static 'landingpage/hero1.png' %}" class="flex-shrink-0 w-full h-full object-cover">
+        <img src="{% static 'landingpage/hero2.png' %}" class="flex-shrink-0 w-full h-full object-cover">
+        <img src="{% static 'landingpage/hero3.png' %}" class="flex-shrink-0 w-full h-full object-cover">
+    </div>
+
+    <button id="prevBtn" 
+            class="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-40 text-white px-4 py-2 rounded-full hover:bg-opacity-60 transition">
+        ❮
+    </button>
+
+    <button id="nextBtn" 
+            class="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-40 text-white px-4 py-2 rounded-full hover:bg-opacity-60 transition">
+        ❯
+    </button>
+</section>
+
+<script>
+    const carousel = document.getElementById('carousel');
+    const slides = carousel.children;
+    let currentIndex = 0;
+    const total = slides.length;
+
+    function showSlide(index) {
+        const offset = -index * 100;
+        carousel.style.transform = `translateX(${offset}%)`;
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        currentIndex = (currentIndex + 1) % total;
+        showSlide(currentIndex);
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        currentIndex = (currentIndex - 1 + total) % total;
+        showSlide(currentIndex);
+    });
+
+    setInterval(() => {
+        currentIndex = (currentIndex + 1) % total;
+        showSlide(currentIndex);
+    }, 3000);
+</script>
+
+
+
+<!-- ABOUT US SECTION -->
+<section id="about" class="pt-32 pb-20 px-6 md:px-20 bg-gray-50 text-center">
+    <h2 class="text-3xl font-bold mb-6 text-green-600">
+        About Us
+    </h2>
+
+    <p class="max-w-3xl mx-auto text-gray-600 text-lg leading-relaxed">
+        We provide high-quality dental care in a modern, welcoming environment.  
+        Our dedicated dentists aim to give every patient a smooth and stress-free treatment experience  
+        using updated technology and a compassionate approach.
+    </p>
+</section>
+
+<!-- DENTAL SERVICES SECTION -->
+<section id="services" class="pt-32 pb-20 px-6 md:px-20 bg-white text-center">
+
+    <h2 class="text-3xl font-bold mb-10 text-green-600">
+        Our Dental Services
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+
+        <!-- GENERAL DENTISTRY -->
+        <div class="p-6 rounded-xl shadow-md hover:shadow-lg transition">
+            <div class="text-5xl mb-4">🪥</div>
+            <h3 class="text-xl font-semibold mb-2">General Dentistry</h3>
+            <p class="text-gray-600">
+                Comprehensive care including cleaning, fillings, preventive care, and overall oral maintenance.
+            </p>
+        </div>
+
+        <!-- ORTHODONTICS -->
+        <div class="p-6 rounded-xl shadow-md hover:shadow-lg transition">
+            <div class="text-5xl mb-4">😁</div>
+            <h3 class="text-xl font-semibold mb-2">Orthodontics</h3>
+            <p class="text-gray-600">
+                Teeth alignment treatments including braces and clear aligners for a straighter smile.
+            </p>
+        </div>
+
+        <!-- IMPLANT DENTISTRY -->
+        <div class="p-6 rounded-xl shadow-md hover:shadow-lg transition">
+            <div class="text-5xl mb-4">🔩</div>
+            <h3 class="text-xl font-semibold mb-2">Implant Dentistry</h3>
+            <p class="text-gray-600">
+                Permanent and natural-looking tooth replacement using advanced dental implant technology.
+            </p>
+        </div>
+        
+    </div>
+</section>
+
+<!-- CONTACT US SECTION -->
+<section id="contact" class="pt-32 pb-20 bg-[#1f1f1f] text-gray-300 px-6 md:px-20">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+
+        <!-- ABOUT COLUMN -->
+        <div>
+            <h3 class="text-sm font-semibold tracking-widest mb-6">ABOUT</h3>
+
+            <img src="{% static 'landingpage/logo.png' %}" class="w-40 mb-5">
+
+            <p class="text-gray-400 leading-relaxed text-justify">
+                We bring a personal and effective approach to every project we work on,
+                ensuring the success of your dental experience.
+            </p>
+        </div>
+
+        <!-- SPACER TO BALANCE GRID -->
+        <div></div>
+
+        <!-- RECENT SERVICES COLUMN -->
+        <div>
+            <h3 class="text-sm font-semibold tracking-widest mb-6">RECENT SERVICES</h3>
+
+            <ul class="space-y-2 text-gray-400">
+                <li class="hover:text-white cursor-pointer transition">Dental Cleaning</li>
+                <li class="hover:text-white cursor-pointer transition">Tooth Extraction</li>
+                <li class="hover:text-white cursor-pointer transition">Orthodontic Braces</li>
+                <li class="hover:text-white cursor-pointer transition">Show More</li>
+            </ul>
+        </div>
+
+        <!-- CONTACT COLUMN -->
+        <div>
+            <h3 class="text-sm font-semibold tracking-widest mb-6">CONTACT US</h3>
+
+            <div class="space-y-4">
+
+                <p class="flex items-center gap-3">
+                    📱 <span>+63 912 345 6789</span>
+                </p>
+
+                <p class="flex items-center gap-3">
+                    ✉️ <span>clinic@example.com</span>
+                </p>
+
+                <p class="flex items-center gap-3">
+                    📍 <span>Tactay-Billedo Dental Clinic, Sto.Domingo, Ilocos Sur</span>
+                </p>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+</body>
+</html>

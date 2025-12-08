@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "inventory",
     "patient",
     "userprofile",
+    "landingpage",
 ]
 
 MIDDLEWARE = [

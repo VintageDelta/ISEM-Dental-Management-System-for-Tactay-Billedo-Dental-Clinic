@@ -17,9 +17,11 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from landingpage import views as landing_views
 
 from core.views import index
 urlpatterns = [
+    path('', landing_views.landing, name='landing'),
     path("", index, name="index"),
     path("dashboard/", include('dashboard.urls')),
     path("dashboard/patient/", include('patient.urls')),
