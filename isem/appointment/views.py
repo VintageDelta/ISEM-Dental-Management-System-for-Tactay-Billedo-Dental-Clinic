@@ -93,15 +93,20 @@ def appointment_page(request):
 def events(request):
     branch = request.GET.get("branch")
 
+    # Decide if this user can manage appointments
+    user = request.user
+    is_admin = user.is_authenticated and (user.is_superuser or user.is_staff)
+
     # Base queryset: nothing if not logged in
-    if not request.user.is_authenticated:
+    if not user.is_authenticated:
         appointments = Appointment.objects.none()
     else:
         # Admin/staff see all, normal users see only their own
-        if request.user.is_superuser or request.user.is_staff:
+        if is_admin:
             appointments = Appointment.objects.all()
         else:
-            appointments = Appointment.objects.filter(user=request.user)
+            appointments = Appointment.objects.filter(user=user)
+
 
     if branch:
         appointments = appointments.filter(location=branch)
@@ -138,6 +143,7 @@ def events(request):
                 "service_ids": service_ids,
                 "email": a.email,
                 "status": a.status,
+                "can_manage": is_admin,
             }
         })
 

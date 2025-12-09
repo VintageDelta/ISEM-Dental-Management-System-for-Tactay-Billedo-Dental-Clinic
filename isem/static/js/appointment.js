@@ -11,7 +11,60 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target === appointmentModal) closeModal("appointment-modal");
   });
 
-  // Followup / Reschedule
+  // Cancel confirmation wiring
+  const statusCancelBtn = document.getElementById("status-cancel-btn");
+  console.log("statusCancelBtn found?", statusCancelBtn); 
+  const confirmYes = document.getElementById("cancel-confirm-yes");
+  const confirmNo = document.getElementById("cancel-confirm-no");
+
+  let pendingCancelEventId = null;
+
+  statusCancelBtn?.addEventListener("click", () => {
+    console.log("Cancel button clicked");    // TEMP DEBUG
+    if (!window.currentEventId) return;     // calendar.js sets currentEventId
+    pendingCancelEventId = window.currentEventId;
+    openModal("cancel-confirm-modal");
+  });
+
+  confirmNo?.addEventListener("click", () => {
+    pendingCancelEventId = null;
+    closeModal("cancel-confirm-modal");
+  });
+
+  confirmYes?.addEventListener("click", () => {
+    if (!pendingCancelEventId) return;
+
+    fetch(`/dashboard/appointment/update-status/${pendingCancelEventId}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: JSON.stringify({ status: "cancelled" })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
+          if (window.mainCalendar) window.mainCalendar.refetchEvents();
+
+          setTimeout(() => {
+            if (typeof renderTodaysAppointments === "function") {
+              renderTodaysAppointments();
+            }
+          }, 250);
+
+          closeModal("cancel-confirm-modal");
+          closeModal("status-modal");
+        }
+      });
+
+    pendingCancelEventId = null;
+  });
+
+
+  // Status / Followup / Reschedule
+  document.getElementById("close-status-btn")?.addEventListener("click", () => closeModal("status-modal"));
   document.getElementById("close-followup-btn")?.addEventListener("click", () => closeModal("followup-modal"));
   document.getElementById("close-reschedule-btn")?.addEventListener("click", () => closeModal("reschedule-modal"));
 
@@ -23,27 +76,40 @@ document.addEventListener("DOMContentLoaded", () => {
 // ===== Modal Helpers =====
 function openModal(id) {
   const modal = document.getElementById(id);
-  const content = modal.querySelector("div");
-  if (!modal || !content) return;
+  if (!modal) return;
+
+  // find the first direct child div (the white box)
+  const content = modal.querySelector(":scope > div");
+  if (!content) return;
 
   modal.classList.remove("hidden");
   modal.classList.add("flex");
 
-  setTimeout(() => {
+  // start from transparent & slightly scaled down
+  content.classList.remove("opacity-100", "scale-100");
+  content.classList.add("opacity-0", "scale-95");
+
+  // animate to visible on next frame
+  requestAnimationFrame(() => {
     content.classList.remove("opacity-0", "scale-95");
     content.classList.add("opacity-100", "scale-100");
-  }, 10);
+  });
 }
 
 function closeModal(id) {
   const modal = document.getElementById(id);
-  const content = modal.querySelector("div");
-  if (!modal || !content) return;
+  if (!modal) return;
+
+  const content = modal.querySelector(":scope > div");
+  if (!content) return;
 
   content.classList.remove("opacity-100", "scale-100");
   content.classList.add("opacity-0", "scale-95");
 
-  setTimeout(() => modal.classList.add("hidden"), 200);
+  // duration-200 = 200ms
+  setTimeout(() => {
+    modal.classList.add("hidden");
+  }, 200);
 }
 
 // ===== Fetch Booked Times =====
@@ -129,8 +195,8 @@ function initTimeValidation() {
     hourSelect.innerHTML = `<option value="">Hour</option>`;
 
     if (ampm === "AM") {
-      // 7 AM to 11 AM
-      const hours = ["7", "8", "9", "10", "11"];
+      // 8 AM to 11 AM
+      const hours = ["8", "9", "10", "11"];
       hours.forEach(h => {
         hourSelect.innerHTML += `<option value="${h}">${h}</option>`;
       });
@@ -289,24 +355,17 @@ const successModal = document.getElementById("success-modal");
 const closeSuccessBtn = document.getElementById("close-success-btn");
 
 function showSuccessModal() {
-  if (!successModal) return;
-
-  successModal.classList.remove("hidden");
-  setTimeout(() => {
-    successModal.querySelector("div").classList.remove("opacity-0", "scale-95");
-    successModal.querySelector("div").classList.add("opacity-100", "scale-100");
-  }, 10);
+  openModal("success-modal");
 }
 
 function closeSuccessModal() {
-  if (!successModal) return;
-
-  const content = successModal.querySelector("div");
-  content.classList.remove("opacity-100", "scale-100");
-  content.classList.add("opacity-0", "scale-95");
-
-  setTimeout(() => successModal.classList.add("hidden"), 200);
+  closeModal("success-modal");
 }
+
+closeSuccessBtn?.addEventListener("click", closeSuccessModal);
+successModal?.addEventListener("click", e => {
+  if (e.target === successModal) closeSuccessModal();
+});
 
 // Close on button click
 closeSuccessBtn?.addEventListener("click", closeSuccessModal);
@@ -324,31 +383,18 @@ const failedMessageText = document.getElementById("failed-message-text");
 
 function showFailedModal(message) {
   if (!failedModal || !failedMessageText) return;
-
   failedMessageText.textContent = message || "Something went wrong.";
-
-  failedModal.classList.remove("hidden");
-  setTimeout(() => {
-    failedModal.querySelector("div").classList.remove("opacity-0", "scale-95");
-    failedModal.querySelector("div").classList.add("opacity-100", "scale-100");
-  }, 10);
+  openModal("failed-modal");
 }
 
 function closeFailedModal() {
-  if (!failedModal) return;
-
-  const content = failedModal.querySelector("div");
-  content.classList.remove("opacity-100", "scale-100");
-  content.classList.add("opacity-0", "scale-95");
-
-  setTimeout(() => failedModal.classList.add("hidden"), 200);
+  closeModal("failed-modal");
 }
 
 closeFailedBtn?.addEventListener("click", closeFailedModal);
 failedModal?.addEventListener("click", e => {
   if (e.target === failedModal) closeFailedModal();
-}
-);
+});
 
 function to24Hour(hour, ampm) {
   hour = parseInt(hour);
