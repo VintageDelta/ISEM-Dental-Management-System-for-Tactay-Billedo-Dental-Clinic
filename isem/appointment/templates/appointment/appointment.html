@@ -576,7 +576,7 @@
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     {% for message in messages %}
-      {% if message.tags == "success" %}
+      {% if "appointment_created" in message.tags %}
         showSuccessModal();
       {% elif message.tags == "error" %}
         showFailedModal("{{ message|escapejs }}");

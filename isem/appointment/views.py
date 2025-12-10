@@ -80,7 +80,12 @@ def appointment_page(request):
         )
         appointment.services.set(selected_services)
 
-        messages.success(request, "Appointment successfully created!")
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            "Appointment successfully created!",
+            extra_tags="appointment_created"
+        )
         return redirect("appointment:appointment_page")
 
     return render(request, "appointment/appointment.html", {
@@ -126,7 +131,7 @@ def events(request):
         dentist_obj = Dentist.objects.filter(name=a.dentist_name).first()
 
         events.append({
-            "id": a.id,
+            "id": str(a.id),
             "title": f"{service_names} - {a.dentist_name or 'N/A'}",
             "start": f"{a.date}T{a.time}",
             "end": f"{a.date}T{a.end_time}" if a.end_time else None,

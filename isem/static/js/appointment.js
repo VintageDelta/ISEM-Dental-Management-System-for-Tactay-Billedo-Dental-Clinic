@@ -31,36 +31,49 @@ document.addEventListener("DOMContentLoaded", () => {
     closeModal("cancel-confirm-modal");
   });
 
-  confirmYes?.addEventListener("click", () => {
-    if (!pendingCancelEventId) return;
+confirmYes?.addEventListener("click", () => {
+  if (!pendingCancelEventId) return;
 
-    fetch(`/dashboard/appointment/update-status/${pendingCancelEventId}/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken")
-      },
-      body: JSON.stringify({ status: "cancelled" })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
-          if (window.mainCalendar) window.mainCalendar.refetchEvents();
+  const idStr = String(pendingCancelEventId);
 
-          setTimeout(() => {
-            if (typeof renderTodaysAppointments === "function") {
-              renderTodaysAppointments();
-            }
-          }, 250);
+  fetch(`/dashboard/appointment/update-status/${pendingCancelEventId}/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({ status: "cancelled" })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) return;
 
-          closeModal("cancel-confirm-modal");
-          closeModal("status-modal");
+      // 1) Update the event object in the timeline immediately
+      if (window.timelineCalendar) {
+        const ev = window.timelineCalendar.getEventById(idStr);
+        if (ev) {
+          ev.setExtendedProp("status", "cancelled"); // rerenders this event [web:234][web:263]
         }
-      });
+      }
 
-    pendingCancelEventId = null;
-  });
+      // 2) Refetch from the server so everything stays in sync
+      if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
+      if (window.mainCalendar) window.mainCalendar.refetchEvents();
+
+      // 3) Rebuild today's side list after refetch
+      setTimeout(() => {
+        if (typeof window.renderTodaysAppointments === "function") {
+          window.renderTodaysAppointments();
+        }
+      }, 300);
+
+      closeModal("cancel-confirm-modal");
+      closeModal("status-modal");
+    });
+
+  pendingCancelEventId = null;
+});
+
 
 
   // Status / Followup / Reschedule

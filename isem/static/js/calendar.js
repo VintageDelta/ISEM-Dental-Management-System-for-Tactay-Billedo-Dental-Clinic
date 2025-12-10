@@ -21,8 +21,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (timelineCalendar) timelineCalendar.refetchEvents();
 
     setTimeout(() => {
-      if (typeof renderTodaysAppointments === "function") {
-        renderTodaysAppointments();
+      if (typeof window.renderTodaysAppointments === "function") {
+        window.renderTodaysAppointments();
       }
     }, 300);
   });
@@ -89,10 +89,11 @@ document.addEventListener('DOMContentLoaded', function () {
           if (mainCalendar) mainCalendar.refetchEvents();
 
           setTimeout(() => {
-            if (typeof renderTodaysAppointments === "function") {
-              renderTodaysAppointments();
+            if (typeof window.renderTodaysAppointments === "function") {
+              window.renderTodaysAppointments();
             }
           }, 250);
+
 
           closeModal("status-modal");
         }
@@ -337,22 +338,70 @@ document.addEventListener('DOMContentLoaded', function () {
             openModal("followup-modal");
           });
 
-          rescheduleBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            currentEventId = info.event.id;
+                  rescheduleBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          currentEventId = info.event.id;
 
-            const propsInner = info.event.extendedProps || {};
+          const propsInner = info.event.extendedProps || {};
 
-            document.getElementById("resched-dentist").value = propsInner.dentist_id || "";
-            document.getElementById("resched-location").value = propsInner.location || "";
-            document.getElementById("resched-date").value = propsInner.preferred_date || propsInner.date || "";
-            document.getElementById("resched-email").value = propsInner.email || "";
+          // Basic fields
+          document.getElementById("resched-dentist").value  = propsInner.dentist_id || "";
+          document.getElementById("resched-location").value = propsInner.location || "";
+          document.getElementById("resched-date").value     = propsInner.preferred_date || propsInner.date || "";
+          document.getElementById("resched-email").value    = propsInner.email || "";
 
-            // existing time + services + current-time filling code here (reuse your old code)
-            // ...
+          // ----- Time prefill (preferred_time or time) -----
+          const rawTime = propsInner.preferred_time || propsInner.time || ""; // e.g. "09:30 AM"
+          const reschedAmpm  = document.getElementById("resched-ampm");
+          const reschedHour  = document.getElementById("resched-hour");
+          const reschedMin   = document.getElementById("resched-minute");
+          const reschedHidden = document.getElementById("resched-time-hidden");
 
-            openModal("reschedule-modal");
+          if (rawTime && reschedAmpm && reschedHour && reschedMin) {
+            const [timePart, ampmPart] = rawTime.split(" ");
+            const [hStr, mStr] = timePart.split(":");
+
+            // Set AM/PM first to rebuild hour options
+            reschedAmpm.value = ampmPart;
+            reschedAmpm.dispatchEvent(new Event("change"));
+
+            // Now set hour + minute
+            reschedHour.value = String(parseInt(hStr, 10)); // "09" -> "9"
+            reschedMin.value  = mStr;
+
+            // Update hidden 24h field (matches initRescheduleForm logic)
+            if (typeof to24Hour === "function") {
+              reschedHidden.value = `${String(to24Hour(reschedHour.value, ampmPart)).padStart(2, "0")}:${mStr}`;
+            } else {
+              reschedHidden.value = ""; // fallback
+            }
+          }
+
+          // ----- Services pre-check -----
+          const serviceIds = propsInner.service_ids || [];   // from views: extendedProps.service_ids
+          const allServiceCbs = document.querySelectorAll("#resched-services-checkboxes input.resched-service-checkbox");
+          allServiceCbs.forEach(cb => {
+            cb.checked = serviceIds.includes(parseInt(cb.value, 10));
           });
+
+          // Refresh selected-service tags in reschedule modal
+          if (typeof window.refreshReschedSelectedServiceTags === "function") {
+            window.refreshReschedSelectedServiceTags();
+          }
+
+          // ----- Current schedule display -----
+          const currentScheduleEl = document.getElementById("resched-current-time");
+          if (currentScheduleEl) {
+            const dateLabel = propsInner.preferred_date || propsInner.date || "";
+            const timeLabel = propsInner.preferred_time || propsInner.time || "";
+            currentScheduleEl.textContent = dateLabel && timeLabel
+              ? `${dateLabel} at ${timeLabel}`
+              : "";
+          }
+
+          openModal("reschedule-modal");
+        });
+
         } else {
           // visually show disabled buttons for non-admin cancelled
           followBtn.disabled = true;
@@ -401,6 +450,9 @@ document.addEventListener('DOMContentLoaded', function () {
     //renders the calendar
     timelineCalendar.render();
 
+    // EXPOSE THEM GLOBALLY so appointment.js can use them
+    window.mainCalendar = mainCalendar;
+    window.timelineCalendar = timelineCalendar;
 
     // --- Extra timeline controls (Day/Week/Today) ---
     function makeBtn(label, onClick) {
@@ -421,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function () {
     timelineControlsEl.appendChild(makeBtn("Today", () => timelineCalendar.today()));
 
     // --- Render today's appointments in the side list ---
-    function renderTodaysAppointments() {
+    window.renderTodaysAppointments = function() {
       listEl.innerHTML = "";
       const today = new Date().toISOString().split("T")[0];
       const todaysEvents = timelineCalendar.getEvents().filter(ev => ev.startStr.startsWith(today));
@@ -480,10 +532,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    renderTodaysAppointments();
-    timelineCalendar.on("eventAdd", renderTodaysAppointments);
-    timelineCalendar.on("eventRemove", renderTodaysAppointments);
-    timelineCalendar.on("eventChange", renderTodaysAppointments);
+    window.renderTodaysAppointments();
+    timelineCalendar.on("eventAdd", window.renderTodaysAppointments);
+    timelineCalendar.on("eventRemove", window.renderTodaysAppointments);
+    timelineCalendar.on("eventChange", window.renderTodaysAppointments);
   }
 });
 
