@@ -1,6 +1,7 @@
 // ===== Appointment Modals & Utility =====
 document.addEventListener("DOMContentLoaded", () => {
   const createBtn = document.getElementById("create-appointment-btn");
+  
   const appointmentModal = document.getElementById("appointment-modal");
   const closeAppointmentBtn = document.getElementById("close-appointment-btn");
 
@@ -75,12 +76,46 @@ confirmYes?.addEventListener("click", () => {
 });
 
 
-
   // Status / Followup / Reschedule
   document.getElementById("close-status-btn")?.addEventListener("click", () => closeModal("status-modal"));
   document.getElementById("close-followup-btn")?.addEventListener("click", () => closeModal("followup-modal"));
   document.getElementById("close-reschedule-btn")?.addEventListener("click", () => closeModal("reschedule-modal"));
 
+    // Notify Patient modal wiring
+  const notifyPatientBtn = document.getElementById("notify-patient-btn");
+  const closeNotifyBtn = document.getElementById("close-notify-btn");
+  const notifySmsBtn = document.getElementById("notify-sms-btn");
+  const notifyEmailBtn = document.getElementById("notify-email-btn");
+
+  notifyPatientBtn?.addEventListener("click", () => {
+    if (!window.currentEventId) return; // set by calendar.js when opening status modal
+    openModal("notify-modal");
+  });
+
+  closeNotifyBtn?.addEventListener("click", () => {
+    closeModal("notify-modal");
+  });
+
+  // Optional: clicking on the backdrop closes the notify modal as well
+  const notifyModal = document.getElementById("notify-modal");
+  notifyModal?.addEventListener("click", (e) => {
+    if (e.target === notifyModal) closeModal("notify-modal");
+  });
+
+  // For now, just close after click; you can replace with real API calls later
+  notifySmsBtn?.addEventListener("click", () => {
+    console.log("Send SMS to patient for event", window.currentEventId);
+    // TODO: call your SMS endpoint here
+    closeModal("notify-modal");
+  });
+
+  notifyEmailBtn?.addEventListener("click", () => {
+    console.log("Send EMAIL to patient for event", window.currentEventId);
+    // TODO: call your Email endpoint here
+    closeModal("notify-modal");
+  });
+
+  
   // Initialize
   initTimeValidation();
   initRescheduleForm();

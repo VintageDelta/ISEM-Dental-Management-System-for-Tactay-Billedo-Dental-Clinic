@@ -102,6 +102,42 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   if (mainCalendarEl && timelineCalendarEl && listEl) {
+
+    // Ensure only one selected day in main calendar
+    // dateInput can be a Date or a YYYY-MM-DD string
+    function setMainSelectedDate(dateInput) {
+      const calendarEl = document.getElementById("calendar");
+      if (!calendarEl) return;
+
+      // 1) Normalize to YYYY-MM-DD
+      let dateStr;
+      if (dateInput instanceof Date) {
+        dateStr = dateInput.toISOString().split("T")[0]; // YYYY-MM-DD
+      } else {
+        // assume it's already a YYYY-MM-DD string (e.g. info.dateStr)
+        dateStr = dateInput;
+      }
+
+      // 2) Clear ALL previously selected cells
+      calendarEl
+        .querySelectorAll('.fc-daygrid-day[data-selected="true"]')
+        .forEach((el) => {
+          el.style.backgroundColor = "";
+          el.style.borderRadius = "";
+          el.style.boxShadow = "";
+          el.dataset.selected = "false";
+        });
+
+      // 3) Find the cell for the given date and apply styles
+      const cell = calendarEl.querySelector(`.fc-daygrid-day[data-date="${dateStr}"]`);
+      if (cell) {
+        cell.style.backgroundColor = "#e5e7eb";   // Tailwind gray-200
+        cell.style.borderRadius = "0.375rem";     // rounded-md
+        cell.style.boxShadow = "inset 0 0 0 2px #9ca3af"; // like ring-2 ring-gray-400
+        cell.dataset.selected = "true";
+      }
+    }
+
     // Main monthly calendar
     mainCalendar = new FullCalendar.Calendar(mainCalendarEl, {
       initialView: 'dayGridMonth',
@@ -109,8 +145,28 @@ document.addEventListener('DOMContentLoaded', function () {
       aspectRatio: 1.4,
       expandRows: true,
       handleWindowResize: true,
-      headerToolbar: { left: "prev today", center: "title", right: "next" },
-      buttonText: { today: 'Today' },
+      customButtons: {
+      myToday: {
+        text: 'Today',
+        click: function() {
+          const today = new Date();
+
+          // 1) Move month view to today
+          mainCalendar.today();
+
+          // 2) Also move timeline to today's day view
+          if (window.timelineCalendar) {
+            timelineCalendar.changeView("timeGridDay", today);
+          }
+
+          // 3) Ensure only today is selected in main calendar
+          setMainSelectedDate(today);
+        }
+      }
+    },
+    headerToolbar: { left: "prev myToday", center: "title", right: "next" },
+
+
 
       events: fetchEvents,
 
@@ -153,23 +209,10 @@ document.addEventListener('DOMContentLoaded', function () {
       titleFormat: { year: 'numeric', month: 'short' },
 
       dateClick: function(info) {
-        // 1) remove previous selection (if any)
-        const prev = mainCalendarEl.querySelector('.fc-daygrid-day[data-selected="true"]');
-        if (prev) {
-          prev.style.backgroundColor = "";
-          prev.style.borderRadius = "";
-          prev.style.boxShadow = "";
-          prev.dataset.selected = "false";
-        }
+        // 1) Use the exact YYYY-MM-DD string from FullCalendar
+        setMainSelectedDate(info.dateStr);
 
-        // 2) highlight this clicked day cell
-        const cell = info.dayEl;
-        cell.style.backgroundColor = "#e5e7eb";   // Tailwind gray-200
-        cell.style.borderRadius = "0.375rem";     // Tailwind rounded-md
-        cell.style.boxShadow = "inset 0 0 0 2px #9ca3af"; // like ring-2 ring-gray-400
-        cell.dataset.selected = "true";
-
-        // 3) keep your existing behavior: sync timeline view
+        // 2) Sync timeline view (still using Date)
         const current = timelineCalendar.view.currentStart.toISOString().split("T")[0];
         const clicked = info.date.toISOString().split("T")[0];
 
@@ -178,10 +221,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
 
-
-
     });
     mainCalendar.render();
+    
+
 
     // Timeline calendar
     timelineCalendar = new FullCalendar.Calendar(timelineCalendarEl, {
@@ -468,9 +511,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     
     timelineControlsEl.appendChild(makeBtn("Week", () => timelineCalendar.changeView("timeGridWeek")));
-
     timelineControlsEl.appendChild(makeBtn("Day", () => timelineCalendar.changeView("timeGridDay")));
-    timelineControlsEl.appendChild(makeBtn("Today", () => timelineCalendar.today()));
+    timelineControlsEl.appendChild(
+    makeBtn("Today", () => {
+      const today = new Date();
+
+      // 1) Move the timeline to today (existing behavior)
+      timelineCalendar.today();
+
+      // 2) Move the main month view so today is in view
+      if (window.mainCalendar) {
+        mainCalendar.gotoDate(today); // ensure month is correct
+      }
+
+      // 3) Ensure only today is selected in main calendar
+      setMainSelectedDate(today);
+    })
+  );
+
 
     // --- Render today's appointments in the side list ---
     window.renderTodaysAppointments = function() {
