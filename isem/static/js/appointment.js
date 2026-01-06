@@ -119,6 +119,7 @@ confirmYes?.addEventListener("click", () => {
   // Initialize
   initTimeValidation();
   initRescheduleForm();
+  initFollowupForm();
 });
 
 // ===== Modal Helpers =====
@@ -605,4 +606,76 @@ function initRescheduleForm() {
 
   validateReschedForm();
 
+}
+
+// ===== Follow-up form (acts like create appointment, but linked to original) =====
+function initFollowupForm() {
+  const dateInput = document.getElementById("followup-date");
+  const hourSelect = document.getElementById("followup-hour");
+  const minuteSelect = document.getElementById("followup-minute");
+  const ampmSelect = document.getElementById("followup-ampm");
+  const timeHidden = document.getElementById("followup-time-hidden");
+  const followupForm = document.getElementById("followup-form");
+  const followupSaveBtn = followupForm
+    ? followupForm.querySelector('button[type="submit"]')
+    : null;
+
+  if (!followupForm) return;
+
+  // Build hours when AM/PM changes (similar to reschedule)
+  ampmSelect?.addEventListener("change", function () {
+    const ampm = this.value;
+    hourSelect.innerHTML = '<option value="" selected disabled>Hour</option>';
+
+    if (ampm === "AM") {
+      ["7", "8", "9", "10", "11"].forEach((h) => {
+        const opt = document.createElement("option");
+        opt.value = h;
+        opt.textContent = h;
+        hourSelect.appendChild(opt);
+      });
+    } else if (ampm === "PM") {
+      ["12", "1", "2", "3", "4", "5"].forEach((h) => {
+        const opt = document.createElement("option");
+        opt.value = h;
+        opt.textContent = h;
+        hourSelect.appendChild(opt);
+      });
+    }
+  });
+
+  // Update hidden 24h time
+  [hourSelect, minuteSelect, ampmSelect].forEach((el) => {
+    el?.addEventListener("change", () => {
+      const h = hourSelect.value;
+      const m = minuteSelect.value;
+      const ampm = ampmSelect.value;
+      if (!h || !m || !ampm) return;
+      timeHidden.value = `${String(to24Hour(h, ampm)).padStart(2, "0")}:${m}`;
+    });
+  });
+
+  // Basic validation: require date + full time
+  function validateFollowupForm() {
+    if (!followupSaveBtn) return;
+
+    const date = dateInput?.value || "";
+    const ampm = ampmSelect?.value || "";
+    const hour = hourSelect?.value || "";
+    const minute = minuteSelect?.value || "";
+
+    const timeOk = ampm && hour && minute;
+    const basicOk = date && timeOk;
+
+    followupSaveBtn.disabled = !basicOk;
+    followupSaveBtn.classList.toggle("opacity-50", !basicOk);
+    followupSaveBtn.classList.toggle("cursor-not-allowed", !basicOk);
+  }
+
+  [dateInput, ampmSelect, hourSelect, minuteSelect].forEach((el) => {
+    el && el.addEventListener("change", validateFollowupForm);
+    el && el.addEventListener("input", validateFollowupForm);
+  });
+
+  validateFollowupForm();
 }

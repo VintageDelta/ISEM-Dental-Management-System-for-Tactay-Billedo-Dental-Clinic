@@ -4,6 +4,7 @@ from .models import Dentist, Service, Appointment
 from datetime import datetime, timedelta
 #appoitnmetn form diffy name
 from .forms import AppointmentForm
+from django.shortcuts import render, redirect, get_object_or_404
 from .utils import find_next_available_slot
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -23,6 +24,82 @@ def update_status(request, appointment_id):
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
+def create_followup(request):
+    """
+    Create a follow-up appointment based on an existing appointment.
+    Expects POST with: original_id, date (YYYY-MM-DD), time (HH:MM 24h).
+    """
+    if request.method != "POST":
+        return redirect("appointment:appointment_page")
+
+    original_id = request.POST.get("original_id")
+    date_str = request.POST.get("date")
+    time_str = request.POST.get("time")
+
+    # Safety: make sure these exist
+    if not (original_id and date_str and time_str):
+        messages.error(request, "Missing follow-up date or time.")
+        return redirect("appointment:appointment_page")
+
+    original = get_object_or_404(Appointment, pk=original_id)
+
+    try:
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        time_obj = datetime.strptime(time_str, "%H:%M").time()
+    except ValueError:
+        messages.error(request, "Invalid follow-up date or time.")
+        return redirect("appointment:appointment_page")
+
+    # Block any follow-up date before today (same rule as main create)
+    if date_obj < datetime.now().date():
+        messages.error(request, "You cannot create a follow-up in the past.")
+        return redirect("appointment:appointment_page")
+
+    # Reuse original dentist/location/services/email
+    dentist_name = original.dentist_name
+    location = original.location
+    selected_services = list(original.services.all())
+    total_minutes = sum(s.duration for s in selected_services)
+
+    # Find a valid slot using your existing util
+    start_time, end_time = find_next_available_slot(
+        Dentist.objects.get(name=dentist_name),
+        date_obj,
+        total_minutes,
+        time_obj,
+        location=location,
+    )
+
+    if not start_time or not end_time:
+        messages.error(
+            request,
+            "No available time slot for the selected follow-up date and services.",
+        )
+        return redirect("appointment:appointment_page")
+
+    # Create the follow-up appointment
+    followup = Appointment.objects.create(
+        user=request.user if request.user.is_authenticated else original.user,
+        dentist_name=dentist_name,
+        location=location,
+        date=date_obj,
+        time=start_time,
+        end_time=end_time,
+        preferred_date=date_obj,
+        preferred_time=time_obj,
+        email=original.email,
+        # if you later add a FK like followup_of = models.ForeignKey(...),
+        # set it here, e.g. followup_of=original,
+    )
+    followup.services.set(selected_services)
+
+    messages.add_message(
+        request,
+        messages.SUCCESS,
+        "Follow-up appointment successfully created!",
+        extra_tags="appointment_created",
+    )
+    return redirect("appointment:appointment_page")
 
 # POSTTTT Saves yo shi in the database FRFR
 def appointment_page(request):

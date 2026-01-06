@@ -421,36 +421,55 @@
       Create Follow Up Appointment
     </h2>
 
-    <form id="followup-form" class="space-y-4">
+<form
+      id="followup-form"
+      method="POST"
+      action="{% url 'appointment:create_followup' %}"
+      class="space-y-4"
+    >
       {% csrf_token %}
 
-      <!-- You can start simple: just date + time for follow-up -->
+      <!-- Follow-up date -->
       <div>
         <label class="block text-sm font-medium mb-1">Follow Up Date</label>
-        <input type="date" id="followup-date" name="date"
-               class="w-full border rounded-md p-2 text-sm" required>
+        <input
+          type="date"
+          id="followup-date"
+          name="date"
+          class="w-full border rounded-md p-2 text-sm"
+          required
+        >
       </div>
 
       <div class="flex flex-wrap gap-2">
         <div class="w-full text-sm font-medium">Follow Up Time</div>
 
-        <select id="followup-ampm"
-                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
-                required>
+        <!-- AM/PM -->
+        <select
+          id="followup-ampm"
+          class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+          required
+        >
           <option value="" disabled selected>AM/PM</option>
           <option value="AM">AM</option>
           <option value="PM">PM</option>
         </select>
 
-        <select id="followup-hour"
-                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
-                required>
+        <!-- Hour -->
+        <select
+          id="followup-hour"
+          class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+          required
+        >
           <option value="" disabled selected>Hour</option>
         </select>
 
-        <select id="followup-minute"
-                class="w-full sm:flex-1 border rounded-md p-2 text-sm"
-                required>
+        <!-- Minute -->
+        <select
+          id="followup-minute"
+          class="w-full sm:flex-1 border rounded-md p-2 text-sm"
+          required
+        >
           <option value="" disabled selected>Min</option>
           <option value="00">00</option>
           <option value="15">15</option>
