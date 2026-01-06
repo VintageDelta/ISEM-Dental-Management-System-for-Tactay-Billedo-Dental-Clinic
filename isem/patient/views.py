@@ -165,35 +165,81 @@ def odontogram(request, patient_id):
 def add_odontogram(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     if request.method == "POST":
-        print("POST DATA:", request.POST)
-        print("tooth_number getlist:", request.POST.getlist("tooth_number"))
-        tooth_number=request.POST.get("tooth_number")
-        services=request.POST.getlist("services")
-        dentists=request.POST.get("dentist"),
-        Odontogram.objects.create(
-            patient=patient,
-            tooth_number=tooth_number,
-            # services=services,
-            # dentists=dentists,
-            
-            
-        )
+        index = 0
+        created_any= False
+
+        while True:
+            date_key = f"date_{index}"
+            if date_key not in request.POST:
+
+                break
+
+            date_val = request.POST.get(date_key)
+            status_val = request.POST.get(f"status_{index}")  
+            dentist_id = request.POST.get(f"dentist_{index}")
+            tooth_numbers = request.POST.getlist(f"tooth_number_{index}")
+            services_ids = request.POST.getlist(f"services_{index}")
+
+            if not date_val or not status_val or not dentist_id or not tooth_numbers:
+                index += 1
+                continue
+
+            dentist = dentist_id
+
+            print(f"ROW {index} TEETH:", tooth_numbers)
+
+            for tooth_number in tooth_numbers:
+                odontogram = Odontogram.objects.create(
+                    patient=patient,
+                    tooth_number=int(tooth_number),
+                    date=date_val,
+                    dentist=dentist,
+                    status=status_val,
+                )
+
+                if services_ids:
+                    odontogram.service.add(*services_ids)
+                
+                messages.success(request,f"Tooth {tooth_number} added successfully with services.")
+                created_any = True
+            index += 1
+        if not created_any:
+            messages.error(request, "No valid odontogram entries were provided.")
         return redirect("patient:odontogram", patient_id=patient_id)
     return render(request, "patient/medical_history.html", {"patient": patient})
+        # print("POST DATA:", request.POST)
+        # print("tooth_number getlist:", request.POST.get("tooth_number"))
+        # tooth_number=request.POST.getlist("tooth_number")
+        # services=request.POST.getlist("services")
+        # dentist=request.POST.get("dentist")
+        # print("TEETH:", tooth_number)
 
-def odontogram_history(request, patient_id):
+        # for tooth_number in tooth_number:
+        #     odontogram = Odontogram.objects.create(
+        #         patient=patient,
+        #         tooth_number=int(tooth_number),
+        #         dentist=dentist,
+        #         status=request.POST.get("status"),
+        # )
+
+        #     if services:
+        #         odontogram.service.add(*services)
+        #     messages.success(request,f"Tooth {tooth_number} added successfully with services.")
+        # return redirect("patient:odontogram", patient_id=patient_id)
+
+
+def odontogram_history(request, patient_id, tooth_number):
     patient = get_object_or_404(Patient, pk=patient_id)
-    odontogram = Odontogram.objects.filter(patient=patient, tooth_number=request.POST.get("tooth_number")).first()
-    if odontogram: {
-        "date": odontogram.date,
-        "condition": odontogram.condition,
-        "treatment": odontogram.treatment,
-        "dentist": odontogram.dentist,
-        "status": odontogram.status,
-        "notes": odontogram.notes,
-    }
-    else:
-        data = None
+    records = Odontogram.objects.filter(patient=patient, tooth_number=tooth_number)
+    data = []
+    for record in records:
+        data.append({
+            "tooth_name": TOOTH_NAMES.get(record.tooth_number, "Unknown Tooth"),
+            "date": record.date.strftime("%Y-%m-%d"),
+            "services": [service.service_name for service in record.service.all()],
+            "dentist": record.dentist,
+            "status": record.status,
+        })
     return JsonResponse({"data": data})
 
 def update_odontogram(request, patient_id):

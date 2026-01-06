@@ -6,7 +6,7 @@
       id="medicalTab"
       class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none"
     >
-      Medical History
+      Treatment History
     </button>
     <button
       id="financialTab"
@@ -174,10 +174,14 @@
   >
     <div
       id="popup-content"
-      class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95"
+      class="bg-white rounded-lg shadow-lg w-full max-w-lg max-h-[80vh] flex flex-col transform transition-all duration-200 opacity-0 scale-95"
     >
+    <div class="px-6 pt-5 pb-3 border-b">
       <h2 class="text-lg font-semibold mb-4 text-center">Add Record</h2>
+    </div>
+     <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
       <!-- Medical History Form -->
+      <div class="flex-1 overflow-y-auto pr-2">
       <form
         id="medicalForm" 
         method="post"
@@ -323,76 +327,104 @@
         id="odontogramForm"
         method="post"
         action="{% url 'patient:add_odontogram' patient.id %}"
-        class="space-y-3 hidden"
+        class="flex flex-col gap-3 h-full hidden"
       >
         {% csrf_token %}
 
-        <input
-          type="date"
-          name="date"
-          placeholder="Date of Operation"
-          required
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="number"
-          min = '1'
-          max = '32'
-          name="tooth_number"
-          placeholder="Tooth Number (1-32)"
-          required
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <!-- Service (Checkboxes instead of multi-select) -->
-  <label class="font-semibold">Select Services:</label>
-  <div class="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1">
-      {% for service in services %}
-      <label class="flex items-center space-x-2">
-          <input type="checkbox" name="services" value="{{ service.id }}" class="rounded border-gray-300">
-          <span>{{ service.service_name }}</span>
-      </label>
-      {% endfor %}
-      </div>
-        {% comment %} <!-- Service Name -->
-          <select id="resched-service" name="service" required class="w-full border rounded-md p-2 text-sm">
-            <option value="" disabled selected>Select Service</option>
-            {% for service in services %}
-              <option value="{{ service.id }}">{{ service.service_name }}</option>
-            {% endfor %}
-  </select> {% endcomment %}
-        <!-- Dentist Name -->
-          <select id="resched-dentist" name="dentist" required class="w-full border rounded-md p-2 text-sm">
-            <option value="" disabled selected>Select Dentist</option>
-            {% for dentist in dentists %}
+        <div id="odontogram-records" class="space-y-4 overflow-y-auto pr-2">
+          <!-- ONE RECORD TEMPLATE -->
+          <div class="odontogram-record border rounded-md p-3 space-y-3">
+            <input
+              type="date"
+              name="date_0"
+              placeholder="Date of Operation"
+              required
+              class="w-full border rounded-md p-2 text-sm"
+            />
+
+            <label class="font-semibold">Tooth Number:</label>
+            <!-- Check All-->
+            <div class="flex items-center gap-2 mb-1 text-xs">
+  <input
+    type="checkbox"
+    class="tooth-check-all rounded border-gray-300"
+  />
+  <span class="text-gray-600">Check all teeth</span>
+</div>
+            <div class="grid grid-cols-8 gap-2 max-h-40 overflow-y-auto mb-2">
+              {% for tooth_num in tooth_num %}
+              <label class="text-center text-sm">
+                <input type="checkbox" name="tooth_number_0" value="{{ tooth_num }}" class="mr-1 tooth-checkbox">
+                <span>{{ tooth_num }}</span>
+              </label>
+              {% endfor %}
+            </div>
+
+            <label class="font-semibold">Select Services:</label>
+            <div class="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1">
+              {% for service in services %}
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="services_0" value="{{ service.id }}" class="rounded border-gray-300">
+                <span>{{ service.service_name }}</span>
+              </label>
+              {% endfor %}
+            </div>
+
+            <!-- Dentist Name -->
+            <select name="dentist_0" required class="w-full border rounded-md p-2 text-sm">
+              <option value="" disabled selected>Select Dentist</option>
+              {% for dentist in dentists %}
               <option value="{{ dentist.id }}">{{ dentist.name }}</option>
-            {% endfor %}
-          </select>
-        <input
-          type="text"
-          name="status"
-          placeholder="Status"
-          required
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <div class="flex justify-end gap-2 pt-3">
+              {% endfor %}
+            </select>
+
+            <input
+              type="text"
+              name="status_0"
+              placeholder="Status"
+              required
+              class="w-full border rounded-md p-2 text-sm"
+            />
+
+            <!-- Remove button for extra records -->
+            <button
+              type="button"
+              class="remove-record hidden mt-2 text-xs text-red-600 hover:underline"
+            >
+              Remove this record
+            </button>
+          </div>
+        </div>
+
+        <div class="flex justify-between gap-2 pt-3 border-t mt-3 pt-3">
           <button
             type="button"
-            id="close-popup-btn"
-            class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+            id="add-more-odontogram"
+            class="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
           >
-            Cancel
+            + Add More
           </button>
-          <button
-            type="submit"
-            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Save
-          </button>
+
+          <div class="flex gap-2">
+            <button
+              type="button"
+              id="close-popup-btn"
+              class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Save
+            </button>
+          </div>
         </div>
       </form>
     </div>
   </div>
-
+</div>
     
   </div>
 
@@ -400,6 +432,7 @@
 
   {% endblock %} {% block extra_js %}
   <script src="{% static 'js/modal.js' %}"></script>
+
   <script>
     const medicalTab = document.getElementById("medicalTab");
     const financialTab = document.getElementById("financialTab");
@@ -460,66 +493,138 @@
     const financialUrl = "{% url 'patient:add_financial_history' patient.id %}";
     const odontogramUrl = "{% url 'patient:add_odontogram' patient.id %}";
   </script>
-
   <script>
-  function selectTooth(tooth_num) {
-    tooth_num = Number(tooth_num);
-    console.log("Selected Tooth:", tooth_num);
-    const toothNames = {
-        1: "Upper Right Third Molar (Wisdom Tooth)",
-        2: "Upper Right Second Molar",
-        3: "Upper Right First Molar",
-        4: "Upper Right Second Premolar",
-        5: "Upper Right First Premolar",
-        6: "Upper Right Canine",
-        7: "Upper Right Lateral Incisor",
-        8: "Upper Right Central Incisor",
-        9: "Upper Left Central Incisor",
-        10: "Upper Left Lateral Incisor",
-        11: "Upper Left Canine",
-        12: "Upper Left First Premolar",
-        13: "Upper Left Second Premolar",
-        14: "Upper Left First Molar",
-        15: "Upper Left Second Molar",
-        16: "Upper Left Third Molar (Wisdom Tooth)",
-        17: "Lower Left Third Molar (Wisdom Tooth)",
-        18: "Lower Left Second Molar",
-        19: "Lower Left First Molar",
-        20: "Lower Left Second Premolar",
-        21: "Lower Left First Premolar",
-        22: "Lower Left Canine",
-        23: "Lower Left Lateral Incisor",
-        24: "Lower Left Central Incisor",
-        25: "Lower Right Central Incisor",
-        26: "Lower Right Lateral Incisor",
-        27: "Lower Right Canine",
-        28: "Lower Right First Premolar",
-        29: "Lower Right Second Premolar",
-        30: "Lower Right First Molar",
-        31: "Lower Right Second Molar",
-        32: "Lower Right Third Molar (Wisdom Tooth)", 
-  };
-
+    
+</script>
+ <script>
+function selectTooth(tooth_num) {
+  const patient_id = {{ patient.id }};
+  
+  // Highlight selected tooth
   document.querySelectorAll('.w-10').forEach(btn => {
     btn.classList.remove('bg-blue-500', 'text-white');
-    btn.classList.add('border-gray-300', 'hover:bg-blue-100', 'text-black');
+    btn.classList.add('border-gray-300','hover:bg-blue-100','text-black');
   });
+  const currentBtn = document.querySelector(`button[onclick="selectTooth('${tooth_num}')"]`);
+  currentBtn.classList.add('bg-blue-500','text-white');
 
-  const selectedBtn = document.querySelector(`button[onclick="selectTooth('${tooth_num}')"]`);
-  selectedBtn.classList.add('bg-blue-500', 'text-white');
+  // Fetch tooth history
+  fetch(`/dashboard/patient/${ patient_id }/odontogram/history/${tooth_num}/`)
+      .then(response => response.json())
+      .then(result => {
+         console.log("RAW RESPONSE:", result);
+         displayToothHistory(tooth_num, result.data)})
+      .catch(error => console.error("Fetch Error:", error));
+}
 
-  const historyDiv = document.getElementById("tooth-history");
-  const toothName = toothNames[tooth_num];
 
-  historyDiv.innerHTML = `
-        <h3 class="text-lg font-semibold mb-2 text-center">Tooth ${tooth_num}: ${toothName}</h3>
-        <div class="space-y-2 text-sm">
-          <p><strong>Date of Operation:</strong> <span class="text-gray-500">-</span></p>
-          <p><strong>Service:</strong> <span class="text-gray-500">-</span></p>
-          <p><strong>Dentist:</strong> <span class="text-gray-500">-</span></p>
-          <p><strong>Status:</strong> <span class="text-gray-500">-</span></p>
-        </div>
-        `;
+// Render tooth history
+function displayToothHistory(tooth_num, data) {
+    const historyDiv = document.getElementById("tooth-history");
+    let html = `
+      <h3 class="text-lg font-semibold text-center mb-3">Tooth ${tooth_num}</h3>
+    `;
+
+    if (data.length === 0) {
+      historyDiv.innerHTML = html + `<p class="text-center text-gray-500">No records yet.</p>`
+      return;
+    }
+
+    data.forEach(record => {
+      html += `
+        <div class="p-3 mb-2 border bg-gray-50 rounded">
+          <p><strong>Date:</strong> ${record.date || "-"}</p>
+          <p><strong>Dentist:</strong> ${record.dentist || "-"}</p>
+          <p><strong>Status:</strong> ${record.status || "-"}</p>
+
+          <p><strong>Services:</strong> 
+            ${record.services &&  record.services.length > 0 
+              ? record.services.join(", ")
+              : "-" }
+          </p>
+        </div>`;
+        console.log("SERVICES VALUE:", record.services); 
+    });
+
+    historyDiv.innerHTML = html;
+}
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const recordsWrapper = document.getElementById("odontogram-records");
+    const addMoreBtn = document.getElementById("add-more-odontogram");
+
+    if (!recordsWrapper || !addMoreBtn) return;
+
+    let recordIndex = 0; // highest index used
+
+    function wireCheckAll(recordEl) {
+      const checkAllBox = recordEl.querySelector(".tooth-check-all");
+      const toothCheckboxes = recordEl.querySelectorAll(".tooth-checkbox");
+
+      if (!checkAllBox) return;
+
+      // remove existing listeners by cloning (simple reset)
+      const newCheckAll = checkAllBox.cloneNode(true);
+      checkAllBox.parentNode.replaceChild(newCheckAll, checkAllBox);
+
+      newCheckAll.addEventListener("change", () => {
+        toothCheckboxes.forEach((cb) => {
+          cb.checked = newCheckAll.checked;
+        });
+      });
+    }
+
+    function updateNames(recordEl, index) {
+      const inputs = recordEl.querySelectorAll("input, select");
+      inputs.forEach((el) => {
+        if (!el.name) return;
+        el.name = el.name.replace(/_\d+$/, "_" + index);
+
+        if (el.type === "checkbox" || el.type === "radio") {
+          el.checked = false;
+        } else {
+          el.value = "";
+        }
+      });
+
+      const indexLabel = recordEl.querySelector(".record-index");
+      if (indexLabel) indexLabel.textContent = index + 1;
+
+      wireCheckAll(recordEl);
+    }
+
+    // initialise first record
+    wireCheckAll(recordsWrapper.querySelector(".odontogram-record"));
+
+    addMoreBtn.addEventListener("click", () => {
+      const firstRecord = recordsWrapper.querySelector(".odontogram-record");
+      if (!firstRecord) return;
+
+      const newRecord = firstRecord.cloneNode(true);
+      recordIndex += 1;
+      updateNames(newRecord, recordIndex);
+
+      const removeBtn = newRecord.querySelector(".remove-record");
+      if (removeBtn) {
+        removeBtn.classList.remove("hidden");
+        removeBtn.addEventListener("click", () => {
+          newRecord.remove();
+        });
       }
-  </script>
+
+      recordsWrapper.appendChild(newRecord);
+    });
+
+    // keep first block non-removable
+    const firstRemoveBtn = recordsWrapper.querySelector(".odontogram-record .remove-record");
+    if (firstRemoveBtn) {
+      firstRemoveBtn.classList.add("hidden");
+    }
+  });
+</script>
+
+
+
   {% endblock %}
