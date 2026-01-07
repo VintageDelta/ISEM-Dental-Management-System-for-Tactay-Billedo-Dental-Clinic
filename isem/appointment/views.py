@@ -77,7 +77,7 @@ def create_followup(request):
         )
         return redirect("appointment:appointment_page")
 
-    # Create the follow-up appointment
+    # follow-up appointment
     followup = Appointment.objects.create(
         user=request.user if request.user.is_authenticated else original.user,
         dentist_name=dentist_name,
@@ -88,7 +88,7 @@ def create_followup(request):
         preferred_date=date_obj,
         preferred_time=time_obj,
         email=original.email,
-        # if you later add a FK like followup_of = models.ForeignKey(...),
+        # if you later add a FK like followup_of = models.ForeignKey
         # set it here, e.g. followup_of=original,
     )
     followup.services.set(selected_services)
@@ -120,7 +120,7 @@ def appointment_page(request):
 
         date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-        # 🔒 Block any appointment date before today
+        #Block any appointment date before today
         if date_obj < datetime.now().date():
             messages.error(request, "You cannot create an appointment in the past.")
             return redirect("appointment:appointment_page")
@@ -270,17 +270,49 @@ def reschedule_appointment(request, appointment_id):
 
     dentist = Dentist.objects.get(id=request.POST.get("dentist"))
     location = request.POST.get("location")
-    date = request.POST.get("date")
+    date_str = request.POST.get("date")
     time_str = request.POST.get("time")
+    email = request.POST.get("email")
 
     service_ids = request.POST.getlist("services")
+    selected_services = Service.objects.filter(id__in=service_ids)
 
+    try:
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        preferred_time = datetime.strptime(time_str, "%H:%M").time()
+    except ValueError:
+        return JsonResponse({"success": False, "error": "Invalid date or time"}, status=400)
+
+    if date_obj < datetime.now().date():
+        return JsonResponse({"success": False, "error": "You cannot reschedule in the past."}, status=400)
+
+    total_minutes = sum(s.duration for s in selected_services)
+
+    start_time, end_time = find_next_available_slot(
+        dentist,
+        date_obj,
+        total_minutes,
+        preferred_time,
+        location=location,
+    )
+
+    if not start_time or not end_time:
+        return JsonResponse({"success": False, "error": "No available time slot for the selected date and services."}, status=400)
+
+    # update the SAME appointment
     appt.dentist_name = dentist.name
     appt.location = location
-    appt.date = date
-    appt.time = time_str
-    appt.services.set(service_ids)
+    appt.date = date_obj
+    appt.time = start_time
+    appt.end_time = end_time
+    appt.preferred_date = date_obj
+    appt.preferred_time = preferred_time
+    appt.email = email
+    appt.services.set(selected_services)
     appt.save()
 
     messages.success(request, "Appointment rescheduled successfully!")
     return JsonResponse({"success": True})
+
+
+

@@ -1,3 +1,10 @@
+// Global refs for main create-appointment form/button
+let addForm = null;
+let addSaveBtn = null;
+let reschedAppointmentId = null;
+
+let reschedHandlerAttached = false;
+
 // ===== Appointment Modals & Utility =====
 document.addEventListener("DOMContentLoaded", () => {
   const createBtn = document.getElementById("create-appointment-btn");
@@ -115,7 +122,88 @@ confirmYes?.addEventListener("click", () => {
     closeModal("notify-modal");
   });
 
-  
+    // --- Two-step create appointment flow (loading + confirm) ---
+  addForm = document.querySelector("#appointment-modal form");
+  addSaveBtn = addForm ? addForm.querySelector('button[type="submit"]') : null;
+
+  const overlay = document.getElementById("appointment-loading-overlay");
+  const loadingStep = document.getElementById("appointment-loading-step");
+  const confirmStep = document.getElementById("appointment-confirm-step");
+  const confirmDateEl = document.getElementById("confirm-picked-date");
+  const confirmTimeEl = document.getElementById("confirm-picked-time");
+  const confirmSaveBtn = document.getElementById("confirm-save-btn");
+  const confirmReschedBtn = document.getElementById("confirm-reschedule-btn");
+
+  let pendingSubmitTimeout = null;
+
+  if (addForm && overlay && loadingStep && confirmStep) {
+    // Intercept the normal submit
+    addForm.addEventListener("submit", (e) => {
+      e.preventDefault(); // stop immediate POST
+
+      // If form invalid by our existing validation, do nothing
+      if (addSaveBtn && addSaveBtn.disabled) return;
+
+      // Prepare overlay: show loading step, hide confirm step
+      loadingStep.classList.remove("hidden");
+      confirmStep.classList.add("hidden");
+      overlay.classList.remove("hidden");
+      overlay.classList.add("flex");
+
+      const content = overlay.querySelector(":scope > div");
+      if (content) {
+        content.classList.remove("opacity-100", "scale-100");
+        content.classList.add("opacity-0", "scale-95");
+        requestAnimationFrame(() => {
+          content.classList.remove("opacity-0", "scale-95");
+          content.classList.add("opacity-100", "scale-100");
+        });
+      }
+
+      // After ~5 seconds, switch to confirmation step
+      if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
+      pendingSubmitTimeout = setTimeout(() => {
+        // Compute the picked date / time from the form
+        const dateVal = document.getElementById("date")?.value || "";
+        const hourVal = document.getElementById("hour")?.value || "";
+        const minuteVal = document.getElementById("minute")?.value || "";
+        const ampmVal = document.getElementById("ampm")?.value || "";
+
+        // Format date as YYYY-MM-DD (as stored)
+        confirmDateEl.textContent = dateVal || "N/A";
+
+        // Format time into something like "09:30 AM"
+        if (hourVal && minuteVal && ampmVal) {
+          const hourStr = hourVal.toString().padStart(2, "0");
+          confirmTimeEl.textContent = `${hourStr}:${minuteVal} ${ampmVal}`;
+        } else {
+          confirmTimeEl.textContent = "N/A";
+        }
+
+        loadingStep.classList.add("hidden");
+        confirmStep.classList.remove("hidden");
+      }, 5000); // 5 seconds
+    });
+
+    // User confirms: actually submit form to Django
+    confirmSaveBtn?.addEventListener("click", () => {
+      if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
+      // Close overlay
+      overlay.classList.add("hidden");
+      overlay.classList.remove("flex");
+      // Now allow the real submit
+      addForm.submit();
+    });
+
+    // User wants to change schedule: close overlay, keep modal & inputs as-is
+    confirmReschedBtn?.addEventListener("click", () => {
+      if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
+      overlay.classList.add("hidden");
+      overlay.classList.remove("flex");
+      // Do NOT reset the form; all inputs stay the same
+    });
+  }
+
   // Initialize
   initTimeValidation();
   initRescheduleForm();
@@ -352,8 +440,6 @@ function initTimeValidation() {
   // Initial state
   refreshSelectedServiceTags();
     // --- Form-level validation: enable Save only when all required fields are filled ---
-  const addForm = document.querySelector("#appointment-modal form");
-  const addSaveBtn = addForm ? addForm.querySelector('button[type="submit"]') : null;
 
   function validateAddForm() {
     if (!addForm || !addSaveBtn) return;
@@ -460,6 +546,49 @@ function initRescheduleForm() {
   const ampmSelect = document.getElementById("resched-ampm");
   const timeHidden = document.getElementById("resched-time-hidden");
 
+    async function toggleReschedTimeInputs() {
+    const dentist = document.getElementById("resched-dentist")?.value || "";
+    const date = document.getElementById("resched-date")?.value || "";
+    const location = document.getElementById("resched-location")?.value || "";
+
+    const ready = dentist && date && location;
+
+    // enable/disable selects
+    hourSelect.disabled = !ready;
+    minuteSelect.disabled = !ready;
+    ampmSelect.disabled = !ready;
+
+    if (!ready) return;
+
+    const booked = await fetchBookedTimes(dentist, date, location);
+
+    // reset hour options disabled state
+    Array.from(hourSelect.options).forEach(o => {
+      o.disabled = false;
+    });
+
+    // disable booked hours (same idea as create)
+    booked.forEach(slot => {
+      const [sh] = slot.start.split(":").map(Number);
+      const [eh] = slot.end.split(":").map(Number);
+
+      for (let h = sh; h <= eh; h++) {
+        const hour12 = (h % 12) || 12;
+        const opt = hourSelect.querySelector(`option[value="${hour12}"]`);
+        if (opt) opt.disabled = true;
+      }
+    });
+  }
+
+    // when resched dentist/date/location change, refetch and apply booked times
+  [
+    document.getElementById("resched-dentist"),
+    document.getElementById("resched-location"),
+    document.getElementById("resched-date"),
+  ].forEach(el => {
+    el && el.addEventListener("change", toggleReschedTimeInputs);
+  });
+
   // Rebuild hours when AM/PM changes
   ampmSelect?.addEventListener("change", function() {
     const ampm = this.value;
@@ -480,6 +609,8 @@ function initRescheduleForm() {
         hourSelect.appendChild(opt);
       });
     }
+
+    toggleReschedTimeInputs();
   });
 
   // Update hidden 24h time
@@ -567,6 +698,60 @@ function initRescheduleForm() {
   const reschedForm = document.getElementById("reschedule-form");
   const reschedSaveBtn = reschedForm ? reschedForm.querySelector('button[type="submit"]') : null;
 
+    const reschedLoadingRow = document.getElementById("resched-loading-row");
+
+  // Attach submit handler only once
+  if (reschedForm && reschedSaveBtn && !reschedHandlerAttached) {
+    reschedHandlerAttached = true;
+
+    reschedForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (reschedSaveBtn.disabled) return;
+      if (!window.reschedAppointmentId) return;
+
+      // show small loader in modal, disable button
+      reschedLoadingRow?.classList.remove("hidden");
+      reschedSaveBtn.disabled = true;
+      reschedSaveBtn.classList.add("opacity-50", "cursor-not-allowed");
+
+      const formData = new FormData(reschedForm);
+
+      setTimeout(() => {
+        fetch(`/dashboard/appointment/reschedule_appointment/${window.reschedAppointmentId}/`, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: formData,
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            reschedLoadingRow?.classList.add("hidden");
+            reschedSaveBtn.disabled = false;
+            reschedSaveBtn.classList.remove("opacity-50", "cursor-not-allowed");
+
+            if (!data.success) {
+              showFailedModal(data.error || "Failed to reschedule appointment.");
+              return;
+            }
+
+            closeModal("reschedule-modal");
+
+            if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
+            if (window.mainCalendar) window.mainCalendar.refetchEvents();
+            setTimeout(() => {
+              if (typeof window.renderTodaysAppointments === "function") {
+                window.renderTodaysAppointments();
+              }
+            }, 250);
+
+            showSuccessModal();
+          });
+      }, 5000); // 5-second delay to match your UX
+    });
+  }
+
+
   function validateReschedForm() {
     if (!reschedForm || !reschedSaveBtn) return;
 
@@ -605,6 +790,7 @@ function initRescheduleForm() {
   });
 
   validateReschedForm();
+  toggleReschedTimeInputs();
 
 }
 

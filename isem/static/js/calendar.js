@@ -381,9 +381,10 @@ document.addEventListener('DOMContentLoaded', function () {
             openModal("followup-modal");
           });
 
-                  rescheduleBtn.addEventListener("click", (e) => {
+          rescheduleBtn.addEventListener("click", (e) => {
           e.stopPropagation();
           currentEventId = info.event.id;
+          window.reschedAppointmentId = info.event.id; 
 
           const propsInner = info.event.extendedProps || {};
 
@@ -473,6 +474,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!isCancelled || canManage) {
           wrapper.addEventListener("click", () => {
             currentEventId = info.event.id;
+            window.reschedAppointmentId = info.event.id;
             window.currentEventId = currentEventId; 
             const props2 = info.event.extendedProps || {};
             document.getElementById("detail-dentist").textContent = props2.dentist || "N/A";
