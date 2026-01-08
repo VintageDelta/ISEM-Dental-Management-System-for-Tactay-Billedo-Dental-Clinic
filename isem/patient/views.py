@@ -5,6 +5,12 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Patient, MedicalHistory, FinancialHistory, Odontogram
 from appointment.models import Dentist, Service
+
+#pagination import
+from django.core.paginator import Paginator
+from django.shortcuts import render
+
+
 def patient_records(request):
     if request.method == "POST":
         name = request.POST.get("name")
@@ -20,6 +26,7 @@ def patient_records(request):
             if email and Patient.objects.filter(email=email).exists():
                 messages.error(request, "A patient with this email already exists.")
                 return redirect("patient:list")
+            
             Patient.objects.create(
                 name=name,
                 address=address,
@@ -46,8 +53,20 @@ def patient_records(request):
 
         return redirect("patient:list")
     if request.user.is_staff or request.user.is_superuser:
-         patients = Patient.objects.all()
-         return render(request, "patient/patient-records.html", {"patients": patients})
+        qs = Patient.objects.all().order_by('id')
+
+        paginator = Paginator(qs, 5)  # 5 records per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        return render(
+            request,
+            "patient/patient-records.html",
+            {
+                "patients": page_obj.object_list,  # what your template loops over
+                "page_obj": page_obj,             # used by pagination links
+            },
+        )
     else:
         patient = get_object_or_404(Patient, email=request.user.email)
     return medical_history(request, pk=patient.id)
@@ -76,9 +95,13 @@ def update_patient(request):
 
 def medical_history(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
-    history = patient.medical_history.all() 
+
+    medical_history_qs = patient.medical_history.all()
+    financial_history_qs = patient.financial_history.all()
     tooth_num = range(1, 33)
-    return render(request, "patient/medical_history.html", {"patient": patient, "history": history, "tooth_num": tooth_num, "services": Service.objects.all(), "dentists": Dentist.objects.all()})
+
+
+    return render(request, "patient/medical_history.html", {"patient": patient, "medical_history": medical_history_qs, "financial_history": financial_history_qs, "tooth_num": tooth_num, "services": Service.objects.all(), "dentists": Dentist.objects.all()})
 
 def add_medical_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
@@ -96,12 +119,12 @@ def add_medical_history(request, patient_id):
         return redirect("patient:medical_history", pk=patient_id)
     return render(request, "patient/medical_history.html", {"patient": patient})
 
-def financial_history(request, patient_id):
-    patient = get_object_or_404(Patient, pk=patient_id)
+# def financial_history(request, patient_id):
+#     patient = get_object_or_404(Patient, pk=patient_id)
     
-    history = patient.financial_history.all()
-    tooth_num = range(1, 33)
-    return render(request, "patient/medical_history.html", {"patient": patient, "history": history, "tooth_num": tooth_num})
+#     history = patient.financial_history.all()
+#     tooth_num = range(1, 33)
+#     return render(request, "patient/medical_history.html", {"patient": patient, "history": history, "tooth_num": tooth_num})
 
 def add_financial_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
@@ -115,8 +138,9 @@ def add_financial_history(request, patient_id):
             amount=request.POST.get("amount"),
             balance=request.POST.get("balance"),
         )
-        return redirect("patient:financial_history", patient_id=patient_id)
-    return render(request, "patient/medical_history.html", {"patient": patient})
+        return redirect("patient:medical_history", pk=patient_id)
+    return render(request, "patient/medical_history", pk=patient_id)
+
 TOOTH_NAMES = {
   1: "Upper Right Third Molar (Wisdom Tooth)",
   2: "Upper Right Second Molar",
@@ -280,3 +304,4 @@ def update_odontogram(request, patient_id):
         })
 
     return JsonResponse({"success": False, "error": "Invalid request method."}, status=400)
+

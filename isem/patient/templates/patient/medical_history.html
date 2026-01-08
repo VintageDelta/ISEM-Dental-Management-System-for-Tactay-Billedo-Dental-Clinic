@@ -70,7 +70,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          {% for record in history %}
+          {% for record in medical_history %}
           <tr class="hover:bg-gray-100">
             <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
             <td class="px-4 py-2">{{ record.dentist }}</td>
@@ -116,7 +116,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          {% for record in history %}
+          {% for record in financial_history %}
           <tr class="hover:bg-gray-100">
             <td class="px-4 py-2">{{ record.number }}</td>
             <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
@@ -275,7 +275,7 @@
         />
         <input
           type="text"
-          name="Description" 
+          name="description" 
           placeholder="Description"
           required
           class="w-full border rounded-md p-2 text-sm"
@@ -289,20 +289,20 @@
         />
         <input
           type="text"
-          name="Type"
+          name="type"
           placeholder="Type"
           required
           class="w-full border rounded-md p-2 text-sm"
         />
         <input
           type="number"
-          name="Amount"
+          name="amount"
           placeholder="Amount"
           class="w-full border rounded-md p-2 text-sm"
         />
         <input
           type="number"
-          name="Balance"
+          name="balance"
           placeholder="Balance"
           class="w-full border rounded-md p-2 text-sm"
         />

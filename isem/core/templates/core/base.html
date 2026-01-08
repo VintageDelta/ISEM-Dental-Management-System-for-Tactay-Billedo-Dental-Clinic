@@ -93,9 +93,33 @@
             />
           </div>
           <div class="flex items-center space-x-4">
-            <button><span class="material-icons">mail</span></button>
-            <button><span class="material-icons">notifications</span></button>
-            <button><span class="material-icons">settings</span></button>
+            <!--Messages Button--><!--COMMENTED FOR FUTURE PURPOSES, CAN BE REMOVED ANYTIME SOON-->
+            {% comment %} <div class="relative">
+              <button id="messagesToggle" class="p-2 roounded-full hover:br-gray-100">
+                <span class="material-icons">mail</span>
+              </button>
+              <div id="messagesMenu"
+                    class="hidden absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-md border text-sm z-50">
+                    <div class="px-3 py-2 border-b font-semibold">
+                      Messages</div>
+                      <p class="px-3 py-3 text-gray-500 text-xs">No new messages</p>
+                    </div>
+                  </div>
+            <!--Notifications Button-->
+            <div class="relative">
+    <button id="notificationsToggle" class="p-2 rounded-full hover:bg-gray-100">
+      <span class="material-icons">notifications</span>
+    </button>
+    <div id="notificationsMenu"
+         class="hidden absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-md border text-sm z-50">
+      <div class="px-3 py-2 border-b font-semibold">Notifications</div>
+      <p class="px-3 py-3 text-gray-500 text-xs">No notifications currently.</p>
+    </div>
+  </div>
+  <!--Settings that redirects to profile for the meantime cuz y not-->
+  <a href="{% url 'userprofile:profile' %}" class="p-2 rounded-full hover:bg-gray-100">
+    <span class="material-icons">settings</span>
+  </a> {% endcomment %}
             <div class="relative inline-block text-left">
   <!-- Trigger -->
   <div class="relative">
@@ -151,5 +175,41 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+<!--script for message and notif toggles--><!--COMMENTED FOR FUTURE PURPOSES, CAN BE REMOVED ANYTIME SOON-->
+{% comment %} <script>
+document.addEventListener('DOMContentLoaded', function () {
+
+
+  const menus = [
+    { toggleId: 'messagesToggle', menuId: 'messagesMenu' },
+    { toggleId: 'notificationsToggle', menuId: 'notificationsMenu' },
+  ];
+
+  function closeAll() {
+    menus.forEach(({ menuId }) => {
+      const menu = document.getElementById(menuId);
+      if (menu) menu.classList.add('hidden');
+    });
+  }
+
+  menus.forEach(({ toggleId, menuId }) => {
+    const toggle = document.getElementById(toggleId);
+    const menu = document.getElementById(menuId);
+    if (!toggle || !menu) return;
+
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const isHidden = menu.classList.contains('hidden');
+      closeAll();
+      if (isHidden) menu.classList.remove('hidden');
+    });
+  });
+
+
+  document.addEventListener('click', function () {
+    closeAll();
+  });
+});
+</script> {% endcomment %}
 </body>
 </html>
