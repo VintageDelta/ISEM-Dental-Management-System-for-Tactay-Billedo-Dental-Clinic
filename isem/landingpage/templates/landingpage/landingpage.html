@@ -22,35 +22,45 @@
 
     <!-- LEFT: LOGO -->
     <div class="flex items-center gap-3">
-        <img src="{% static 'landingpage/logo.png' %}" class="w-40 h-12 object-contain">
+        <img src="{% static 'landingpage/logo.png' %}" class="w-24 sm:w-32 md:w-40 h-auto object-contain">
     </div>
 
-    <!-- CENTER: MENU LINKS -->
-    <div class="hidden md:flex gap-8 text-gray-700 font-medium">
-        <a href="#top" class="hover:text-green-600 transition">Home</a>
-        <a href="#about" class="hover:text-green-600 transition">About Us</a>
-        <a href="#services" class="hover:text-green-600 transition">Services</a>
-        <a href="#contact" class="hover:text-green-600 transition">Contact Us</a>
-    </div>
+   <!-- CENTER: MENU LINKS -->
+<div class="flex flex-wrap justify-center gap-2 sm:gap-5 md:gap-8 text-gray-700 font-medium 
+            text-xs sm:text-sm md:text-base lg:text-lg">
+    <a href="#top" class="hover:text-green-600 transition">Home</a>
+    <a href="#about" class="hover:text-green-600 transition">About Us</a>
+    <a href="#services" class="hover:text-green-600 transition">Services</a>
+    <a href="#contact" class="hover:text-green-600 transition">Contact Us</a>
+</div>
+
 
     <!-- RIGHT: GUEST DROPDOWN -->
     <div class="relative">
-        <button id="guestBtn" 
-                class="flex items-center gap-2 bg-white text-gray-800 px-4 py-2 rounded-lg shadow hover:bg-gray-100 transition">
-            
-            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold">
-                👤
-            </div>
-            Guest
-        </button>
+    <button id="guestBtn" 
+            class="flex items-center gap-2 bg-white text-gray-800 
+                   w-20 sm:w-28 md:w-36 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg shadow hover:bg-gray-100 transition text-sm sm:text-base">
 
-        <!-- DROPDOWN -->
-        <div id="guestDropdown"
-             class="hidden absolute right-0 mt-2 bg-white shadow-lg rounded-lg py-2 w-40 text-gray-700 flex flex-col space-y-1">
-            <a href="{% url 'userprofile:signin' %}" class="px-4 py-2 hover:bg-gray-100 rounded">Login</a>
-            <a href="{% url 'userprofile:signup' %}" class="px-4 py-2 hover:bg-gray-100 rounded">Register</a>
+        <div class="w-5 h-5 sm:w-6 sm:h-8 bg-gray-300 rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" 
+                 viewBox="0 0 24 24" 
+                 fill="currentColor" 
+                 class="w-3 h-3 sm:w-4 sm:h-5 text-green-600">
+                <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-3.314 0-10 1.657-10 5v1h20v-1c0-3.343-6.686-5-10-5Z"/>
+            </svg>
         </div>
+
+        <span class="truncate">Guest</span>
+    </button>
+
+    <!-- DROPDOWN -->
+    <div id="guestDropdown"
+         class="hidden absolute right-0 mt-2 bg-white shadow-lg rounded-lg py-2 w-40 text-gray-700 flex flex-col space-y-1">
+        <a href="{% url 'userprofile:signin' %}" class="px-4 py-2 hover:bg-gray-100 rounded">Login</a>
+        <a href="{% url 'userprofile:signup' %}" class="px-4 py-2 hover:bg-gray-100 rounded">Register</a>
     </div>
+</div>
+
 </nav>
 
 <script>

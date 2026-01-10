@@ -57,138 +57,95 @@ Records {% endblock %} {% block content %}
       </div>
 
       <!-- Patient Table -->
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm border">
-          <thead class="bg-gray-50 text-gray-600 text-left">
-            <tr>
-              <th class="py-3 px-4 border-b">
-                <input type="checkbox" />
-              </th>
-              <th class="py-3 px-4 border-b">Patient ID</th>
-              <th class="py-3 px-4 border-b">Name</th>
-              <th class="py-3 px-4 border-b">Email</th>
-              <th class="py-3 px-4 border-b">Address</th>
-              <th class="py-3 px-4 border-b">Telephone</th>
-              <th class="py-3 px-4 border-b">Age</th>
-              <th class="py-3 px-4 border-b">Occupation</th>
-              <th class="py-3 px-4 border-b text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="patient-table-body">
-            {% for patient in patients %}
-            <tr
-              class="hover:bg-gray-50 border-b patient-row clickable-row"
-              data-url="{% url 'patient:medical_history' patient.id %}"
-            >
-              <td class="py-3 px-4">
-                <input
-                  type="checkbox"
-                  class="select-patient"
-                  value="{{ patient.id }}"
-                />
-              </td>
-              <td class="py-3 px-4">{{ patient.id }}</td>
-              <td class="py-3 px-4">{{ patient.name }}</td>
-              <td class="py-3 px-4">{{ patient.email }}</td>
-              <td class="py-3 px-4">{{ patient.address }}</td>
-              <td class="py-3 px-4">{{ patient.telephone }}</td>
-              <td class="py-3 px-4">{{ patient.age }}</td>
-              <td class="py-3 px-4">{{ patient.occupation }}</td>
-              <td class="py-3 px-4 text-right">
-                {% if user.is_staff or user.is_superuser%}
-                <div class="flex justify-end gap-2">
-                  <a
-                    href="#"
-                    class="text-gray-500 hover:text-gray-700"
-                    data-id="{{patient.id}}"
-                    ><i class="uil uil-edit text-xl"></i>
-                  </a>
-                  <a
-                    href="#"
-                    class="text-gray-500 hover:text-red-600 delete-btn"
-                    data-id="{{ patient.id }}"
-                    ><i class="uil uil-trash-alt text-xl"></i>
-                  </a>
-                </div>
-                {%endif%}
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="9" class="py-4 text-center text-gray-500">
-                No patients found.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+<div class="relative w-full min-w-0 overflow-x-auto">
+  <div class="min-w-[1200px]">
+    <table class="w-full text-sm border border-gray-200">
+      <thead class="bg-gray-50 text-gray-600 text-left">
+        <tr>
+          <th class="py-3 px-4 border-b">
+            <input type="checkbox" />
+          </th>
+          <th class="py-3 px-4 border-b">Patient ID</th>
+          <th class="py-3 px-4 border-b">Name</th>
+          <th class="py-3 px-4 border-b">Email</th>
+          <th class="py-3 px-4 border-b">Address</th>
+          <th class="py-3 px-4 border-b">Telephone</th>
+          <th class="py-3 px-4 border-b">Age</th>
+          <th class="py-3 px-4 border-b">Occupation</th>
+          <th class="py-3 px-4 border-b text-right">Actions</th>
+        </tr>
+      </thead>
 
-      <!-- Pagination -->
-      {% comment %} <div class="flex justify-between items-center border-t pt-4 mt-4">
-        <div class="flex space-x-2 text-sm">
-          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100"
-            >&laquo;</a
-          >
-          <a href="#" class="px-3 py-1 border rounded bg-blue-500 text-white"
-            >1</a
-          >
-          <a href="#" class="px-3 py-1 border rounded">2</a>
-          <a href="#" class="px-3 py-1 border rounded">3</a>
-          <a href="#" class="px-3 py-1 border rounded">...</a>
-          <a href="#" class="px-3 py-1 border rounded">12</a>
-          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100"
-            >&raquo;</a
-          >
-        </div>
-        <select class="border rounded px-2 py-1 text-sm">
-          <option value="20">20/page</option>
-          <option value="40">40/page</option>
-          <option value="60">60/page</option>
-        </select>
-      </div> {% endcomment %}
-            <!-- Pagination -->
-      <div class="flex justify-between items-center border-t pt-4 mt-4">
-        <div class="flex space-x-2 text-sm">
-          {# Previous #}
-          {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}"
-               class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
-          {% else %}
-            <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
-          {% endif %}
-
-          {# Page numbers #}
-          {% for num in page_obj.paginator.page_range %}
-            {% if num == page_obj.number %}
-              <span class="px-3 py-1 border rounded bg-blue-500 text-white">
-                {{ num }}
-              </span>
-            {% else %}
-              <a href="?page={{ num }}"
-                 class="px-3 py-1 border rounded hover:bg-gray-100">
-                {{ num }}
-              </a>
-            {% endif %}
-          {% endfor %}
-
-          {# Next #}
-          {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}"
-               class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
-          {% else %}
-            <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
-          {% endif %}
-        </div>
-
-        <select class="border rounded px-2 py-1 text-sm" disabled>
-          <option selected>5/page</option>
-        </select>
-      </div>
-
-    </div>
+      <tbody>
+        {% for patient in patients %}
+        <tr class="hover:bg-gray-50 border-b">
+          <td class="py-3 px-4">
+            <input type="checkbox" />
+          </td>
+          <td class="py-3 px-4">{{ patient.id }}</td>
+          <td class="py-3 px-4">{{ patient.name }}</td>
+          <td class="py-3 px-4">{{ patient.email }}</td>
+          <td class="py-3 px-4">{{ patient.address }}</td>
+          <td class="py-3 px-4">{{ patient.telephone }}</td>
+          <td class="py-3 px-4">{{ patient.age }}</td>
+          <td class="py-3 px-4">{{ patient.occupation }}</td>
+          <td class="py-3 px-4 text-right">...</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
+
+
+
+     <!-- Pagination -->
+<div
+  class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-t pt-3 mt-4 text-xs"
+>
+  <!-- Left: Prev / Pages / Next -->
+  <div class="flex flex-wrap items-center gap-1">
+    <a
+      href="#"
+      class="px-2 py-1 border rounded hover:bg-gray-100 whitespace-nowrap"
+    >
+      &laquo;
+    </a>
+
+    <a
+      href="#"
+      class="px-2 py-1 border rounded bg-blue-500 text-white"
+    >
+      1
+    </a>
+
+    <a href="#" class="px-2 py-1 border rounded">2</a>
+    <a href="#" class="px-2 py-1 border rounded">3</a>
+
+    <span class="px-1">...</span>
+
+    <a href="#" class="px-2 py-1 border rounded">12</a>
+
+    <a
+      href="#"
+      class="px-2 py-1 border rounded hover:bg-gray-100 whitespace-nowrap"
+    >
+      &raquo;
+    </a>
+  </div>
+
+  <!-- Right: Items per page -->
+  <div class="flex items-center gap-1">
+    <span class="text-gray-500">Show</span>
+    <select class="border rounded px-1 py-0.5 text-xs">
+      <option>20</option>
+      <option>40</option>
+      <option>60</option>
+    </select>
+  </div>
+</div>
+
+
 <!-- Patient Type Modal -->
 <!-- <div
   id="choose-type-modal"

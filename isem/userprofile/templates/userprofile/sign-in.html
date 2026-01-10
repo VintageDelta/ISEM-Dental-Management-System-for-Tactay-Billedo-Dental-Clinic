@@ -7,72 +7,72 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-gray-100">
-    <div
-      class="flex items-center justify-center min-h-screen bg-green-100 relative overflow-hidden"
-    >
+
+    <div class="flex items-center justify-center min-h-screen bg-green-100 relative overflow-hidden px-4">
+
       <!-- Green Semi-Circle Background -->
-      <div
-        class="absolute top-0 w-full h-1/2 bg-green-500 rounded-b-full"
-      ></div>
+      <div class="absolute top-0 w-full h-1/2 bg-green-500 rounded-b-full"></div>
 
       <!-- Sign-In Card -->
-      <div class="relative bg-white shadow-lg rounded-md w-full max-w-md p-6">
-        <div class="text-center mb-6">
-          <div class="mx-auto w-12 h-12 bg-green-500 rounded-full mb-2"></div>
-          <h1 class="text-green-700 font-bold text-lg">Tactay-Billedo</h1>
-          <p class="text-green-700 text-sm">Dental Clinic</p>
+      <div class="relative bg-white shadow-lg rounded-md w-full max-w-md sm:max-w-lg md:max-w-md lg:max-w-md p-6 sm:p-8 md:p-10 mt-8 mb-8 sm:mt-12 sm:mb-12">
+
+        <!-- Back to Home Button (inside card, top-left) -->
+        <div class="mb-4 text-left">
+          <a href="{% url 'landing' %}" 
+             class="text-green-600 hover:text-green-800 text-sm sm:text-base font-medium transition flex items-center gap-1">
+            ← Back to Home
+          </a>
         </div>
-        <h2 class="text-center text-xl font-semibold mb-4">Sign In</h2>
+
+        <!-- Logo -->
+        <div class="text-center mb-6">
+          <div class="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-green-500 rounded-full mb-2"></div>
+          <h1 class="text-green-700 font-bold text-lg sm:text-xl">Tactay-Billedo</h1>
+          <p class="text-green-700 text-sm sm:text-base">Dental Clinic</p>
+        </div>
+
+        <!-- Title -->
+        <h2 class="text-center text-xl sm:text-2xl font-semibold mb-4">Sign In</h2>
+
+        <!-- Form -->
         <form method="post" class="space-y-4">
           {% csrf_token %}
+
           <!-- Email or Username -->
           <div>
-            <label class="block text-sm font-medium text-gray-700"
-              >Username or Email Address</label
-            >
-            <input
-              type="text"
-              name="username"
-              class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="juandelacruz@gmail.com"
-              required
-            />
+            <label class="block text-sm sm:text-base font-medium text-gray-700">
+              Username or Email Address
+            </label>
+            <input type="text" name="username" 
+                   class="mt-1 w-full border rounded px-3 py-2 sm:px-4 sm:py-2 focus:outline-none focus:ring-2 focus:ring-green-500" 
+                   placeholder="juandelacruz@gmail.com" required />
           </div>
+
           <!-- Password -->
           <div>
-            <label class="block text-sm font-medium text-gray-700"
-              >Password</label
-            >
+            <label class="block text-sm sm:text-base font-medium text-gray-700">Password</label>
             <div class="relative">
-              <input
-                type="password"
-                name="password"
-                class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="********"
-                required
-              />
-              <span
-                class="absolute inset-y-0 right-3 flex items-center text-gray-400 cursor-pointer"
-              ></span>
+              <input type="password" name="password" 
+                     class="mt-1 w-full border rounded px-3 py-2 sm:px-4 sm:py-2 focus:outline-none focus:ring-2 focus:ring-green-500" 
+                     placeholder="********" required />
+              <span class="absolute inset-y-0 right-3 flex items-center text-gray-400 cursor-pointer"></span>
             </div>
           </div>
+
           <!-- Keep me logged in & Forgot password -->
-          <div class="flex justify-between items-center text-sm">
+          <div class="flex justify-between items-center text-sm sm:text-base">
             <label class="flex items-center">
               <input type="checkbox" name="remember" class="mr-2" />
               Keep me logged in
             </label>
-            <a
-              href="{% url 'userprofile:password_reset' %}"
-              class="text-green-600 hover:underline"
-              >Forgot password?</a
-            >
+            <a href="{% url 'userprofile:password_reset' %}" class="text-green-600 hover:underline">
+              Forgot password?
+            </a>
           </div>
+
           <!-- Submit Button -->
-          <button
-            type="submit"
-            class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-          >
+          <button type="submit" 
+                  class="w-full bg-green-600 text-white py-2 sm:py-3 rounded hover:bg-green-700 transition text-sm sm:text-base">
             Sign In
           </button>
         </form>
@@ -80,29 +80,22 @@
         <!-- Divider -->
         <div class="my-4 flex items-center">
           <hr class="flex-1 border-gray-300" />
-          <span class="mx-2 text-gray-400 text-sm">or</span>
+          <span class="mx-2 text-gray-400 text-sm sm:text-base">or</span>
           <hr class="flex-1 border-gray-300" />
         </div>
 
-        <!-- Optional Social Login (placeholder) -->
+        <!-- Optional Social Login -->
         <div class="grid grid-cols-2 gap-2">
-          <button class="border rounded py-2 hover:bg-gray-100 transition">
-            Google
-          </button>
-          <button class="border rounded py-2 hover:bg-gray-100 transition">
-            Facebook
-          </button>
+          <button class="border rounded py-2 hover:bg-gray-100 transition">Google</button>
+          <button class="border rounded py-2 hover:bg-gray-100 transition">Facebook</button>
         </div>
 
         <!-- Sign Up Redirect -->
-        <div class="mt-4 text-center text-sm">
+        <div class="mt-4 text-center text-sm sm:text-base">
           Don't have an account?
-          <a
-            href="{% url 'userprofile:signup' %}"
-            class="text-green-600 hover:underline"
-            >Sign up</a
-          >
+          <a href="{% url 'userprofile:signup' %}" class="text-green-600 hover:underline">Sign up</a>
         </div>
+
       </div>
     </div>
   </body>
