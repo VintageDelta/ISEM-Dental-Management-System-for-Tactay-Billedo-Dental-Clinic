@@ -116,6 +116,9 @@ def add_medical_history(request, patient_id):
             treatment=request.POST.get("treatment"),
             prescriptions=request.POST.get("prescriptions"),
         )
+        # Return JSON response for AJAX requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({"success": True, "message": "Medical history saved successfully"})
         return redirect("patient:medical_history", pk=patient_id)
     return render(request, "patient/medical_history.html", {"patient": patient})
 
@@ -138,6 +141,9 @@ def add_financial_history(request, patient_id):
             amount=request.POST.get("amount"),
             balance=request.POST.get("balance"),
         )
+        # Return JSON response for AJAX requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({"success": True, "message": "Financial history saved successfully"})
         return redirect("patient:medical_history", pk=patient_id)
     return render(request, "patient/medical_history", pk=patient_id)
 
@@ -229,6 +235,12 @@ def add_odontogram(request, patient_id):
             index += 1
         if not created_any:
             messages.error(request, "No valid odontogram entries were provided.")
+        # Return JSON response for AJAX requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            if created_any:
+                return JsonResponse({"success": True, "message": "Odontogram saved successfully"})
+            else:
+                return JsonResponse({"success": False, "error": "No valid odontogram entries were provided."}, status=400)
         return redirect("patient:odontogram", patient_id=patient_id)
     return render(request, "patient/medical_history.html", {"patient": patient})
         # print("POST DATA:", request.POST)

@@ -88,6 +88,459 @@ confirmYes?.addEventListener("click", () => {
   document.getElementById("close-followup-btn")?.addEventListener("click", () => closeModal("followup-modal"));
   document.getElementById("close-reschedule-btn")?.addEventListener("click", () => closeModal("reschedule-modal"));
 
+  // Done Steps Modal - Step navigation
+  let currentStep = 1;
+  const totalSteps = 3;
+  let currentAppointmentData = null;
+  let currentPatientId = null;
+
+  function updateDoneStepsDisplay() {
+    // Update all steps
+    for (let i = 1; i <= totalSteps; i++) {
+      const stepEl = document.getElementById(`step-${i}`);
+      const stepCircle = stepEl?.querySelector('.step-circle');
+      const icon = stepCircle?.querySelector('i');
+      
+      if (!stepEl || !stepCircle) continue;
+
+      if (i < currentStep) {
+        // Completed step
+        stepEl.classList.remove("opacity-50");
+        stepEl.classList.remove("border-gray-200", "border-blue-500", "bg-blue-50");
+        stepEl.classList.add("border-emerald-500", "bg-emerald-50");
+        stepCircle.classList.remove("border-gray-300", "bg-white", "border-blue-500");
+        stepCircle.classList.add("border-emerald-500", "bg-emerald-500");
+        if (icon) {
+          icon.classList.remove("text-gray-400", "text-blue-500");
+          icon.classList.add("text-white");
+        }
+      } else if (i === currentStep) {
+        // Current step
+        stepEl.classList.remove("opacity-50");
+        stepEl.classList.remove("border-gray-200", "border-emerald-500", "bg-emerald-50");
+        stepEl.classList.add("border-blue-500", "bg-blue-50");
+        stepCircle.classList.remove("border-gray-300", "bg-white", "border-emerald-500", "bg-emerald-500");
+        stepCircle.classList.add("border-blue-500", "bg-white");
+        if (icon) {
+          icon.classList.remove("text-white", "text-gray-400");
+          icon.classList.add("text-blue-500");
+        }
+      } else {
+        // Future step
+        stepEl.classList.add("opacity-50");
+        stepEl.classList.remove("border-blue-500", "bg-blue-50", "border-emerald-500", "bg-emerald-50");
+        stepEl.classList.add("border-gray-200");
+        stepCircle.classList.remove("border-blue-500", "border-emerald-500", "bg-emerald-500");
+        stepCircle.classList.add("border-gray-300", "bg-white");
+        if (icon) {
+          icon.classList.remove("text-blue-500", "text-white");
+          icon.classList.add("text-gray-400");
+        }
+      }
+    }
+
+    // Show/hide forms based on current step
+    document.querySelectorAll('.step-form').forEach(form => {
+      const formStep = parseInt(form.dataset.step);
+      if (formStep === currentStep) {
+        form.classList.remove('hidden');
+        // Update submit button form attribute
+        const submitBtn = document.getElementById("done-steps-submit-btn");
+        if (submitBtn) {
+          submitBtn.setAttribute("form", form.id);
+        }
+      } else {
+        form.classList.add('hidden');
+      }
+    });
+
+    // Update buttons
+    const backBtn = document.getElementById("done-steps-back-btn");
+    const nextBtn = document.getElementById("done-steps-next-btn");
+    const submitBtn = document.getElementById("done-steps-submit-btn");
+
+    if (backBtn) {
+      backBtn.disabled = currentStep === 1;
+    }
+
+    if (nextBtn) {
+      if (currentStep === totalSteps) {
+        nextBtn.classList.add("hidden");
+        if (submitBtn) submitBtn.classList.remove("hidden");
+      } else {
+        nextBtn.classList.remove("hidden");
+        if (submitBtn) submitBtn.classList.add("hidden");
+      }
+    }
+  }
+
+  function prefillForms(appointmentData, patientData, userRole) {
+    if (!appointmentData) return;
+
+    // Pre-fill Medical History Form (Step 1)
+    const medicalPatientName = document.getElementById("done-medical-patient-name");
+    const medicalDate = document.getElementById("done-medical-date");
+    const medicalDentist = document.getElementById("done-medical-dentist");
+    const medicalService = document.getElementById("done-medical-service");
+    const medicalReason = document.getElementById("done-medical-reason");
+    
+    // Conditionally pre-fill patient name only if user is NOT admin/staff
+    if (medicalPatientName && patientData && patientData.name) {
+      if (userRole && !userRole.is_admin_or_staff) {
+        // Auto-fill patient name for non-admin/staff users
+        medicalPatientName.value = patientData.name;
+        medicalPatientName.readOnly = true;
+        medicalPatientName.classList.add("bg-gray-100");
+        medicalPatientName.classList.remove("bg-white");
+      } else {
+        // For admin/staff, leave empty and make editable
+        medicalPatientName.value = "";
+        medicalPatientName.readOnly = false;
+        medicalPatientName.classList.remove("bg-gray-100");
+        medicalPatientName.classList.add("bg-white");
+      }
+    }
+    
+    if (medicalDate && appointmentData.date) medicalDate.value = appointmentData.date;
+    if (medicalDentist && appointmentData.dentist) {
+      // Set dentist name as text (field is text input)
+      medicalDentist.value = appointmentData.dentist;
+    }
+    if (medicalService && appointmentData.services) {
+      // Set service names as text (field is text input)
+      medicalService.value = appointmentData.services;
+    }
+    if (medicalReason) {
+      medicalReason.value = `Appointment - ${appointmentData.services || "Treatment"}`;
+    }
+
+    // Pre-fill Financial History Form (Step 2)
+    const financialDate = document.getElementById("done-financial-date");
+    const financialTime = document.getElementById("done-financial-time");
+    const financialDescription = document.getElementById("done-financial-description");
+    
+    if (financialDate && appointmentData.date) financialDate.value = appointmentData.date;
+    if (financialTime && appointmentData.time) {
+      // Convert 12-hour format to 24-hour format for time input
+      const time24 = appointmentData.time.includes(":") ? appointmentData.time : appointmentData.preferred_time || "";
+      if (time24) {
+        const timeMatch = time24.match(/(\d{1,2}):(\d{2})/);
+        if (timeMatch) {
+          let hours = parseInt(timeMatch[1]);
+          const minutes = timeMatch[2];
+          if (time24.includes("PM") && hours < 12) hours += 12;
+          if (time24.includes("AM") && hours === 12) hours = 0;
+          financialTime.value = `${String(hours).padStart(2, "0")}:${minutes}`;
+        }
+      }
+    }
+    if (financialDescription && appointmentData.services) {
+      financialDescription.value = `Treatment: ${appointmentData.services}`;
+    }
+
+    // Pre-fill Odontogram Form (Step 3)
+    const odontogramDate = document.getElementById("done-odontogram-date-0");
+    const odontogramDentist = document.getElementById("done-odontogram-dentist-0");
+    
+    if (odontogramDate && appointmentData.date) odontogramDate.value = appointmentData.date;
+    if (odontogramDentist && appointmentData.dentist_id) {
+      odontogramDentist.value = appointmentData.dentist_id;
+    }
+
+    // Pre-check services in odontogram form
+    if (appointmentData.service_ids && appointmentData.service_ids.length > 0) {
+      const serviceCheckboxes = document.querySelectorAll('#done-odontogram-form input[name="services_0"]');
+      serviceCheckboxes.forEach(cb => {
+        if (appointmentData.service_ids.includes(parseInt(cb.value))) {
+          cb.checked = true;
+        }
+      });
+    }
+  }
+
+  // Initialize the done steps modal (called from calendar.js when "Done" is clicked)
+  window.initDoneStepsModal = function(appointmentId) {
+    currentStep = 1;
+    currentAppointmentData = null;
+    currentPatientId = null;
+
+    // Fetch appointment details
+    if (appointmentId) {
+      fetch(`/dashboard/appointment/get-appointment-details/${appointmentId}/`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            currentAppointmentData = data.appointment;
+            currentPatientId = data.patient.id;
+
+            // Set form action URLs with patient ID
+            const medicalForm = document.getElementById("done-medical-form");
+            const financialForm = document.getElementById("done-financial-form");
+            const odontogramForm = document.getElementById("done-odontogram-form");
+            
+            if (medicalForm && currentPatientId) {
+              medicalForm.action = `/dashboard/patient/${currentPatientId}/add_history/`;
+            }
+            if (financialForm && currentPatientId) {
+              financialForm.action = `/dashboard/patient/${currentPatientId}/add_financial_history/`;
+            }
+            if (odontogramForm && currentPatientId) {
+              odontogramForm.action = `/dashboard/patient/${currentPatientId}/add_odontogram/`;
+            }
+
+            // Pre-fill forms (pass user role for conditional patient name pre-fill)
+            prefillForms(data.appointment, data.patient, data.user_role);
+
+            // Update display
+            updateDoneStepsDisplay();
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching appointment details:", err);
+        });
+    }
+
+    // Use setTimeout to ensure DOM is ready
+    setTimeout(() => {
+      updateDoneStepsDisplay();
+    }, 100);
+  };
+
+  // Expose update function globally
+  window.updateDoneStepsDisplay = updateDoneStepsDisplay;
+
+  // Back button
+  document.getElementById("done-steps-back-btn")?.addEventListener("click", () => {
+    if (currentStep > 1) {
+      currentStep--;
+      updateDoneStepsDisplay();
+    }
+  });
+
+  // Next button
+  document.getElementById("done-steps-next-btn")?.addEventListener("click", () => {
+    if (currentStep < totalSteps) {
+      currentStep++;
+      updateDoneStepsDisplay();
+    }
+  });
+
+  // Close button
+  document.getElementById("done-steps-close-btn")?.addEventListener("click", () => {
+    closeModal("done-steps-modal");
+  });
+
+  // Form submissions
+  document.getElementById("done-medical-form")?.addEventListener("submit", function(e) {
+    e.preventDefault();
+    if (!currentPatientId) {
+      alert("Patient ID not found. Please try again.");
+      return;
+    }
+
+    const formData = new FormData(this);
+    fetch(this.action, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: formData,
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Success - move to next step
+        currentStep++;
+        updateDoneStepsDisplay();
+      } else {
+        alert(data.error || "Error saving medical history. Please try again.");
+      }
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      alert("Error saving medical history. Please try again.");
+    });
+  });
+
+  document.getElementById("done-financial-form")?.addEventListener("submit", function(e) {
+    e.preventDefault();
+    if (!currentPatientId) {
+      alert("Patient ID not found. Please try again.");
+      return;
+    }
+
+    const formData = new FormData(this);
+    fetch(this.action, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: formData,
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Success - move to next step
+        currentStep++;
+        updateDoneStepsDisplay();
+      } else {
+        alert(data.error || "Error saving financial history. Please try again.");
+      }
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      alert("Error saving financial history. Please try again.");
+    });
+  });
+
+  document.getElementById("done-odontogram-form")?.addEventListener("submit", function(e) {
+    e.preventDefault();
+    if (!currentPatientId) {
+      alert("Patient ID not found. Please try again.");
+      return;
+    }
+
+    const formData = new FormData(this);
+    fetch(this.action, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: formData,
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Success - update appointment status to "done" and close modal
+        if (window.currentEventId) {
+          fetch(`/dashboard/appointment/update-status/${window.currentEventId}/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: JSON.stringify({ status: "done" })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
+              if (window.mainCalendar) window.mainCalendar.refetchEvents();
+              setTimeout(() => {
+                if (typeof window.renderTodaysAppointments === "function") {
+                  window.renderTodaysAppointments();
+                }
+              }, 250);
+              closeModal("done-steps-modal");
+              closeModal("status-modal");
+            }
+          });
+        } else {
+          closeModal("done-steps-modal");
+        }
+      } else {
+        alert(data.error || "Error saving odontogram. Please try again.");
+      }
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      alert("Error saving odontogram. Please try again.");
+    });
+  });
+
+  // Odontogram "Check All" functionality
+  function wireDoneOdontogramCheckAll(recordEl) {
+    const checkAllBox = recordEl.querySelector(".tooth-check-all");
+    const toothCheckboxes = recordEl.querySelectorAll(".done-tooth-checkbox");
+
+    if (!checkAllBox || !toothCheckboxes.length) return;
+
+    // Remove existing listeners by cloning
+    const newCheckAll = checkAllBox.cloneNode(true);
+    checkAllBox.parentNode.replaceChild(newCheckAll, checkAllBox);
+
+    newCheckAll.addEventListener("change", () => {
+      toothCheckboxes.forEach((cb) => {
+        cb.checked = newCheckAll.checked;
+      });
+    });
+  }
+
+  // Odontogram "Add More" functionality
+  document.getElementById("done-add-more-odontogram")?.addEventListener("click", () => {
+    const recordsWrapper = document.getElementById("done-odontogram-records");
+    if (!recordsWrapper) return;
+
+    const firstRecord = recordsWrapper.querySelector(".odontogram-record");
+    if (!firstRecord) return;
+
+    const newRecord = firstRecord.cloneNode(true);
+    
+    // Find the highest index
+    let maxIndex = 0;
+    recordsWrapper.querySelectorAll(".odontogram-record").forEach(record => {
+      const inputs = record.querySelectorAll("input[name^='date_'], select[name^='dentist_'], input[name^='status_']");
+      inputs.forEach(input => {
+        const match = input.name.match(/_(\d+)$/);
+        if (match) {
+          const idx = parseInt(match[1]);
+          if (idx > maxIndex) maxIndex = idx;
+        }
+      });
+    });
+    
+    const newIndex = maxIndex + 1;
+    
+    // Update all input names in the new record
+    newRecord.querySelectorAll("input, select").forEach(el => {
+      if (el.name) {
+        el.name = el.name.replace(/_\d+$/, `_${newIndex}`);
+        el.id = el.id ? el.id.replace(/_\d+$/, `_${newIndex}`) : el.name;
+        
+        // Reset values
+        if (el.type === "checkbox" || el.type === "radio") {
+          el.checked = false;
+        } else {
+          el.value = "";
+        }
+      }
+    });
+
+    // Show remove button for new record
+    const removeBtn = newRecord.querySelector(".remove-record");
+    if (removeBtn) {
+      removeBtn.classList.remove("hidden");
+      removeBtn.addEventListener("click", () => {
+        newRecord.remove();
+      });
+    }
+
+    // Wire check all for new record
+    wireDoneOdontogramCheckAll(newRecord);
+
+    recordsWrapper.appendChild(newRecord);
+  });
+
+  // Wire check all for initial odontogram record
+  const doneOdontogramRecords = document.getElementById("done-odontogram-records");
+  if (doneOdontogramRecords) {
+    const initialRecord = doneOdontogramRecords.querySelector(".odontogram-record");
+    if (initialRecord) {
+      wireDoneOdontogramCheckAll(initialRecord);
+    }
+  }
+
+  // Close modal when clicking outside
+  const doneStepsModal = document.getElementById("done-steps-modal");
+  doneStepsModal?.addEventListener("click", (e) => {
+    if (e.target === doneStepsModal) {
+      closeModal("done-steps-modal");
+    }
+  });
+
     // Notify Patient modal wiring
   const notifyPatientBtn = document.getElementById("notify-patient-btn");
   const closeNotifyBtn = document.getElementById("close-notify-btn");

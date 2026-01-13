@@ -74,6 +74,17 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
+      // Special handling for "Done" button - open steps modal
+      if (chosen === "done") {
+        // Initialize the steps modal with appointment ID
+        if (typeof window.initDoneStepsModal === "function") {
+          window.initDoneStepsModal(currentEventId);
+        }
+        openModal("done-steps-modal");
+        return;
+      }
+
+      // For other statuses, update immediately as before
       fetch(`/dashboard/appointment/update-status/${currentEventId}/`, {
         method: "POST",
         headers: {
@@ -142,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
     mainCalendar = new FullCalendar.Calendar(mainCalendarEl, {
       initialView: 'dayGridMonth',
       height: "auto",
-      aspectRatio: 1.4,
+      aspectRatio: window.innerWidth < 768 ? 1.0 : 1.4, // Smaller aspect ratio on mobile
       expandRows: true,
       handleWindowResize: true,
       customButtons: {
@@ -229,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Timeline calendar
     timelineCalendar = new FullCalendar.Calendar(timelineCalendarEl, {
       initialView: 'timeGridDay',
-      height: "auto",
+      height: window.innerWidth < 768 ? 400 : "auto", // Fixed height on mobile
       expandRows: true,
       headerToolbar: {
         left: "prev,next today",

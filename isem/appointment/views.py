@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 import json
+from patient.models import Patient
 
 @csrf_exempt
 @require_POST
@@ -144,6 +145,25 @@ def appointment_page(request):
             )
             return redirect("appointment:appointment_page")
 
+        # Create or find patient by email
+        patient = None
+        if email:
+            patient = Patient.objects.filter(email=email).first()
+            if not patient:
+                # Create a guest patient for appointment
+                total = Patient.objects.filter(is_guest=True).count() + 1
+                temp_id = f"P-{total:06d}-T"
+                patient = Patient.objects.create(
+                    name=email.split("@")[0] or "Guest Patient",  # Use email prefix as default name
+                    email=email,
+                    address="TBD",  # Will be filled later in the done steps modal
+                    telephone="00000000000",  # Default phone number (required field)
+                    age=0,  # Will be filled later
+                    occupation="",
+                    is_guest=True,
+                    guest_id=temp_id
+                )
+
         appointment = Appointment.objects.create(
             user=request.user if request.user.is_authenticated else None,
             dentist_name=dentist.name,
@@ -156,6 +176,9 @@ def appointment_page(request):
             email=email,
         )
         appointment.services.set(selected_services)
+        
+        # Store patient_id in appointment (if you want to add a FK later)
+        # For now, we'll use email to find patient when needed
 
         messages.add_message(
             request,
@@ -165,9 +188,16 @@ def appointment_page(request):
         )
         return redirect("appointment:appointment_page")
 
+    # Import here to avoid circular imports
+    from patient.models import Patient as PatientModel
+    
+    # Get tooth numbers for odontogram (1-32)
+    tooth_num = range(1, 33)
+    
     return render(request, "appointment/appointment.html", {
         "dentists": dentists,
-        "services": services
+        "services": services,
+        "tooth_num": tooth_num,
     })
 
 
@@ -313,6 +343,70 @@ def reschedule_appointment(request, appointment_id):
 
     messages.success(request, "Appointment rescheduled successfully!")
     return JsonResponse({"success": True})
+
+
+@csrf_exempt
+def get_appointment_details(request, appointment_id):
+    """Get appointment details including patient info for the done steps modal"""
+    try:
+        appointment = get_object_or_404(Appointment, id=appointment_id)
+        
+        # Find or create patient by email
+        patient = None
+        patient_id = None
+        if appointment.email:
+            patient = Patient.objects.filter(email=appointment.email).first()
+            if not patient:
+                # Create patient if doesn't exist (for older appointments)
+                total = Patient.objects.filter(is_guest=True).count() + 1
+                temp_id = f"P-{total:06d}-T"
+                patient = Patient.objects.create(
+                    name=appointment.email.split("@")[0] or "Guest Patient",
+                    email=appointment.email,
+                    address="TBD",
+                    telephone="00000000000",
+                    age=0,
+                    occupation="",
+                    is_guest=True,
+                    guest_id=temp_id
+                )
+            if patient:
+                patient_id = patient.id
+        
+        service_names = ", ".join([s.service_name for s in appointment.services.all()])
+        service_ids = list(appointment.services.values_list("id", flat=True))
+        
+        dentist_obj = Dentist.objects.filter(name=appointment.dentist_name).first()
+        
+        # Check if user is admin or staff
+        is_admin_or_staff = request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser)
+        
+        return JsonResponse({
+            "success": True,
+            "appointment": {
+                "id": appointment.id,
+                "dentist": appointment.dentist_name,
+                "dentist_id": dentist_obj.id if dentist_obj else None,
+                "location": appointment.location,
+                "date": str(appointment.date),
+                "time": appointment.time.strftime("%H:%M"),
+                "preferred_date": str(appointment.preferred_date) if appointment.preferred_date else None,
+                "preferred_time": appointment.preferred_time.strftime("%I:%M %p") if appointment.preferred_time else None,
+                "email": appointment.email,
+                "services": service_names,
+                "service_ids": service_ids,
+            },
+            "patient": {
+                "id": patient_id,
+                "name": patient.name if patient else None,
+                "email": appointment.email,
+            },
+            "user_role": {
+                "is_admin_or_staff": is_admin_or_staff,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
 
