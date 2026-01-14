@@ -1,10 +1,20 @@
   {% extends "core/base.html" %} {% load static %} {% block content %}
-
+  <div class="container mx-auto px-4 py-6">
+    <h1 class="text-2xl font-semibold mb-4">{{ patient.name }}'s Patient Record</h1>
   <!-- === TAB BUTTONS === -->
-  <div class="flex items-center space-x-4 mb-6">
+  <div class="flex items-center mb-6 w-full">
+
+    <div class="flex items-center space-x-4">
+              <!-- Patient Information part--> <!-- NEED TO CONTINUE LATER FOR THE LOGIC-->
+      <button
+        id="patientInfoTab"
+        class="ml-auto px-4 py-2 rounded-lg bg-blue-600 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
+      >
+        Patient Information
+      </button>
     <button
       id="medicalTab"
-      class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none"
+      class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
     >
       Treatment History
     </button>
@@ -20,6 +30,7 @@
     >
       Odontogram
     </button>
+
     {% if user.is_staff or user.is_superuser %}
     <button
       id="add-medical-btn"
@@ -40,10 +51,183 @@
     + Add Record
   </button>
     {% endif %}
+</div>
+
+  </div>
+
+  <!--======================= TAB CONTENTS =======================-->
+
+  <!-- === PATIENT INFO TAB CONTENT === -->
+  <div id="patientInfoContent" class="space-y-4">
+    <div class="bg-white shadow rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4">Patient Information</h2>
+      <button type="button" id="editPatientBtn"
+        class="mb-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+        Edit Information
+      </button>
+      <!--PatienT data-->
+      <div id="patientInfoView">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+     <div>
+      <h2 class="text-md font-semibold mb-2">Patient Data</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <p><span class="font-semibold">Age:</span> {{ patient.age }}</p>
+        <p><span class="font-semibold">Gender:</span> {{ patient.gender }}</p>
+        <p><span class="font-semibold">Occupation:</span> {{ patient.occupation }}</p>
+
+        <p><span class="font-semibold">Telephone:</span> {{ patient.telephone }}</p>
+        <p><span class="font-semibold">Address:</span> {{ patient.address }}</p>
+        <p><span class="font-semibold">Email:</span> {{ patient.email }}</p>
+      </div>
+    </div>
+
+    <!-- Medical Data -->
+    <div>
+      <h3 class="text-md font-semibold mb-2">Medical Data</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <p><span class="font-semibold">Particular Condition:</span> {{ patient.particular_condition }}</p>
+        <p><span class="font-semibold">Allergy:</span> {{ patient.allergy }}</p>
+        <p><span class="font-semibold">Pregnancy Status:</span> {{ patient.pregnancy_status }}</p>
+        <p><span class="font-semibold">Medications:</span> {{ patient.medications }}</p>
+        <p class="md:col-span-2">
+          <span class="font-semibold">Abnormal Bleeding History:</span> {{ patient.abnormal_bleeding_history }}
+        </p>
+      </div>
+    </div>
+
+    <!-- X-ray Images -->
+    <div>
+      <h3 class="text-md font-semibold mb-2">X-ray Attachments</h3>
+      {% if patient.xrays.all %}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {% for xray in patient.xrays.all %}
+            <a href="{{ xray.file.url }}" target="_blank"
+               class="block border rounded-md overflow-hidden hover:shadow">
+              <img src="{{ xray.file.url }}" alt="X-ray"
+                   class="w-full h-32 object-cover">
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-sm text-gray-500">No X-ray images uploaded.</p>
+      {% endif %}
+    </div>
+  </div>
+  </div>
+  <form method="post" action="{% url 'patient:medical_history' pk=patient.id %}" id="patientInfoForm" class="hidden space-y-6">
+      {% csrf_token %}
+      <input type="hidden" name="update_patient_info" value="1">
+      
+      <!-- Patient Data Section -->
+      <div>
+        <h3 class="text-md font-semibold mb-3 text-gray-700">Patient Data</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Age -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
+            <input type="number" name="age" value="{{ patient.age }}" 
+                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          
+          <!-- Gender -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+            <select name="gender" class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Select</option>
+              <option value="Male" {% if patient.gender == "Male" %}selected{% endif %}>Male</option>
+              <option value="Female" {% if patient.gender == "Female" %}selected{% endif %}>Female</option>
+              <option value="Other" {% if patient.gender == "Other" %}selected{% endif %}>Other</option>
+            </select>
+          </div>
+          
+          <!-- Occupation -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
+            <input type="text" name="occupation" value="{{ patient.occupation }}" 
+                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          
+          <!-- Telephone -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Telephone</label>
+            <input type="text" name="telephone" value="{{ patient.telephone }}" 
+                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          
+          <!-- Address -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+            <input type="text" name="address" value="{{ patient.address }}" 
+                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          
+          <!-- Email -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" name="email" value="{{ patient.email }}" 
+                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- Medical Data Section -->
+      <div>
+        <h3 class="text-md font-semibold mb-3 text-gray-700">Medical Data</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Particular Condition -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Particular Condition</label>
+            <textarea name="particular_condition" rows="2" 
+                      class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.particular_condition }}</textarea>
+          </div>
+          
+          <!-- Allergy -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Allergy</label>
+            <textarea name="allergy" rows="2" 
+                      class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.allergy }}</textarea>
+          </div>
+          
+          <!-- Pregnancy Status -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Pregnancy Status</label>
+            <input type="text" name="pregnancy_status" value="{{ patient.pregnancy_status }}" 
+                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          
+          <!-- Medications -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Medications</label>
+            <textarea name="medications" rows="2" 
+                      class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.medications }}</textarea>
+          </div>
+          
+          <!-- Abnormal Bleeding History -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Abnormal Bleeding History</label>
+            <textarea name="abnormal_bleeding_history" rows="2" 
+                      class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.abnormal_bleeding_history }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save and Cancel Buttons -->
+      <div class="flex justify-end gap-3">
+        <button type="button" id="cancelEditBtn"
+                class="px-6 py-2 bg-gray-500 text-white font-medium rounded-md hover:bg-gray-600 focus:outline-none">
+          Cancel
+        </button>
+        <button type="submit" 
+                class="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none">
+          Update Information
+        </button>
+      </div>
+    </form>
+    </div>
   </div>
 
   <!-- === MEDICAL TAB CONTENT === -->
-  <div id="medicalContent" class="space-y-4">
+  <div id="medicalContent" class="space-y-4 hidden">
     <div class="overflow-x-auto bg-white shadow rounded-lg">
       <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
         <thead class="bg-gray-50">
@@ -440,12 +624,15 @@
     const financialContent = document.getElementById("financialContent");
     const odontogramTab = document.getElementById("odontogramTab");
     const odontogramContent = document.getElementById("odontogramContent"); 
+    const patientInfoTab = document.getElementById("patientInfoTab");
+    const patientInfoContent = document.getElementById("patientInfoContent");
     
 
     medicalTab.addEventListener("click", () => {
       medicalContent.classList.remove("hidden");
       financialContent.classList.add("hidden");
       odontogramContent.classList.add("hidden");
+      patientInfoContent.classList.add("hidden");
 
       odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
       odontogramTab.classList.replace("text-white", "text-gray-700");
@@ -455,12 +642,16 @@
 
       financialTab.classList.replace("bg-blue-600", "bg-gray-200");
       financialTab.classList.replace("text-white", "text-gray-700");
+
+      patientInfoTab.classList.replace("bg-blue-600", "bg-gray-200");
+      patientInfoTab.classList.replace("text-white", "text-gray-700");
     });
 
     financialTab.addEventListener("click", () => {
       financialContent.classList.remove("hidden");
       medicalContent.classList.add("hidden");
       odontogramContent.classList.add("hidden");
+      patientInfoContent.classList.add("hidden");
 
       odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
       odontogramTab.classList.replace("text-white", "text-gray-700");
@@ -470,12 +661,16 @@
 
       medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
       medicalTab.classList.replace("text-white", "text-gray-700");
+
+      patientInfoTab.classList.replace("bg-blue-600", "bg-gray-200");
+      patientInfoTab.classList.replace("text-white", "text-gray-700");
     });
 
     odontogramTab.addEventListener("click", () => {
       odontogramContent.classList.remove("hidden");
       medicalContent.classList.add("hidden");
       financialContent.classList.add("hidden");
+      patientInfoContent.classList.add("hidden");
 
       odontogramTab.classList.replace("bg-gray-200", "bg-blue-600");
       odontogramTab.classList.replace("text-gray-700", "text-white");
@@ -485,6 +680,28 @@
 
       financialTab.classList.replace("bg-blue-600", "bg-gray-200");
       financialTab.classList.replace("text-white", "text-gray-700");
+
+      patientInfoTab.classList.replace("bg-blue-600", "bg-gray-200");
+      patientInfoTab.classList.replace("text-white", "text-gray-700");
+    });
+
+    patientInfoTab.addEventListener("click", () =>{
+      patientInfoContent.classList.remove("hidden");
+      medicalContent.classList.add("hidden");
+      financialContent.classList.add("hidden");
+      odontogramContent.classList.add("hidden");
+
+      patientInfoTab.classList.replace("bg-gray-200", "bg-blue-600");
+      patientInfoTab.classList.replace("text-gray-700", "text-white");
+
+      medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
+      medicalTab.classList.replace("text-white", "text-gray-700");
+
+      financialTab.classList.replace("bg-blue-600", "bg-gray-200");
+      financialTab.classList.replace("text-white", "text-gray-700");
+
+      odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
+      odontogramTab.classList.replace("text-white", "text-gray-700");
     });
   </script>
 
@@ -493,9 +710,7 @@
     const financialUrl = "{% url 'patient:add_financial_history' patient.id %}";
     const odontogramUrl = "{% url 'patient:add_odontogram' patient.id %}";
   </script>
-  <script>
-    
-</script>
+
  <script>
 function selectTooth(tooth_num) {
   const patient_id = {{ patient.id }};
@@ -621,6 +836,39 @@ function displayToothHistory(tooth_num, data) {
     const firstRemoveBtn = recordsWrapper.querySelector(".odontogram-record .remove-record");
     if (firstRemoveBtn) {
       firstRemoveBtn.classList.add("hidden");
+    }
+  });
+</script>
+
+<!--Patient Data Script-->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Toggle between view and edit mode for Patient Information
+    const editPatientBtn = document.getElementById("editPatientBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const patientInfoView = document.getElementById("patientInfoView");
+    const patientInfoForm = document.getElementById("patientInfoForm");
+
+    // Debug: Check if elements exist
+    console.log("Edit button:", editPatientBtn);
+    console.log("Cancel button:", cancelEditBtn);
+    console.log("Info view:", patientInfoView);
+    console.log("Info form:", patientInfoForm);
+
+    if (editPatientBtn && cancelEditBtn && patientInfoView && patientInfoForm) {
+      editPatientBtn.addEventListener("click", () => {
+        patientInfoView.classList.add("hidden");
+        patientInfoForm.classList.remove("hidden");
+        editPatientBtn.classList.add("hidden");
+      });
+
+      cancelEditBtn.addEventListener("click", () => {
+        patientInfoForm.classList.add("hidden");
+        patientInfoView.classList.remove("hidden");
+        editPatientBtn.classList.remove("hidden");
+      });
+    } else {
+      console.error("Patient info toggle elements not found!");
     }
   });
 </script>

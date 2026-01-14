@@ -20,6 +20,7 @@ def patient_records(request):
         occupation = request.POST.get("occupation")
         email = request.POST.get("email")
 
+
         is_guest = request.POST.get("is_guest") == "true"  
         if not is_guest:
             # Registered patient: check for existing email
@@ -95,6 +96,32 @@ def update_patient(request):
 
 def medical_history(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
+
+
+    if request.method == "POST" and 'update_patient_info' in request.POST:
+        age = request.POST.get("age")
+        if age:
+            try:
+                patient.age = int(age)
+            except ValueError:
+                    pass
+            
+        patient.gender = request.POST.get("gender") or patient.gender
+        patient.occupation = request.POST.get("occupation") or patient.occupation
+        patient.telephone = request.POST.get("telephone") or patient.telephone
+        patient.address = request.POST.get("address") or patient.address
+        patient.email = request.POST.get("email") or patient.email
+        
+        patient.particular_condition = request.POST.get("particular_condition") or patient.particular_condition
+        patient.allergy = request.POST.get("allergy") or patient.allergy
+        patient.pregnancy_status = request.POST.get("pregnancy_status") or patient.pregnancy_status
+        patient.medications = request.POST.get("medications") or patient.medications
+        patient.abnormal_bleeding_history = request.POST.get("abnormal_bleeding_history") or patient.abnormal_bleeding_history
+        
+        patient.save()
+        messages.success(request, "Patient information updated successfully.")
+        return redirect("patient:medical_history", pk=pk)
+
 
     medical_history_qs = patient.medical_history.all()
     financial_history_qs = patient.financial_history.all()
@@ -316,4 +343,6 @@ def update_odontogram(request, patient_id):
         })
 
     return JsonResponse({"success": False, "error": "Invalid request method."}, status=400)
+
+
 

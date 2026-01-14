@@ -8,6 +8,7 @@ app_name = 'userprofile'
 urlpatterns = [
     path('sign-in/', views.RoleBasedLoginView.as_view(), name='signin'),
     path('sign-up/', views.signup, name='signup'),
+    path('patient_data/', views.patient_data, name='patient_data'),
 
     #Password Reset URLs
     path('password-reset/', auth_views.PasswordResetView.as_view(template_name='userprofile/password_reset.html',

@@ -66,13 +66,14 @@ def signup(request):
         
         #user creation role based
         if role == "patient":
+            print("DEBUG: Creating patient user")
             user = User.objects.create_user(
                 username=username, email=email, password=password1,
                 first_name=first_name, last_name=last_name
             )
             patient_group, created = Group.objects.get_or_create(name='Patient')
             user.groups.add(patient_group)
-
+            print("DEBUG: Creating Patient object")
             Patient.objects.create(
                 user=user,
                 name=f"{first_name} {last_name}",
@@ -81,10 +82,13 @@ def signup(request):
                 telephone="",
                 age=0,
                 occupation="",
-                is_guest=False
+                is_guest=False,
             )
-            
-            messages.success(request, "Account created successfully. Please sign in.")
+            print("DEBUG: Logging in user")
+            login(request, user)
+            print("DEBUG: About to redirect")
+            messages.success(request, "Account created successfully. Please complete your patient data.")
+            return redirect("userprofile:patient_data")
 
         elif role == "staff":
             user = User.objects.create_user(
@@ -161,6 +165,7 @@ def profile(request):
     return render(request, 'userprofile/profile.html')
 
 def logout(request):
+    auth_logout(request)
     messages.success(request, "You have been logged out.")
     return redirect("userprofile:signin")
 
@@ -168,8 +173,39 @@ def is_patient(user):
     
     return hasattr(user, 'patient') or not user.is_staff
 
-# @login_required
-# @user_passes_test(is_patient)
+@login_required
+def patient_data(request):
+    patient = getattr(request.user, 'patient_patient', None)
+ 
+    if not patient:
+        print("DEBUG: No patient found, redirecting to homepage")
+        return redirect('userprofile:homepage')
+    
+    if request.method == "POST":
+
+        age = request.POST.get("age")
+        if age:
+            try:
+                patient.age = int(age)
+            except ValueError:
+                    pass
+        
+        patient.gender = request.POST.get("gender") or getattr(patient, "gender", "")
+        patient.occupation = request.POST.get("occupation") or patient.occupation
+        patient.telephone = request.POST.get("telephone") or patient.telephone
+        patient.address = request.POST.get("address") or patient.address
+
+        patient.particular_condition = request.POST.get("particular_condition") or getattr(patient, "particular_condition", "")
+        patient.allergy = request.POST.get("allergy") or getattr(patient, "allergy", "")
+        patient.pregnancy_status = request.POST.get("pregnancy_status") or getattr(patient, "pregnancy_status", "")
+        patient.medications = request.POST.get("medications") or getattr(patient, "medications", "")
+        patient.abnormal_bleeding_history = request.POST.get("abnormal_bleeding_history") or getattr(patient, "abnormal_bleeding_history", "")
+
+        patient.save()
+        return redirect("userprofile:homepage")
+
+    return render(request, 'userprofile/patient_data.html', {'patient': patient})
+
 def homepage(request):
     if request.user.is_superuser:
         return redirect('userprofile:admin_dashboard')

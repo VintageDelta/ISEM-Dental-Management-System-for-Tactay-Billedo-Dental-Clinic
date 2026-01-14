@@ -18,6 +18,13 @@ class Patient(models.Model):
     is_guest = models.BooleanField(default=False)  
     guest_id = models.CharField(max_length=50, blank=True, null=True)  
     
+    #Medical data fields
+    particular_condition = models.CharField(max_length=255, blank=True, null=True)
+    gender = models.CharField(max_length=10, blank=True, null=True)
+    allergy = models.CharField(max_length=255, blank=True, null=True)
+    pregnancy_status = models.CharField(max_length=255, blank=True, null=True)
+    medications = models.TextField(blank=True, null=True)
+    abnormal_bleeding_history = models.TextField(blank=True, null=True)
 
 class MedicalHistory(models.Model):
     patient = models.ForeignKey(Patient, related_name="medical_history", on_delete=models.CASCADE)
