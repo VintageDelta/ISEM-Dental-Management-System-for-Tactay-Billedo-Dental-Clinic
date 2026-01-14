@@ -2,6 +2,7 @@
 let addForm = null;
 let addSaveBtn = null;
 let reschedAppointmentId = null;
+let doneOdontogramHandlerAttached = false;
 
 let reschedHandlerAttached = false;
 
@@ -258,54 +259,6 @@ confirmYes?.addEventListener("click", () => {
     }
   }
 
-  // Initialize the done steps modal (called from calendar.js when "Done" is clicked)
-  window.initDoneStepsModal = function(appointmentId) {
-    currentStep = 1;
-    currentAppointmentData = null;
-    currentPatientId = null;
-
-    // Fetch appointment details
-    if (appointmentId) {
-      fetch(`/dashboard/appointment/get-appointment-details/${appointmentId}/`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            currentAppointmentData = data.appointment;
-            currentPatientId = data.patient.id;
-
-            // Set form action URLs with patient ID
-            const medicalForm = document.getElementById("done-medical-form");
-            const financialForm = document.getElementById("done-financial-form");
-            const odontogramForm = document.getElementById("done-odontogram-form");
-            
-            if (medicalForm && currentPatientId) {
-              medicalForm.action = `/dashboard/patient/${currentPatientId}/add_history/`;
-            }
-            if (financialForm && currentPatientId) {
-              financialForm.action = `/dashboard/patient/${currentPatientId}/add_financial_history/`;
-            }
-            if (odontogramForm && currentPatientId) {
-              odontogramForm.action = `/dashboard/patient/${currentPatientId}/add_odontogram/`;
-            }
-
-            // Pre-fill forms (pass user role for conditional patient name pre-fill)
-            prefillForms(data.appointment, data.patient, data.user_role);
-
-            // Update display
-            updateDoneStepsDisplay();
-          }
-        })
-        .catch(err => {
-          console.error("Error fetching appointment details:", err);
-        });
-    }
-
-    // Use setTimeout to ensure DOM is ready
-    setTimeout(() => {
-      updateDoneStepsDisplay();
-    }, 100);
-  };
-
   // Expose update function globally
   window.updateDoneStepsDisplay = updateDoneStepsDisplay;
 
@@ -434,8 +387,15 @@ confirmYes?.addEventListener("click", () => {
                   window.renderTodaysAppointments();
                 }
               }, 250);
-              closeModal("done-steps-modal");
-              closeModal("status-modal");
+
+              // NEW: go to this patient's history page so you see all 3 records
+              if (window.currentPatientId) {
+                window.location.href = `/dashboard/patient/${window.currentPatientId}/`;
+                // or `/dashboard/patient/${window.currentPatientId}/medical_history/` if that is your URL
+              } else {
+                closeModal("done-steps-modal");
+                closeModal("status-modal");
+              }
             }
           });
         } else {
@@ -1318,3 +1278,268 @@ function initFollowupForm() {
 
   validateFollowupForm();
 }
+
+// ===== Done Steps Modal =====
+window.initDoneStepsModal = function(appointmentId) {
+  console.log("=== INIT DONE STEPS MODAL CALLED ===");
+  console.log("appointmentId:", appointmentId);
+  if (!appointmentId) return;
+
+  // Initialize step to 1 FIRST
+  window.doneStepsCurrentStep = 1;
+  console.log("Set doneStepsCurrentStep to:", window.doneStepsCurrentStep);
+
+  // Open modal first
+  openModal("done-steps-modal");
+
+  // Show step 1 immediately
+  showDoneStep(1);
+
+  // Fetch appointment + patient data
+  fetch(`/dashboard/appointment/get-appointment-details/${appointmentId}/`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("Got appointment data:", data);
+      
+      if (!data.success) {
+        alert("Failed to load appointment details");
+        closeModal("done-steps-modal");
+        return;
+      }
+
+      const apptData = data.appointment;
+      const patientData = data.patient;
+      window.currentPatientId = patientData.id;
+
+      console.log("Setting form actions with patient ID:", patientData.id);
+
+      // Set form actions
+      const medicalForm = document.getElementById("done-medical-form");
+      const financialForm = document.getElementById("done-financial-form");
+      const odontogramForm = document.getElementById("done-odontogram-form");
+
+      if (medicalForm) {
+        medicalForm.action = `/dashboard/patient/${patientData.id}/add_history/`;
+        console.log("Medical form action:", medicalForm.action);
+      }
+      if (financialForm) {
+        financialForm.action = `/dashboard/patient/${patientData.id}/add_financial_history/`;
+        console.log("Financial form action:", financialForm.action);
+      }
+      if (odontogramForm) {
+        odontogramForm.action = `/dashboard/patient/${patientData.id}/add_odontogram/`;
+        console.log("Odontogram form action:", odontogramForm.action);
+      }
+
+      // Prefill forms
+      if (document.getElementById("done-medical-patient-name")) 
+        document.getElementById("done-medical-patient-name").value = patientData.name || "";
+      if (document.getElementById("done-medical-date")) 
+        document.getElementById("done-medical-date").value = apptData.date || "";
+      if (document.getElementById("done-medical-dentist")) 
+        document.getElementById("done-medical-dentist").value = apptData.dentist || "";
+      if (document.getElementById("done-medical-service")) 
+        document.getElementById("done-medical-service").value = apptData.services || "";
+      if (document.getElementById("done-financial-date")) 
+        document.getElementById("done-financial-date").value = apptData.date || "";
+      if (document.getElementById("done-financial-time")) 
+        document.getElementById("done-financial-time").value = apptData.time || "";
+      if (document.getElementById("done-odontogram-date-0")) 
+        document.getElementById("done-odontogram-date-0").value = apptData.date || "";
+      
+      const odontoDentistSelect = document.getElementById("done-odontogram-dentist-0");
+      if (odontoDentistSelect && apptData.dentist_id) {
+        odontoDentistSelect.value = apptData.dentist_id;
+      }
+
+      console.log("Forms prefilled successfully");
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      alert("Failed to load appointment details");
+      closeModal("done-steps-modal");
+    });
+};
+
+function showDoneStep(step) {
+  console.log("showDoneStep called with step:", step);
+  
+  // Hide all forms
+  document.querySelectorAll(".step-form").forEach(f => f.classList.add("hidden"));
+  
+  // Reset all step containers
+  document.querySelectorAll(".step-container").forEach(s => {
+    s.classList.add("opacity-50");
+    s.classList.remove("border-blue-500");
+  });
+
+  // Show current form and highlight step
+  const form = document.querySelector(`.step-form[data-step="${step}"]`);
+  const container = document.getElementById(`step-${step}`);
+  
+  console.log("Form for step", step, ":", form);
+  console.log("Container for step", step, ":", container);
+  
+  if (form) form.classList.remove("hidden");
+  if (container) {
+    container.classList.remove("opacity-50");
+    container.classList.add("border-blue-500");
+  }
+
+  // Update buttons
+  const backBtn = document.getElementById("done-steps-back-btn");
+  const nextBtn = document.getElementById("done-steps-next-btn");
+  const submitBtn = document.getElementById("done-steps-submit-btn");
+
+  if (backBtn) backBtn.disabled = (step === 1);
+  if (nextBtn) nextBtn.classList.toggle("hidden", step === 3);
+  if (submitBtn) {
+    submitBtn.classList.toggle("hidden", step !== 3);
+    if (form) submitBtn.setAttribute("form", form.id);
+  }
+
+  window.doneStepsCurrentStep = step;
+  console.log("doneStepsCurrentStep set to:", window.doneStepsCurrentStep);
+}
+
+
+// Attach handlers when DOM loads - ONCE
+document.addEventListener("DOMContentLoaded", function() {
+  console.log("Attaching Done Steps handlers");
+
+  // Back button
+  const backBtn = document.getElementById("done-steps-back-btn");
+  if (backBtn) {
+    backBtn.addEventListener("click", function() {
+      console.log("Back clicked, current step:", window.doneStepsCurrentStep);
+      showDoneStep(Math.max(1, window.doneStepsCurrentStep - 1));
+    });
+  }
+
+  // Next button
+  const nextBtn = document.getElementById("done-steps-next-btn");
+  if (nextBtn) {
+    nextBtn.addEventListener("click", function() {
+      console.log("=== NEXT BUTTON CLICKED ===");
+      console.log("Current step:", window.doneStepsCurrentStep);
+
+      const currentStep = window.doneStepsCurrentStep;
+      const form = document.querySelector(`.step-form[data-step="${currentStep}"]`);
+      
+      if (!form) {
+        console.error("Form not found for step:", currentStep);
+        alert("Form not found");
+        return;
+      }
+
+      const action = form.action;
+      console.log("Form action:", action);
+
+      if (!action || action.includes("/patient/0/") || action.includes("/patient//")) {
+        console.error("Invalid action URL:", action);
+        alert("Form action not set correctly");
+        return;
+      }
+
+      const formData = new FormData(form);
+      console.log("Submitting form data to:", action);
+
+      fetch(action, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: formData,
+      })
+      .then(res => {
+        console.log("Response status:", res.status);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        console.log("Response data:", data);
+        if (data.success) {
+          console.log(`Step ${currentStep} saved!`);
+          if (currentStep < 3) {
+            showDoneStep(currentStep + 1);
+          }
+        } else {
+          alert(data.error || "Failed to save");
+        }
+      })
+      .catch(err => {
+        console.error("Error:", err);
+        alert("Network error: " + err.message);
+      });
+    });
+  }
+
+  // Close button
+  const closeBtn = document.getElementById("done-steps-close-btn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", function() {
+      closeModal("done-steps-modal");
+      closeModal("status-modal");
+    });
+  }
+});
+
+
+
+// Odontogram final step submit (attach only once)
+const doneOdontoForm = document.getElementById("done-odontogram-form");
+if (doneOdontoForm && !doneOdontogramHandlerAttached) {
+  doneOdontogramHandlerAttached = true;
+  
+  doneOdontoForm.addEventListener("submit", function(e) {
+    e.preventDefault();
+    if (!window.currentPatientId) {
+      alert("Patient ID not found");
+      return;
+    }
+
+    const formData = new FormData(this);
+    fetch(this.action, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: formData,
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Mark appointment as done
+        if (window.currentEventId) {
+          fetch(`/dashboard/appointment/update-status/${window.currentEventId}/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: JSON.stringify({ status: "done" })
+          })
+          .then(res => res.json())
+          .then(statusData => {
+            if (statusData.success) {
+              if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
+              if (window.mainCalendar) window.mainCalendar.refetchEvents();
+              
+              // Redirect to patient page so you see all 3 records
+              window.location.href = `/dashboard/patient/${window.currentPatientId}/`;
+            }
+          });
+        }
+      } else {
+        alert(data.error || "Failed to save odontogram");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Network error");
+    });
+  });
+}
+

@@ -131,6 +131,15 @@ def medical_history(request, pk):
     return render(request, "patient/medical_history.html", {"patient": patient, "medical_history": medical_history_qs, "financial_history": financial_history_qs, "tooth_num": tooth_num, "services": Service.objects.all(), "dentists": Dentist.objects.all()})
 
 def add_medical_history(request, patient_id):
+    # for debugging 
+    print("=" * 50)
+    print("ADD_MEDICAL_HISTORY VIEW CALLED")
+    print(f"Patient ID: {patient_id}")
+    print(f"Method: {request.method}")
+    print(f"POST data: {request.POST}")
+    print(f"Is AJAX: {request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
+    print("=" * 50)
+
     patient = get_object_or_404(Patient, pk=patient_id)
     if request.method == "POST":
         MedicalHistory.objects.create(
@@ -145,6 +154,7 @@ def add_medical_history(request, patient_id):
         )
         # Return JSON response for AJAX requests
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            print("RETURNING JSON SUCCESS")
             return JsonResponse({"success": True, "message": "Medical history saved successfully"})
         return redirect("patient:medical_history", pk=patient_id)
     return render(request, "patient/medical_history.html", {"patient": patient})
@@ -157,10 +167,20 @@ def add_medical_history(request, patient_id):
 #     return render(request, "patient/medical_history.html", {"patient": patient, "history": history, "tooth_num": tooth_num})
 
 def add_financial_history(request, patient_id):
+    #for debugging , really need fucking logs RN!
+    print("=" * 50)
+    print("ADD_FINANCIAL_HISTORY VIEW CALLED")
+    print(f"Patient ID: {patient_id}")
+    print(f"Method: {request.method}")
+    print(f"POST data: {request.POST}")
+    print(f"Is AJAX: {request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
+    print("=" * 50)
+
     patient = get_object_or_404(Patient, pk=patient_id)
     if request.method == "POST":
         FinancialHistory.objects.create(
             patient=patient,
+            number=request.POST.get("number"),
             date=request.POST.get("date"),
             description=request.POST.get("description"),
             time=request.POST.get("time"),
@@ -170,6 +190,7 @@ def add_financial_history(request, patient_id):
         )
         # Return JSON response for AJAX requests
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            print("RETURNING JSON SUCCESS")
             return JsonResponse({"success": True, "message": "Financial history saved successfully"})
         return redirect("patient:medical_history", pk=patient_id)
     return render(request, "patient/medical_history", pk=patient_id)
@@ -220,6 +241,16 @@ def odontogram(request, patient_id):
     return render(request, "patient/medical_history.html", {"patient": patient, "tooth_num": tooth_num, "tooth_name": tooth_names, "services": services, "dentists": dentists})
 
 def add_odontogram(request, patient_id):
+    
+    #idk why but shits not posting on my part!
+    print("=" * 50)
+    print("ADD_ODONTOGRAM VIEW CALLED")
+    print(f"Patient ID: {patient_id}")
+    print(f"Method: {request.method}")
+    print(f"POST data: {request.POST}")
+    print(f"Is AJAX: {request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
+    print("=" * 50)
+
     patient = get_object_or_404(Patient, pk=patient_id)
     if request.method == "POST":
         index = 0
