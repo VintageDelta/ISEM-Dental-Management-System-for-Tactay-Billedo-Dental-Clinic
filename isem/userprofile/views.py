@@ -1,4 +1,5 @@
-from datetime import timezone
+from django.utils import timezone
+from datetime import timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout as auth_logout
 from django.contrib.auth.models import User, Group
@@ -6,6 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.views import LoginView as Loginview
 from django.db import models
 from patient.models import Patient
+from appointment.models import Appointment
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import views as auth_views
 
@@ -20,7 +22,48 @@ class RoleBasedLoginView(Loginview):
             return '/dashboard/'
         else:
             return '/user/homepage/' 
-        
+
+@login_required
+def patient_dashboard(request):
+    user = request.user
+
+    # Get patient profile
+    patient = Patient.objects.filter(user=user).first()
+
+    today = timezone.now().date()
+    next_week = today + timedelta(days=7)
+
+    # All appointments of this user
+    appointments = Appointment.objects.filter(user=user)
+
+    total_appointments = appointments.count()
+
+    upcoming_appointments = appointments.filter(
+        date__gte=today,
+        status__in=["not_arrived", "arrived", "ongoing"]
+    ).count()
+
+    cancelled_appointments = appointments.filter(
+        status="cancelled",
+        date__gte=today - timedelta(days=7)
+    ).count()
+
+    # Next appointment
+    next_appointment = appointments.filter(
+        date__gte=today,
+        status__in=["not_arrived", "arrived"]
+    ).order_by("date", "time").first()
+
+    context = {
+        "patient": patient,
+        "total_appointments": total_appointments,
+        "upcoming_appointments": upcoming_appointments,
+        "cancelled_appointments": cancelled_appointments,
+        "next_appointment": next_appointment,
+    }
+
+    return render(request, "userprofile/homepage.html", context)
+
 def signin(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -206,10 +249,11 @@ def patient_data(request):
 
     return render(request, 'userprofile/patient_data.html', {'patient': patient})
 
+@login_required
 def homepage(request):
     if request.user.is_superuser:
         return redirect('userprofile:admin_dashboard')
     elif request.user.is_staff:
         return redirect('dashboard:index')
     else:
-        return render(request, 'userprofile/homepage.html')
+        return patient_dashboard(request)

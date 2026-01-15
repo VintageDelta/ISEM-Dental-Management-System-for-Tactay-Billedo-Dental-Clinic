@@ -5,5 +5,148 @@ ISEM
 {% endblock %}
 
 {% block content %}
-<h2 class="text-2xl font-semibold mb-4">Dashboard</h2>
+<div class="space-y-6">
+
+    <!-- Page Title -->
+    <h2 class="text-2xl font-semibold text-gray-800">Dashboard</h2>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+        <!-- Today's Appointments -->
+        <div class="bg-white rounded-xl shadow p-5 flex items-center justify-between">
+            <div>
+                <h4 class="text-4xl font-bold text-gray-900">{{ todays_count }}</h4>
+                <p class="text-gray-600 font-medium">Today’s Appointments</p>
+            </div>
+            <div class="text-blue-500 text-4xl">
+                📅
+            </div>
+        </div>
+
+        <!-- Upcoming Appointments -->
+        <div class="bg-white rounded-xl shadow p-5 flex items-center justify-between">
+            <div>
+                <h4 class="text-4xl font-bold text-gray-900">{{ upcoming_count }}</h4>
+                <p class="text-gray-600 font-medium">Upcoming Appointments</p>
+            </div>
+            <div class="text-green-500 text-4xl">
+                📆
+            </div>
+        </div>
+
+        <!-- New Patients Today -->
+        <div class="bg-white rounded-xl shadow p-5 flex items-center justify-between">
+            <div>
+                <h4 class="text-4xl font-bold text-gray-900">{{ new_patients_count }}</h4>
+                <p class="text-gray-600 font-medium">New Patients Today</p>
+            </div>
+            <div class="text-purple-500 text-4xl">
+                👤
+            </div>
+        </div>
+
+        <!-- Cancelled / No-shows -->
+        <div class="bg-white rounded-xl shadow p-5 flex items-center justify-between">
+            <div>
+                <h4 class="text-4xl font-bold text-gray-900">{{ cancelled_count }}</h4>
+                <p class="text-gray-600 font-medium">Cancelled / No-Shows</p>
+            </div>
+            <div class="text-red-500 text-4xl">
+                ❌
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Today's Appointment List -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                Today’s Appointments
+            </h3>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-gray-600 border-b">
+                        <tr>
+                            <th class="py-2">Time</th>
+                            <th>Patient</th>
+                            <th>Dentist</th>
+                            <th>Service</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-700"></tbody>
+                    {% for appt in todays_appointments %}
+                    <tr>
+                        <td>{{ appt.time }}</td>
+                        <td>{{ appt.user.get_full_name|default:"Guest" }}</td>
+                        <td>{{ appt.dentist_name }}</td>
+                        <td>
+                            {% for service in appt.services.all %}
+                            {{ service.service_name }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}—{% endfor %}
+                        </td>
+                        <td>{{ appt.get_status_display }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No appointments yet</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="space-y-6">
+
+            <!-- Quick Actions -->
+            <!-- <div class="bg-white rounded-xl shadow p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                    Quick Actions
+                </h3>
+
+                <div class="space-y-3">
+                    <button class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                        ➕ Add Appointment
+                    </button>
+                    <button class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                        ➕ Register Patient
+                    </button>
+                    <button class="w-full bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700">
+                        📅 View Calendar
+                    </button>
+                </div>
+            </div> -->
+
+            <!-- Alerts -->
+            <div class="bg-white rounded-xl shadow p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                    Alerts & Notifications
+                </h3>
+
+                <ul class="text-sm text-gray-700 space-y-2">
+                    {% for item in low_stock_items %}
+                    <li>
+                        ⚠ {{ item.item_name }}
+                        <span class="text-red-600 font-medium">
+                            ({{ item.stock }} left)
+                        </span>
+                    </li>
+                    {% empty %}
+                    <li class="text-green-600">No low stock alerts 🎉</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 {% endblock %}

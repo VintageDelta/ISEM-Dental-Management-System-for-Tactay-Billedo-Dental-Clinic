@@ -26,6 +26,8 @@ class Patient(models.Model):
     medications = models.TextField(blank=True, null=True)
     abnormal_bleeding_history = models.TextField(blank=True, null=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+
 class MedicalHistory(models.Model):
     patient = models.ForeignKey(Patient, related_name="medical_history", on_delete=models.CASCADE)
     date = models.DateField(null=True, blank=True)
