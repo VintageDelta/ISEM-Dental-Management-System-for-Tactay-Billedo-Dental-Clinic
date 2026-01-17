@@ -178,6 +178,14 @@ def add_financial_history(request, patient_id):
 
     patient = get_object_or_404(Patient, pk=patient_id)
     if request.method == "POST":
+        # Handle empty strings for decimal fields
+        amount = request.POST.get("amount")
+        balance = request.POST.get("balance")
+        
+        # Convert empty strings to None or 0
+        amount = None if not amount or amount.strip() == '' else amount
+        balance = None if not balance or balance.strip() == '' else balance
+
         FinancialHistory.objects.create(
             patient=patient,
             number=request.POST.get("number"),

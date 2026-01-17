@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 import json
 from patient.models import Patient
+from django.db import transaction
 
 @csrf_exempt
 @require_POST
@@ -63,7 +64,8 @@ def create_followup(request):
     total_minutes = sum(s.duration for s in selected_services)
 
     # Find a valid slot using your existing util
-    start_time, end_time = find_next_available_slot(
+    with transaction.atomic():
+        start_time, end_time = find_next_available_slot(
         Dentist.objects.get(name=dentist_name),
         date_obj,
         total_minutes,
@@ -78,7 +80,6 @@ def create_followup(request):
         )
         return redirect("appointment:appointment_page")
 
-    # follow-up appointment
     followup = Appointment.objects.create(
         user=request.user if request.user.is_authenticated else original.user,
         dentist_name=dentist_name,
@@ -89,10 +90,9 @@ def create_followup(request):
         preferred_date=date_obj,
         preferred_time=time_obj,
         email=original.email,
-        # if you later add a FK like followup_of = models.ForeignKey
-        # set it here, e.g. followup_of=original,
     )
     followup.services.set(selected_services)
+
 
     messages.add_message(
         request,
@@ -164,6 +164,22 @@ def appointment_page(request):
                     guest_id=temp_id
                 )
 
+        with transaction.atomic():
+            start_time, end_time = find_next_available_slot(
+            dentist,
+            date_obj,
+            total_minutes,
+            preferred_time,
+            location=location
+        )
+
+        if not start_time or not end_time:
+            messages.error(
+                request,
+                "No available time slot for the selected date and services."
+            )
+            return redirect("appointment:appointment_page")
+
         appointment = Appointment.objects.create(
             user=request.user if request.user.is_authenticated else None,
             dentist_name=dentist.name,
@@ -176,6 +192,7 @@ def appointment_page(request):
             email=email,
         )
         appointment.services.set(selected_services)
+
         
         # Store patient_id in appointment (if you want to add a FK later)
         # For now, we'll use email to find patient when needed
@@ -280,7 +297,7 @@ def get_booked_times(request):
         dentist_name=Dentist.objects.get(id=dentist_id).name,
         date=date_obj,
         location=location  # ← This makes branches separate!
-    )
+    ).exclude(status="cancelled")
 
     # Return start/end times so the front-end can block these
     booked = []
@@ -318,7 +335,8 @@ def reschedule_appointment(request, appointment_id):
 
     total_minutes = sum(s.duration for s in selected_services)
 
-    start_time, end_time = find_next_available_slot(
+    with transaction.atomic():
+        start_time, end_time = find_next_available_slot(
         dentist,
         date_obj,
         total_minutes,
@@ -327,9 +345,11 @@ def reschedule_appointment(request, appointment_id):
     )
 
     if not start_time or not end_time:
-        return JsonResponse({"success": False, "error": "No available time slot for the selected date and services."}, status=400)
+        return JsonResponse({
+            "success": False,
+            "error": "No available time slot for the selected date and services."
+        }, status=400)
 
-    # update the SAME appointment
     appt.dentist_name = dentist.name
     appt.location = location
     appt.date = date_obj
@@ -340,6 +360,7 @@ def reschedule_appointment(request, appointment_id):
     appt.email = email
     appt.services.set(selected_services)
     appt.save()
+
 
     messages.success(request, "Appointment rescheduled successfully!")
     return JsonResponse({"success": True})
@@ -400,6 +421,10 @@ def get_appointment_details(request, appointment_id):
                 "id": patient_id,
                 "name": patient.name if patient else None,
                 "email": appointment.email,
+                "telephone": patient.telephone if patient else "",
+                "address": patient.address if patient else "",
+                "age": patient.age if patient else "",
+                "occupation": patient.occupation if patient else "",
             },
             "user_role": {
                 "is_admin_or_staff": is_admin_or_staff,

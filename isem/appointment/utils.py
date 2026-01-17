@@ -2,60 +2,59 @@ def find_next_available_slot(dentist, date, total_duration, preferred_time=None,
     from datetime import datetime, timedelta
     from .models import Appointment
 
+    def round_up_to_interval(dt, minutes=15):
+        remainder = dt.minute % minutes
+        if remainder:
+            dt += timedelta(minutes=(minutes - remainder))
+        return dt.replace(second=0, microsecond=0)
+
     clinic_start = datetime.combine(date, datetime.strptime("08:00", "%H:%M").time())
     clinic_end = datetime.combine(date, datetime.strptime("17:00", "%H:%M").time())
 
-    current = datetime.combine(date, preferred_time) if preferred_time else clinic_start
-
     now = datetime.now()
 
-    # 🔒 Hard stop: never return a slot for a past date
+    # Hard stop: no past dates
     if date < now.date():
-        print("Date is in the past, no slot allowed")
         return None, None
 
-    # If today and chosen time is earlier than now, start from now
-    if date == now.date() and current < now:
-        current = now.replace(second=0, microsecond=0)
+    # Starting point
+    current = datetime.combine(date, preferred_time) if preferred_time else clinic_start
 
-    print("DEBUG")
-    print("Preferred:", preferred_time)
-    print("Date:", date)
-    print("Now:", now)
-    print("Current starts at:", current)
+    # If today, don’t allow past times
+    if date == now.date() and current < now:
+        current = now
+
+    # Enforce 15-minute slots
+    current = round_up_to_interval(current)
+
+    duration = timedelta(minutes=total_duration)
 
     existing = Appointment.objects.filter(
         dentist_name=dentist.name,
         date=date,
-        location=location
+        location=location,
+        status__in=["not_arrived", "arrived", "ongoing"]
     ).order_by("time")
 
-    print("Existing appointments:", [(a.time, a.end_time) for a in existing])
+    # GAP-BASED SCANNING
+    for appt in existing:
+        appt_start = datetime.combine(date, appt.time)
+        appt_end = datetime.combine(date, appt.end_time)
 
-    duration = timedelta(minutes=total_duration)
-
-    while current + duration <= clinic_end:
-        print("Trying slot:", current.time(), "-", (current + duration).time())
-
-        overlap = False
-        for appt in existing:
-            appt_start = datetime.combine(date, appt.time)
-            appt_end = datetime.combine(date, appt.end_time)
-
-            if not (current + duration <= appt_start or current >= appt_end):
-                print("Overlap with:", appt_start.time(), "-", appt_end.time())
-                overlap = True
-                current = appt_end
-                break
-
-        if not overlap:
-            print("Found slot")
+        # If there’s enough space before this appointment
+        if current + duration <= appt_start:
             return current.time(), (current + duration).time()
 
-        current += timedelta(minutes=1)
+        # Otherwise jump to the end of this appointment
+        current = max(current, appt_end)
+        current = round_up_to_interval(current)
 
-    print("No slot found")
+    # Check after the last appointment
+    if current + duration <= clinic_end:
+        return current.time(), (current + duration).time()
+
     return None, None
+
 
 
 

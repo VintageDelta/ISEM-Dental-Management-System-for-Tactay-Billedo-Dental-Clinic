@@ -268,95 +268,66 @@ document.addEventListener('DOMContentLoaded', function () {
       },
 
       //displaying of cards and buttons
-        eventContent: function(info) {
-        const status = info.event.extendedProps && info.event.extendedProps.status
-          ? info.event.extendedProps.status
-          : "not_arrived";
-        const base = colorMap[status] || "#9CA3AF";
-        const tinted = hexToRgba(base, 0.3);
+        eventContent: function(info) {const status = info.event.extendedProps && info.event.extendedProps.status
+    ? info.event.extendedProps.status
+    : "not_arrived";
+      const base = colorMap[status] || "#9CA3AF";
+      const tinted = hexToRgba(base, 0.3);
 
-        // Outer card
-        const wrapper = document.createElement("div");
-        wrapper.style.display = "flex";
-        wrapper.style.alignItems = "stretch";
-        wrapper.style.width = "100%";
-        wrapper.style.height = "100%";
-        wrapper.style.boxSizing = "border-box";
-        wrapper.style.padding = "6px 8px";
-        wrapper.style.borderRadius = "8px";
-        wrapper.style.overflow = "hidden";
-        wrapper.style.backgroundColor = tinted;
-        wrapper.style.minHeight = "40px";
-        wrapper.style.cursor = "pointer";
+      // Outer card
+      const wrapper = document.createElement("div");
+      wrapper.style.display = "flex";
+      wrapper.style.position = "relative";  // ← ADD THIS
+      wrapper.style.width = "100%";
+      wrapper.style.height = "100%";
+      wrapper.style.boxSizing = "border-box";
+      wrapper.style.padding = "8px";
+      wrapper.style.borderRadius = "8px";
+      wrapper.style.backgroundColor = tinted;
+      wrapper.style.minHeight = "40px";
+      wrapper.style.cursor = "pointer";
 
-        const props = info.event.extendedProps || {};
-        const isCancelled = props.status === "cancelled";
-        const canManage = !!props.can_manage;
+      const props = info.event.extendedProps || {};
+      const isCancelled = props.status === "cancelled";
+      const canManage = !!props.can_manage;
 
-        console.log("EVENT PROPS", info.event.id, props);
+      if (isCancelled && !canManage) {
+        wrapper.style.cursor = "default";
+        wrapper.style.opacity = "0.6";
+      }
 
-        // if cancelled and user cannot manage, disable pointer/interactions
-        if (isCancelled && !canManage) {
-          wrapper.style.cursor = "default";
-          wrapper.style.opacity = "0.6";
-        }
+      // Stripe
+      const stripe = document.createElement("div");
+      stripe.style.width = "4px";
+      stripe.style.alignSelf = "stretch";
+      stripe.style.borderRadius = "4px";
+      stripe.style.marginRight = "8px";
+      stripe.style.backgroundColor = base;
 
-        const stripe = document.createElement("div");
-        stripe.style.width = "6px";
-        stripe.style.height = "100%";
-        stripe.style.flex = "0 0 6px";
-        stripe.style.borderRadius = "6px 0 0 6px";
-        stripe.style.marginRight = "8px";
-        stripe.style.backgroundColor = base;
-        stripe.style.pointerEvents = "none";
+      // Content container (for title)
+      const content = document.createElement("div");
+      content.style.flex = "1";
+      content.style.paddingRight = "8px";  // Space for buttons
 
-        // Main content: vertical (title on top, time+buttons at bottom)
-        const content = document.createElement("div");
-        content.style.flex = "1";
-        content.style.minWidth = "0";
-        content.style.color = "#0f172a";
-        content.style.display = "flex";
-        content.style.flexDirection = "column";
-        content.style.alignItems = "flex-start";
-        content.style.justifyContent = "space-between";
+      // Title
+      const title = document.createElement("div");
+      title.textContent = info.event.title || "";
+      title.style.flex = "1";
+      title.style.fontSize = "0.875rem";
+      title.style.fontWeight = "600";
+      title.style.color = "#1f2937";
+      title.style.overflow = "hidden";
+      title.style.textOverflow = "ellipsis";
+      title.style.whiteSpace = "nowrap";
 
-        // Title (top-left)
-        const title = document.createElement("div");
-        title.textContent = info.event.title || "";
-        title.style.whiteSpace = "nowrap";
-        title.style.overflow = "hidden";
-        title.style.textOverflow = "ellipsis";
-        title.style.fontSize = "0.9rem";
-        title.style.fontWeight = "600";
-        title.style.marginBottom = "0px"; //was 2
-
-        // Bottom row: time (left) + buttons (right)
-        const bottomRow = document.createElement("div");
-        bottomRow.style.display = "flex";
-        bottomRow.style.alignItems = "center";
-        bottomRow.style.justifyContent = "space-between";
-        bottomRow.style.width = "100%";
-        bottomRow.style.gap = "4px"; //was 8
-
-        // Time (bottom-left)
-        const startTime = info.event.start
-          ? info.event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-          : "";
-        const endTime = info.event.end
-          ? info.event.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-          : "";
-        const time = document.createElement("div");
-        time.textContent = endTime ? `${startTime} - ${endTime}` : startTime;
-        time.style.fontSize = "0.75rem";
-        time.style.color = "#475569";
-
-        // Buttons (bottom-right)
-        const btnRow = document.createElement("div");
-        btnRow.style.display = "flex";
-        btnRow.style.flexShrink = "0";
-        btnRow.style.gap = "2px"; //was 4
-        btnRow.style.flexWrap = "wrap";
-        btnRow.style.justifyContent = "flex-end";
+      // Buttons container - ABSOLUTE POSITION
+      const btnRow = document.createElement("div");
+      btnRow.style.position = "absolute";  // ← ABSOLUTE POSITIONING
+      btnRow.style.bottom = "8px";  // ← Bottom of card
+      btnRow.style.right = "8px";  // ← Right of card
+      btnRow.style.display = "flex";
+      btnRow.style.gap = "4px";
+      btnRow.style.flexShrink = "0";
 
       if (info.view && info.view.type === "timeGridDay") {
         const followBtn = document.createElement("button");
@@ -366,6 +337,8 @@ document.addEventListener('DOMContentLoaded', function () {
         followBtn.style.borderRadius = "6px";
         followBtn.style.background = "#16a34a";
         followBtn.style.color = "#fff";
+        followBtn.style.border = "none";
+        followBtn.style.cursor = "pointer";
 
         const rescheduleBtn = document.createElement("button");
         rescheduleBtn.textContent = "Reschedule";
@@ -374,91 +347,73 @@ document.addEventListener('DOMContentLoaded', function () {
         rescheduleBtn.style.borderRadius = "6px";
         rescheduleBtn.style.background = "#2563eb";
         rescheduleBtn.style.color = "#fff";
+        rescheduleBtn.style.border = "none";
+        rescheduleBtn.style.cursor = "pointer";
 
         if (!isCancelled || canManage) {
           followBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             currentEventId = info.event.id;
             const propsInner = info.event.extendedProps || {};
-
             const origInput = document.getElementById("followup-original-id");
             if (origInput) origInput.value = currentEventId;
-
             const followDate = document.getElementById("followup-date");
             if (followDate && propsInner.preferred_date) {
               followDate.value = propsInner.preferred_date;
             }
-
             openModal("followup-modal");
           });
 
           rescheduleBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          currentEventId = info.event.id;
-          window.reschedAppointmentId = info.event.id; 
+            e.stopPropagation();
+            currentEventId = info.event.id;
+            window.reschedAppointmentId = info.event.id;
+            const propsInner = info.event.extendedProps || {};
 
-          const propsInner = info.event.extendedProps || {};
+            document.getElementById("resched-dentist").value = propsInner.dentist_id || "";
+            document.getElementById("resched-location").value = propsInner.location || "";
+            document.getElementById("resched-date").value = propsInner.preferred_date || propsInner.date || "";
+            document.getElementById("resched-email").value = propsInner.email || "";
 
-          // Basic fields
-          document.getElementById("resched-dentist").value  = propsInner.dentist_id || "";
-          document.getElementById("resched-location").value = propsInner.location || "";
-          document.getElementById("resched-date").value     = propsInner.preferred_date || propsInner.date || "";
-          document.getElementById("resched-email").value    = propsInner.email || "";
+            const rawTime = propsInner.preferred_time || propsInner.time || "";
+            const reschedAmpm = document.getElementById("resched-ampm");
+            const reschedHour = document.getElementById("resched-hour");
+            const reschedMin = document.getElementById("resched-minute");
+            const reschedHidden = document.getElementById("resched-time-hidden");
 
-          // ----- Time prefill (preferred_time or time) -----
-          const rawTime = propsInner.preferred_time || propsInner.time || ""; // e.g. "09:30 AM"
-          const reschedAmpm  = document.getElementById("resched-ampm");
-          const reschedHour  = document.getElementById("resched-hour");
-          const reschedMin   = document.getElementById("resched-minute");
-          const reschedHidden = document.getElementById("resched-time-hidden");
-
-          if (rawTime && reschedAmpm && reschedHour && reschedMin) {
-            const [timePart, ampmPart] = rawTime.split(" ");
-            const [hStr, mStr] = timePart.split(":");
-
-            // Set AM/PM first to rebuild hour options
-            reschedAmpm.value = ampmPart;
-            reschedAmpm.dispatchEvent(new Event("change"));
-
-            // Now set hour + minute
-            reschedHour.value = String(parseInt(hStr, 10)); // "09" -> "9"
-            reschedMin.value  = mStr;
-
-            // Update hidden 24h field (matches initRescheduleForm logic)
-            if (typeof to24Hour === "function") {
-              reschedHidden.value = `${String(to24Hour(reschedHour.value, ampmPart)).padStart(2, "0")}:${mStr}`;
-            } else {
-              reschedHidden.value = ""; // fallback
+            if (rawTime && reschedAmpm && reschedHour && reschedMin) {
+              const [timePart, ampmPart] = rawTime.split(" ");
+              const [hStr, mStr] = timePart.split(":");
+              reschedAmpm.value = ampmPart;
+              reschedAmpm.dispatchEvent(new Event("change"));
+              reschedHour.value = String(parseInt(hStr, 10));
+              reschedMin.value = mStr;
+              if (typeof to24Hour === "function") {
+                reschedHidden.value = `${String(to24Hour(reschedHour.value, ampmPart)).padStart(2, "0")}:${mStr}`;
+              } else {
+                reschedHidden.value = "";
+              }
             }
-          }
 
-          // ----- Services pre-check -----
-          const serviceIds = propsInner.service_ids || [];   // from views: extendedProps.service_ids
-          const allServiceCbs = document.querySelectorAll("#resched-services-checkboxes input.resched-service-checkbox");
-          allServiceCbs.forEach(cb => {
-            cb.checked = serviceIds.includes(parseInt(cb.value, 10));
+            const serviceIds = propsInner.service_ids || [];
+            const allServiceCbs = document.querySelectorAll("#resched-services-checkboxes input.resched-service-checkbox");
+            allServiceCbs.forEach(cb => {
+              cb.checked = serviceIds.includes(parseInt(cb.value, 10));
+            });
+
+            if (typeof window.refreshReschedSelectedServiceTags === "function") {
+              window.refreshReschedSelectedServiceTags();
+            }
+
+            const currentScheduleEl = document.getElementById("resched-current-time");
+            if (currentScheduleEl) {
+              const dateLabel = propsInner.preferred_date || propsInner.date || "";
+              const timeLabel = propsInner.preferred_time || propsInner.time || "";
+              currentScheduleEl.textContent = dateLabel && timeLabel ? `${dateLabel} at ${timeLabel}` : "";
+            }
+            openModal("reschedule-modal");
           });
-
-          // Refresh selected-service tags in reschedule modal
-          if (typeof window.refreshReschedSelectedServiceTags === "function") {
-            window.refreshReschedSelectedServiceTags();
-          }
-
-          // ----- Current schedule display -----
-          const currentScheduleEl = document.getElementById("resched-current-time");
-          if (currentScheduleEl) {
-            const dateLabel = propsInner.preferred_date || propsInner.date || "";
-            const timeLabel = propsInner.preferred_time || propsInner.time || "";
-            currentScheduleEl.textContent = dateLabel && timeLabel
-              ? `${dateLabel} at ${timeLabel}`
-              : "";
-          }
-
-          openModal("reschedule-modal");
-        });
-
         } else {
-          // visually show disabled buttons for non-admin cancelled
           followBtn.disabled = true;
           rescheduleBtn.disabled = true;
           followBtn.style.opacity = "0.5";
@@ -471,34 +426,28 @@ document.addEventListener('DOMContentLoaded', function () {
         btnRow.appendChild(rescheduleBtn);
       }
 
+      content.appendChild(title);
+      content.appendChild(btnRow);
+      wrapper.appendChild(stripe);
+      wrapper.appendChild(content);
 
-        bottomRow.appendChild(time);
-        bottomRow.appendChild(btnRow);
-
-        content.appendChild(title);
-        content.appendChild(bottomRow);
-
-        wrapper.appendChild(stripe);
-        wrapper.appendChild(content);
-
-        // Make whole card open Status modal only if allowed
-        if (!isCancelled || canManage) {
-          wrapper.addEventListener("click", () => {
-            currentEventId = info.event.id;
-            window.reschedAppointmentId = info.event.id;
-            window.currentEventId = currentEventId; 
-            const props2 = info.event.extendedProps || {};
-            document.getElementById("detail-dentist").textContent = props2.dentist || "N/A";
-            document.getElementById("detail-location").textContent = props2.location || "N/A";
-            document.getElementById("detail-date").textContent = props2.preferred_date || props2.date || "N/A";
-            document.getElementById("detail-time").textContent = props2.preferred_time || props2.time || "N/A";
-            document.getElementById("detail-service").textContent = props2.service || "N/A";
-            openModal("status-modal");
-          });
-        }
-
-        return { domNodes: [wrapper] };
+      if (!isCancelled || canManage) {
+        wrapper.addEventListener("click", () => {
+          currentEventId = info.event.id;
+          window.reschedAppointmentId = info.event.id;
+          window.currentEventId = currentEventId;
+          const props2 = info.event.extendedProps || {};
+          document.getElementById("detail-dentist").textContent = props2.dentist || "N/A";
+          document.getElementById("detail-location").textContent = props2.location || "N/A";
+          document.getElementById("detail-date").textContent = props2.preferred_date || props2.date || "N/A";
+          document.getElementById("detail-time").textContent = props2.preferred_time || props2.time || "N/A";
+          document.getElementById("detail-service").textContent = props2.service || "N/A";
+          openModal("status-modal");
+        });
       }
+
+      return { domNodes: [wrapper] };
+    }
 
 
     });
