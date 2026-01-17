@@ -28,6 +28,8 @@ class InventoryItem(models.Model):
         return f"{self.item_name}  ({self.stock})"
     
     def is_expired(self):
+        if not self.expiry_date:
+            return False
         return self.expiry_date < timezone.now().date()
 
     def update_status(self):
@@ -42,4 +44,7 @@ class InventoryItem(models.Model):
             self.status = 'low_stock'
         else:
             self.status = 'available'
-        self.save()
+    
+    def save(self, *args, **kwargs):
+        self.update_status()
+        super().save(*args, **kwargs)

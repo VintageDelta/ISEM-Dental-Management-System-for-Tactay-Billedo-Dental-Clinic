@@ -126,6 +126,13 @@ def signup(request):
                 age=0,
                 occupation="",
                 is_guest=False,
+
+                gender="",
+                particular_condition="",
+                allergy="",
+                pregnancy_status="",
+                medications="",
+                abnormal_bleeding_history=""
             )
             print("DEBUG: Logging in user")
             login(request, user)

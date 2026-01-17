@@ -111,7 +111,8 @@
                 >
                 {% elif item.status == "expired" %}
                 <span
-                  class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded"
+                  class="px-2 py-1 text-xs font-medium text-gray-700 bg-red-500
+                   rounded"
                   >Expired</span
                 >
                 {% else %}
@@ -157,27 +158,41 @@
         </table>
       </div>
 
-      <!-- Pagination-->
+                  <!-- Pagination -->
       <div class="flex justify-between items-center border-t pt-4 mt-4">
         <div class="flex space-x-2 text-sm">
-          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100"
-            >&laquo;</a
-          >
-          <a href="#" class="px-3 py-1 border rounded bg-blue-500 text-white"
-            >1</a
-          >
-          <a href="#" class="px-3 py-1 border rounded">2</a>
-          <a href="#" class="px-3 py-1 border rounded">3</a>
-          <a href="#" class="px-3 py-1 border rounded">...</a>
-          <a href="#" class="px-3 py-1 border rounded">12</a>
-          <a href="#" class="px-3 py-1 border rounded hover:bg-gray-100"
-            >&raquo;</a
-          >
+          {# Previous #}
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}"
+               class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
+          {% else %}
+            <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
+          {% endif %}
+
+          {# Page numbers #}
+          {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+              <span class="px-3 py-1 border rounded bg-blue-500 text-white">
+                {{ num }}
+              </span>
+            {% else %}
+              <a href="?page={{ num }}"
+                 class="px-3 py-1 border rounded hover:bg-gray-100">
+                {{ num }}
+              </a>
+            {% endif %}
+          {% endfor %}
+
+          {# Next #}
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}"
+               class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
+          {% else %}
+            <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
+          {% endif %}
         </div>
-        <select class="border rounded px-2 py-1 text-sm">
-          <option value="20">20/page</option>
-          <option value="40">40/page</option>
-          <option value="60">60/page</option>
+                <select class="border rounded px-2 py-1 text-sm" disabled>
+          <option selected>5/page</option>
         </select>
       </div>
     </div>

@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
-class BillingRecrd(models.Model):
+class BillingRecord(models.Model):
     PAYMENT_STATUS_CHOICES = (
         ('unpaid', 'Unpaid'),
         ('paid', 'Paid'),

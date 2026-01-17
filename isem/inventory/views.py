@@ -5,10 +5,22 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import InventoryItem
 from .forms import InventoryItemForm
 from django.http import JsonResponse, HttpResponse
+from django.core.paginator import Paginator
+from django.shortcuts import render
 
 # LIST
 def inventory_list(request):
-    items = InventoryItem.objects.all().order_by('-created_at')
+    for item in InventoryItem.objects.all():
+        item.save()
+    qs = InventoryItem.objects.all().order_by('-created_at')
+    
+
+    paginator = Paginator(qs, 5)  # Show 5 items per page
+    page_number = request.GET.get('page')
+    items = paginator.get_page(page_number)
+    page_obj = items
+
+     # Form for adding new items
     form = InventoryItemForm()  # Empty form for adding new items
 
     today = datetime.date.today()
@@ -16,22 +28,34 @@ def inventory_list(request):
 
     expiring_items = InventoryItem.objects.filter(expiry_date__gte=today,
                                                   expiry_date__lte=upcoming,
-                                                  ).exclude(expiry_date= None)
-    return render(request, 'inventory/inventory.html', {'items': items,
+                                                  ).exclude(expiry_date= None).exclude(status='expired').exclude(status='out_of_stock')
+    
+
+    expired_items = InventoryItem.objects.filter(status='expired').order_by('-expiry_date')
+
+    out_of_stock_items = InventoryItem.objects.filter(status='out_of_stock').order_by('-updated_at')
+
+    return render(request, 'inventory/inventory.html', {
+                                                        'items': page_obj.object_list,
+                                                        'page_obj': page_obj,
                                                         'form': form,
                                                         'expiring_list': expiring_items,
-                                                        'has_expiring_items': expiring_items.exists()})
+                                                        'has_expiring_items': expiring_items.exists(),
+                                                        'expired_items': expired_items,
+                                                        'out_of_stock_items': out_of_stock_items,
+                                                        'has_out_of_stock_items': out_of_stock_items.exists(),})
+
 
 def inventory_add(request):
     if request.method == 'POST':
-        print("POST DATA:", request.POST)  # <-- debug
+        
         form = InventoryItemForm(request.POST)
         if form.is_valid():
-            print("FORM IS VALID") 
+            
             item = form.save(commit=False)
             item.update_status()
             item.save()
-            print("ITEM SAVED:", item)  
+             
             return redirect('inventory:list')
         else:
             print("FORM ERRORS:", form.errors)  
@@ -62,13 +86,19 @@ def inventory_edit(request, pk):
         item.description = request.POST.get("description")
         item.stock = request.POST.get("stock")
 
+        #convert stock to int
+        stock = request.POST.get("stock")
+        if stock:
+            item.stock = int(stock)
+
+        
         expiry = request.POST.get("expiry_date")
         if expiry:
             item.expiry_date=datetime.datetime.strptime(expiry, "%Y-%m-%d").date()
         else:
             item.expiry_date=None
         # item.expiry_date = request.POST.get("expiry_date")
-        item.status = request.POST.get("status")
+        # item.status = request.POST.get("status")
         item.save()
 
         return redirect("inventory:list")  

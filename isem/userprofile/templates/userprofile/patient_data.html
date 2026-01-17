@@ -42,7 +42,7 @@
 
         <div>
           <label class="block text-gray-700">Occupation</label>
-          <input type="text" name="occupation" value="{{ patient.occupation }}"
+          <input type="text" name="occupation" value="{{ patient.occupation }}" 
                  class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
         </div>
 
@@ -64,27 +64,27 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
         <div>
           <label class="block text-gray-700">Particular Condition</label>
-          <input type="text" name="particular_condition" value="{{ patient.particular_condition }}"
+          <input type="text" name="particular_condition" value="{{ patient.particular_condition }}" placeholder="e.g., Diabetes, Hypertension, None"
                  class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
         </div>
         <div>
           <label class="block text-gray-700">Allergy</label>
-          <input type="text" name="allergy" value="{{ patient.allergy }}"
+          <input type="text" name="allergy" value="{{ patient.allergy }}" placeholder="e.g., Penicillin, None"
                  class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
         </div>
         <div>
           <label class="block text-gray-700">Pregnancy Status</label>
-          <input type="text" name="pregnancy_status" value="{{ patient.pregnancy_status }}"
+          <input type="text" name="pregnancy_status" value="{{ patient.pregnancy_status }}" placeholder="e.g., Pregnant, Not Pregnant, N/A"
                  class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
         </div>
         <div>
           <label class="block text-gray-700">Medications</label>
-          <input type="text" name="medications" value="{{ patient.medications }}"
+          <input type="text" name="medications" value="{{ patient.medications }}" placeholder="e.g., Aspirin, None"
                  class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
         </div>
         <div class="sm:col-span-2">
-          <label class="block text-gray-700">Abnormal Bleeding History</label>
-          <textarea name="abnormal_bleeding_history" rows="3" 
+          <label class="block text-gray-700">Abnormal Bleeding History</label> 
+          <textarea name="abnormal_bleeding_history" rows="3" placeholder="Provide details if any"
                     class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">{{ patient.abnormal_bleeding_history }}</textarea>
         </div>
       </div>
