@@ -57,21 +57,46 @@
     </div>
   </div>
 
-  <!-- Timeline + list section -->
-  <div class="w-full lg:flex-1">
-    <div class="bg-white p-3 md:p-4 lg:p-6 rounded-xl shadow w-full">
-      <!-- Timeline calendar -->
-      <div class="w-full overflow-x-auto mb-4">
-        <div id="timeline-calendar" class="w-full md:min-w-[360px]"></div>
-      </div>
+ <!-- Timeline + list section -->
+<div class="w-full lg:flex-1">
+  <div class="bg-white p-3 md:p-4 lg:p-6 rounded-xl shadow w-full">
+    <!-- Timeline legend (STATUS COLORS) -->
+    <div class="flex flex-wrap items-center gap-3 mb-3 text-xs text-slate-600">
+      <span class="flex items-center gap-1">
+        <span class="h-2.5 w-2.5 rounded-full" style="background-color:#9CA3AF;"></span>
+        Not yet arrived
+      </span>
+      <span class="flex items-center gap-1">
+        <span class="h-2.5 w-2.5 rounded-full" style="background-color:#3B82F6;"></span>
+        Arrived
+      </span>
+      <span class="flex items-center gap-1">
+        <span class="h-2.5 w-2.5 rounded-full" style="background-color:#F59E0B;"></span>
+        On going
+      </span>
+      <span class="flex items-center gap-1">
+        <span class="h-2.5 w-2.5 rounded-full" style="background-color:#10B981;"></span>
+        Done
+      </span>
+      <span class="flex items-center gap-1">
+        <span class="h-2.5 w-2.5 rounded-full" style="background-color:#EF4444;"></span>
+        Cancelled
+      </span>
+    </div>
 
-      <!-- Timeline list -->
-      <div class="relative pl-3 md:pl-4 border-l border-gray-300 max-h-[400px] md:max-h-[600px] overflow-y-auto">
-        <ul id="todays-appointments-list" class="space-y-6"></ul>
-      </div>
+    <!-- Timeline calendar -->
+    <div class="w-full overflow-x-auto mb-4">
+      <div id="timeline-calendar" class="w-full md:min-w-[360px]"></div>
+    </div>
+
+    <!-- Timeline list -->
+    <div class="relative pl-3 md:pl-4 border-l border-gray-300 max-h-[400px] md:max-h-[600px] overflow-y-auto">
+      <ul id="todays-appointments-list" class="space-y-6"></ul>
     </div>
   </div>
 </div>
+
+
 
 <!-- Add Appointment Modal -->
 <div id="appointment-modal"
@@ -656,11 +681,40 @@
         <!-- Step 2: Financial History Form -->
         <form id="done-financial-form" method="post" action="" class="space-y-3 step-form hidden" data-step="2">
           {% csrf_token %}
+
+          <!-- Total Due (computed from services) -->
+          <div class="flex items-center justify-center gap-3">
+            <span class="text-sm font-medium text-gray-800">Total Due</span>
+            <div class="flex items-center gap-1">
+              <span class="text-2xl font-semibold text-gray-800">₱</span>
+
+              {% if request.user.is_staff or request.user.is_superuser %}
+                <input
+                  type="number"
+                  step="0.01"
+                  name="total_due"
+                  id="done-financial-total-due"
+                  class="w-40 border rounded-md p-3 text-2xl font-semibold text-center text-gray-800"
+                >
+              {% else %}
+                <input
+                  type="number"
+                  step="0.01"
+                  name="total_due"
+                  id="done-financial-total-due"
+                  class="w-40 border rounded-md p-3 text-2xl font-semibold text-center text-gray-800 bg-gray-100"
+                  readonly
+                >
+              {% endif %}
+            </div>
+          </div>
+
+
           <input type="date" name="date" id="done-financial-date" required placeholder="Date" class="w-full border rounded-md p-2 text-sm">
           <input type="text" name="description" id="done-financial-description" placeholder="Description" required class="w-full border rounded-md p-2 text-sm">
           <input type="time" name="time" id="done-financial-time" placeholder="Time" required class="w-full border rounded-md p-2 text-sm">
           <input type="text" name="type" id="done-financial-type" placeholder="Type" required class="w-full border rounded-md p-2 text-sm">
-          <input type="number" step="0.01" name="amount" id="done-financial-amount" placeholder="Amount" class="w-full border rounded-md p-2 text-sm">
+          <input type="number" step="0.01" name="amount" id="done-financial-amount" placeholder="Amount paid" class="w-full border rounded-md p-2 text-sm">
           <input type="number" step="0.01" name="balance" id="done-financial-balance" placeholder="Balance" class="w-full border rounded-md p-2 text-sm">
         </form>
 

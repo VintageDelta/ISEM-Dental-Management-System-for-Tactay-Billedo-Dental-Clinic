@@ -1107,7 +1107,7 @@ function initRescheduleForm() {
 
   refreshReschedSelectedServiceTags();
 
-    // --- Reschedule form validation: enable Save Changes only when complete ---
+  // --- Reschedule form validation: enable Save Changes only when complete ---
   const reschedForm = document.getElementById("reschedule-form");
   const reschedSaveBtn = reschedForm ? reschedForm.querySelector('button[type="submit"]') : null;
 
@@ -1351,6 +1351,43 @@ window.initDoneStepsModal = function(appointmentId) {
       if (odontoDentistSelect && apptData.dentist_id) {
         odontoDentistSelect.value = apptData.dentist_id;
       }
+
+      // === Financial step: Total Due, Amount, Balance ===
+      const totalDueInput = document.getElementById("done-financial-total-due");
+      const amountInput   = document.getElementById("done-financial-amount");
+      const balanceInput  = document.getElementById("done-financial-balance");
+
+      // Use total_price from backend (sum of service prices)
+      let totalDue = 0;
+      if (apptData.total_price !== undefined && apptData.total_price !== null) {
+        totalDue = parseFloat(apptData.total_price) || 0;
+      }
+
+      if (totalDueInput) {
+        totalDueInput.value = totalDue.toFixed(2);
+      }
+
+      // Helper to recompute balance
+      function recomputeBalance() {
+        if (!totalDueInput || !amountInput || !balanceInput) return;
+        const t = parseFloat(totalDueInput.value) || 0;
+        const a = parseFloat(amountInput.value) || 0;
+        const bal = t - a;
+        balanceInput.value = bal.toFixed(2);
+      }
+
+      // Recompute when user types amount (payment)
+      if (amountInput) {
+        amountInput.addEventListener("input", recomputeBalance);
+      }
+
+      // Recompute if staff/admin edits total_due (field is editable only for them in template)
+      if (totalDueInput) {
+        totalDueInput.addEventListener("input", recomputeBalance);
+      }
+
+      // Initial balance = totalDue (before any payment)
+      recomputeBalance();
 
       console.log("Forms prefilled successfully");
     })

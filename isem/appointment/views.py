@@ -109,9 +109,11 @@ def appointment_page(request):
 
     if request.method == "POST":
         dentist_id = request.POST.get("dentist")
+        service_id = request.POST.get("service")
         location = request.POST.get("location")
         date_str = request.POST.get("date")
         time_str = request.POST.get("time")
+        reason = request.POST.get("reason")
         email = request.POST.get("email")
 
         service_ids = request.POST.getlist("services")
@@ -394,9 +396,13 @@ def get_appointment_details(request, appointment_id):
             if patient:
                 patient_id = patient.id
         
-        service_names = ", ".join([s.service_name for s in appointment.services.all()])
-        service_ids = list(appointment.services.values_list("id", flat=True))
-        
+        # Services and prices
+        service_qs = appointment.services.all()
+        service_names = ", ".join([s.service_name for s in service_qs])
+        service_ids = list(service_qs.values_list("id", flat=True))
+        # Sum of prices for Total Amount Due
+        total_price = sum((s.price or 0) for s in service_qs)
+
         dentist_obj = Dentist.objects.filter(name=appointment.dentist_name).first()
         
         # Check if user is admin or staff
@@ -416,6 +422,8 @@ def get_appointment_details(request, appointment_id):
                 "email": appointment.email,
                 "services": service_names,
                 "service_ids": service_ids,
+                # NEW: this is what your JS reads for Total Amount Due
+                "total_price": float(total_price),
             },
             "patient": {
                 "id": patient_id,

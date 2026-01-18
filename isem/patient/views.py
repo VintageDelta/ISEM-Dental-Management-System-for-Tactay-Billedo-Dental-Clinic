@@ -193,8 +193,8 @@ def add_financial_history(request, patient_id):
             description=request.POST.get("description"),
             time=request.POST.get("time"),
             type=request.POST.get("type"),
-            amount=request.POST.get("amount"),
-            balance=request.POST.get("balance"),
+            amount=request.POST.get("amount") or "0",
+            balance=request.POST.get("balance") or "0",
         )
         # Return JSON response for AJAX requests
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
