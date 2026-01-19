@@ -78,7 +78,7 @@ Records {% endblock %} {% block content %}
 
       <tbody>
         {% for patient in patients %}
-        <tr class="hover:bg-gray-50 border-b patient-row clickable-row" data-url="{% url 'patient:medical_history' patient.id %}">
+         <tr class="hover:bg-gray-50 border-b patient-row clickable-row" data-url="{% url 'patient:medical_history' patient.id %}">
           <td class="py-3 px-4">
             <input type="checkbox" class="select-patient" value="{{ patient.id }}" />
           </td>
@@ -106,8 +106,8 @@ Records {% endblock %} {% block content %}
             <td colspan="9" class="py-4 text-center text-gray-500">
               No patients found.
             </td>
-          </tr>
-          {% endfor %}
+        </tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>

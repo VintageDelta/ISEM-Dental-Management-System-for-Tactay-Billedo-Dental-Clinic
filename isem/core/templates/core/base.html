@@ -40,44 +40,71 @@
         <!-- Navigation -->
         <nav class="p-4 flex-1">
           <ul class="space-y-4">
-            <li class="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 p-2 rounded">
-              <span class="material-icons">home</span>
-              <span class="sidebar-text"><a href="{% url 'userprofile:homepage' %}">Home</a></span>
-            </li>
+                  <li>
+                    <a href="{% url 'userprofile:homepage' %}"
+                     class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded transition w-full">
+                    <span class="material-icons">home</span>
+                    <span class="sidebar-text">Home</span>
+
+                  </a>
+                </li>
+
 
             {% if user.is_staff or user.is_superuser %}
-            <li class="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 p-2 rounded">
+            <li>
+            <a href="{% url 'dashboard:index' %}"
+              class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
               <span class="material-icons">dashboard</span>
-              <span class="sidebar-text"><a href="{% url 'dashboard:index' %}">Dashboard</a></span>
-            </li>
+              <span class="sidebar-text">Dashboard</span>
+            </a>
+          </li>
             {% endif %}
 
-            <li class="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 p-2 rounded">
+            <li>
+            <a href="{% url 'patient:list' %}"
+              class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
               <span class="material-icons">folder_shared</span>
-              <span class="sidebar-text"><a href="{% url 'patient:list' %}">Patient Records</a></span>
-            </li>
+              <span class="sidebar-text">Patient Records</span>
+            </a>
+          </li>
 
-            <li class="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 p-2 rounded">
+            <li>
+            <a href="{% url 'appointment:list' %}"
+              class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
               <span class="material-icons">event</span>
-              <span class="sidebar-text"><a href="{% url 'appointment:list' %}">Appointments</a></span>
-            </li>
+              <span class="sidebar-text">Appointments</span>
+            </a>
+          </li>
+
 
             {% if user.is_staff %}
-            <li class="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 p-2 rounded">
-              <span class="material-icons">inventory_2</span>
-              <span class="sidebar-text"><a href="{% url 'inventory:list' %}">Inventory</a></span>
+            <li>
+              <a href="{% url 'inventory:list' %}"
+                class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
+                <span class="material-icons">inventory_2</span>
+                <span class="sidebar-text">Inventory</span>
+              </a>
             </li>
-            <li class="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 p-2 rounded">
-              <span class="material-icons">receipt_long</span>
-              <span class="sidebar-text"><a href="{% url 'billing:list' %}">Billing Records</a></span>
+
+            <li>
+              <a href="{% url 'billing:list' %}"
+                class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
+                <span class="material-icons">receipt_long</span>
+                <span class="sidebar-text">Billing Records</span>
+              </a>
             </li>
+
             {% endif %}
 
             {% if user.is_superuser %}
-            <li class="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 p-2 rounded">
+            <li>
+            <a href="{% url 'userprofile:admin_dashboard' %}"
+              class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
               <span class="material-icons">admin_panel_settings</span>
-              <span class="sidebar-text"><a href="{% url 'userprofile:admin_dashboard' %}">Management</a></span>
-            </li>
+              <span class="sidebar-text">Management</span>
+            </a>
+          </li>
+
             {% endif %}
 
           </ul>
