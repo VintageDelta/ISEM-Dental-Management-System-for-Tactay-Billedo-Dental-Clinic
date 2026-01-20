@@ -183,39 +183,100 @@ document.addEventListener('DOMContentLoaded', function () {
 
       events: fetchEvents,
 
-      eventContent: function(info) {
-        // Only customize in month view
-        if (info.view.type !== "dayGridMonth") {
-          return {}; // default rendering in other views (if any)
-        }
+    eventContent: function(info) {
+  // Only customize in month view
+  if (info.view.type !== "dayGridMonth") {
+    return {}; // let timeline/etc use normal rendering
+  }
 
-        const calendar = info.view.calendar;
-        const allEvents = calendar.getEvents();
-        const dateStr = info.event.startStr.split("T")[0];
+  const calendar = info.view.calendar;
+  const allEvents = calendar.getEvents();
+  const dateStr = info.event.startStr.split("T")[0];
 
-        // All events that start on this same day
-        const sameDayEvents = allEvents.filter(ev => ev.startStr.startsWith(dateStr));
-        const count = sameDayEvents.length;
+  // All events this day
+  const sameDayEvents = allEvents.filter(ev => ev.startStr.startsWith(dateStr));
 
-        // Only render for the earliest event of that day
-        sameDayEvents.sort((a, b) => a.start - b.start);
-        if (sameDayEvents[0].id !== info.event.id) {
-          return { domNodes: [] }; // hide this event row
-        }
+  // Only render for the first event of the day
+  sameDayEvents.sort((a, b) => a.start - b.start);
+  if (sameDayEvents[0].id !== info.event.id) {
+    return null;   // hide this event completely (no harness row)
+  }
 
-        // Create a small badge like "3 appointments"
-        const badge = document.createElement("div");
-        badge.style.display = "inline-block";
-        badge.style.padding = "2px 6px";
-        badge.style.borderRadius = "9999px";
-        badge.style.fontSize = "0.7rem";
-        badge.style.fontWeight = "600";
-        badge.style.backgroundColor = "#3B82F6"; // blue
-        badge.style.color = "white";
-        badge.textContent = `${count} Appt${count > 1 ? "s" : ""}`;
+  // Count by status
+  const counts = {
+    not_arrived: 0,
+    arrived: 0,
+    ongoing: 0,
+    done: 0,
+    cancelled: 0,
+  };
 
-        return { domNodes: [badge] };
-      },
+  sameDayEvents.forEach(ev => {
+    const status = ev.extendedProps && ev.extendedProps.status;
+    if (status && counts.hasOwnProperty(status)) {
+      counts[status]++;
+    }
+  });
+
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  if (!total) {
+    return null;  // no pills, no row
+  }
+
+  const statusColors = {
+    not_arrived: "#9CA3AF",
+    arrived: "#3B82F6",
+    ongoing: "#F59E0B",
+    done: "#10B981",
+    cancelled: "#EF4444",
+  };
+
+  const statusOrder = ["done", "ongoing", "arrived", "not_arrived", "cancelled"];
+
+  const container = document.createElement("div");
+  container.style.display = "flex";
+  container.style.flexWrap = "wrap";
+  container.style.alignItems = "center";
+  container.style.gap = "4px";
+  container.style.fontSize = "0.7rem";
+  container.style.fontWeight = "600";
+  container.style.maxWidth = "100%";
+  container.style.pointerEvents = "none";
+
+  function makePill(count, colorHex) {
+    const wrapper = document.createElement("div");
+    wrapper.style.display = "flex";
+    wrapper.style.alignItems = "center";
+    wrapper.style.gap = "3px";
+    wrapper.style.flexShrink = "0";
+
+    const num = document.createElement("span");
+    num.textContent = count;
+    num.style.color = "#111827";
+
+    const dot = document.createElement("span");
+    dot.style.display = "inline-block";
+    dot.style.width = "8px";
+    dot.style.height = "8px";
+    dot.style.borderRadius = "9999px";
+    dot.style.backgroundColor = colorHex;
+
+    wrapper.appendChild(num);
+    wrapper.appendChild(dot);
+    return wrapper;
+  }
+
+  statusOrder.forEach(key => {
+    if (counts[key] > 0) {
+      container.appendChild(makePill(counts[key], statusColors[key]));
+    }
+  });
+
+  return { domNodes: [container] };
+},
+
+
+
 
       titleFormat: { year: 'numeric', month: 'short' },
 
@@ -268,9 +329,10 @@ document.addEventListener('DOMContentLoaded', function () {
       },
 
       //displaying of cards and buttons
-        eventContent: function(info) {const status = info.event.extendedProps && info.event.extendedProps.status
-    ? info.event.extendedProps.status
-    : "not_arrived";
+      eventContent: function(info) 
+      {const status = info.event.extendedProps && info.event.extendedProps.status
+      ? info.event.extendedProps.status
+      : "not_arrived";
       const base = colorMap[status] || "#9CA3AF";
       const tinted = hexToRgba(base, 0.3);
 
@@ -304,27 +366,42 @@ document.addEventListener('DOMContentLoaded', function () {
       stripe.style.marginRight = "8px";
       stripe.style.backgroundColor = base;
 
-      // Content container (for title)
+      // Content container (for text + buttons)
       const content = document.createElement("div");
       content.style.flex = "1";
-      content.style.paddingRight = "8px";  // Space for buttons
+      content.style.paddingRight = "8px";
 
-      // Title
-      const title = document.createElement("div");
-      title.textContent = info.event.title || "";
-      title.style.flex = "1";
-      title.style.fontSize = "0.875rem";
-      title.style.fontWeight = "600";
-      title.style.color = "#1f2937";
-      title.style.overflow = "hidden";
-      title.style.textOverflow = "ellipsis";
-      title.style.whiteSpace = "nowrap";
+      // DAY vs WEEK text
+      if (info.view && info.view.type === "timeGridDay") {
+        // Day view: show full title, no time text
+        const titleDiv = document.createElement("div");
+        titleDiv.textContent = info.event.title || "";
+        titleDiv.style.fontSize = "0.875rem";
+        titleDiv.style.fontWeight = "600";
+        titleDiv.style.color = "#1f2937";
+        titleDiv.style.overflow = "hidden";
+        titleDiv.style.textOverflow = "ellipsis";
+        titleDiv.style.whiteSpace = "nowrap";
+        content.appendChild(titleDiv);
+      } else if (info.view && info.view.type === "timeGridWeek") {
+        // Week view: show only time text
+        const timeDiv = document.createElement("div");
+        const start = info.event.start;
+        const timeLabel = start
+          ? start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          : "";
+        timeDiv.textContent = timeLabel;
+        timeDiv.style.fontSize = "0.75rem";
+        timeDiv.style.fontWeight = "600";
+        timeDiv.style.color = "#1f2937";
+        content.appendChild(timeDiv);
+      }
 
-      // Buttons container - ABSOLUTE POSITION
+      // Buttons container - ABSOLUTE POSITION (DAY VIEW ONLY)
       const btnRow = document.createElement("div");
-      btnRow.style.position = "absolute";  // ← ABSOLUTE POSITIONING
-      btnRow.style.bottom = "8px";  // ← Bottom of card
-      btnRow.style.right = "8px";  // ← Right of card
+      btnRow.style.position = "absolute";
+      btnRow.style.bottom = "8px";
+      btnRow.style.right = "8px";
       btnRow.style.display = "flex";
       btnRow.style.gap = "4px";
       btnRow.style.flexShrink = "0";
@@ -408,8 +485,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const currentScheduleEl = document.getElementById("resched-current-time");
             if (currentScheduleEl) {
               const dateLabel = propsInner.preferred_date || propsInner.date || "";
-              const timeLabel = propsInner.preferred_time || propsInner.time || "";
-              currentScheduleEl.textContent = dateLabel && timeLabel ? `${dateLabel} at ${timeLabel}` : "";
+              const timeLabel2 = propsInner.preferred_time || propsInner.time || "";
+              currentScheduleEl.textContent = dateLabel && timeLabel2 ? `${dateLabel} at ${timeLabel2}` : "";
             }
             openModal("reschedule-modal");
           });
@@ -426,10 +503,11 @@ document.addEventListener('DOMContentLoaded', function () {
         btnRow.appendChild(rescheduleBtn);
       }
 
-      content.appendChild(title);
+      // In week view there are no buttons, but we still append the (empty) btnRow
       content.appendChild(btnRow);
       wrapper.appendChild(stripe);
       wrapper.appendChild(content);
+
 
       if (!isCancelled || canManage) {
         wrapper.addEventListener("click", () => {

@@ -14,7 +14,27 @@ class Branch(models.Model):
 
 
 class Service(models.Model):
+    CATEGORY_CHOICES = [
+        ("GENERAL", "General / Consultation"),
+        ("ENDO", "Endodontics"),
+        ("EXTRACTION", "Tooth Extraction"),
+        ("IMPLANT", "Implants"),
+        ("WHITENING", "Whitening / Bleaching"),
+        ("RESTORATION", "Restoration"),
+        ("SURGERY", "Surgery"),
+        ("REMOVABLE_ARCH", "Removable Prosthodontics (per arch)"),
+        ("COMPLETE_DENTURE", "Complete Denture"),
+        ("THERMOSENS", "Thermosens"),
+        ("IVOCAP", "Ivocap"),
+        ("REMOVABLE_WHITE", "Removable Prostho (White Plastic)"),
+        ("RPD_METAL", "RPD Metal Framework"),
+        ("ORTHO", "Orthodontics"),
+        ("FIXED", "Fixed Prosthodontics"),
+        ("DENTURE_REPAIR", "Denture Repair"),
+    ]
+
     service_name = models.CharField(max_length=255)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default="GENERAL")
     duration = models.PositiveIntegerField(help_text="Duration in minutes")
     price = models.DecimalField(max_digits=10, decimal_places=2)
     is_active = models.BooleanField(default=True)
@@ -137,3 +157,33 @@ class Appointment(models.Model):
         # prefer real dentist FK if present
         name = self.dentist.name if self.dentist else self.dentist_name
         return f"{name} - {self.date} {self.time} [{self.get_status_display()}]"
+
+
+class AppointmentLog(models.Model):
+    ACTION_CHOICES = [
+        ("created", "Created"),
+        ("updated", "Updated"),
+        ("status_changed", "Status Changed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    appointment = models.ForeignKey(
+        Appointment,
+        on_delete=models.CASCADE,
+        related_name="logs",
+    )
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    old_status = models.CharField(max_length=20, blank=True, null=True)
+    new_status = models.CharField(max_length=20, blank=True, null=True)
+    note = models.TextField(blank=True)
+    actor = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="appointment_logs",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Log for {self.appointment.display_id} - {self.action} at {self.created_at}"

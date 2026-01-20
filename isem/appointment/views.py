@@ -14,6 +14,8 @@ from patient.models import Patient
 from django.db import transaction
 from billing.models import BillingRecord #this the model of billing
 from django.utils import timezone
+from django.db.models import Case, When, IntegerField
+from .models import Dentist, Service, Appointment, AppointmentLog
 
 @csrf_exempt
 @require_POST
@@ -32,9 +34,27 @@ def update_status(request, appointment_id):
         print(f"Parsed status: {status}")
 
         appointment = Appointment.objects.get(id=appointment_id)
+
+        old_status = appointment.status
+        new_status = status
+
+        appointment.status = new_status
         print(f"Found appointment: {appointment}")
         appointment.status = status
         appointment.save()
+
+        # create log only if status actually changed
+        if old_status != new_status:
+            AppointmentLog.objects.create(
+                appointment=appointment,
+                action="status_changed",
+                old_status=old_status,
+                new_status=new_status,
+                actor=request.user if request.user.is_authenticated else None,
+                note=f"Status changed from {old_status} to {new_status}",
+            )
+
+        return JsonResponse({"success": True, "status": new_status})
         print(f"✓ Appointment status updated to: {status}")
         
         # If status is 'done', create a billing record
@@ -143,7 +163,14 @@ def create_followup(request):
         email=original.email,
     )
     followup.services.set(selected_services)
-
+    
+    AppointmentLog.objects.create(
+        appointment=followup,
+        action="created",
+        new_status=followup.status,
+        actor=request.user if request.user.is_authenticated else None,
+        note=f"Follow-up created from appointment {original.id}",
+    )
 
     messages.add_message(
         request,
@@ -156,7 +183,18 @@ def create_followup(request):
 # POSTTTT Saves yo shi in the database FRFR
 def appointment_page(request):
     dentists = Dentist.objects.all()
-    services = Service.objects.all()
+    # ordered + only active
+    services = (
+        Service.objects.filter(is_active=True)
+        .annotate(
+            category_order=Case(
+                When(category="GENERAL", then=0),
+                default=1,
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("category_order", "category", "service_name")
+    )
 
     if request.method == "POST":
         dentist_id = request.POST.get("dentist")
@@ -171,16 +209,13 @@ def appointment_page(request):
         selected_services = Service.objects.filter(id__in=service_ids)
 
         dentist = Dentist.objects.get(id=dentist_id)
-
         date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-        #Block any appointment date before today
         if date_obj < datetime.now().date():
             messages.error(request, "You cannot create an appointment in the past.")
             return redirect("appointment:appointment_page")
 
         preferred_time = datetime.strptime(time_str, "%H:%M").time()
-
         total_minutes = sum(s.duration for s in selected_services)
 
         start_time, end_time = find_next_available_slot(
@@ -188,13 +223,13 @@ def appointment_page(request):
             date_obj,
             total_minutes,
             preferred_time,
-            location=location
+            location=location,
         )
-        
+
         if not start_time or not end_time:
             messages.error(
                 request,
-                "No available time slot for the selected date and services."
+                "No available time slot for the selected date and services.",
             )
             return redirect("appointment:appointment_page")
 
@@ -245,6 +280,14 @@ def appointment_page(request):
             email=email,
         )
         appointment.services.set(selected_services)
+
+        AppointmentLog.objects.create(
+            appointment=appointment,
+            action="created",
+            new_status=appointment.status,
+            actor=request.user if request.user.is_authenticated else None,
+            note="Appointment created from appointment_page",
+        )
 
         
         # Store patient_id in appointment (if you want to add a FK later)
@@ -414,6 +457,15 @@ def reschedule_appointment(request, appointment_id):
     appt.services.set(selected_services)
     appt.save()
 
+    AppointmentLog.objects.create(
+        appointment=appt,
+        action="rescheduled",
+        old_status=None,
+        new_status=appt.status,
+        actor=request.user if request.user.is_authenticated else None,
+        note=f"Rescheduled to {date_obj} {start_time} at {location}",
+    )
+
 
     messages.success(request, "Appointment rescheduled successfully!")
     return JsonResponse({"success": True})
@@ -473,7 +525,6 @@ def get_appointment_details(request, appointment_id):
                 "email": appointment.email,
                 "services": service_names,
                 "service_ids": service_ids,
-                # NEW: this is what your JS reads for Total Amount Due
                 "total_price": float(total_price),
             },
             "patient": {
