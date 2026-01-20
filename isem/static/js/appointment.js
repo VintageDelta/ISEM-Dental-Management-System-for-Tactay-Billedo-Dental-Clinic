@@ -1,3 +1,4 @@
+let currentPatientId = null;
 // Global refs for main create-appointment form/button
 let addForm = null;
 let addSaveBtn = null;
@@ -5,6 +6,7 @@ let reschedAppointmentId = null;
 let doneOdontogramHandlerAttached = false;
 
 let reschedHandlerAttached = false;
+
 
 // ===== Appointment Modals & Utility =====
 document.addEventListener("DOMContentLoaded", () => {
@@ -93,7 +95,7 @@ confirmYes?.addEventListener("click", () => {
   let currentStep = 1;
   const totalSteps = 3;
   let currentAppointmentData = null;
-  let currentPatientId = null;
+  // let currentPatientId = null;
 
   function updateDoneStepsDisplay() {
     // Update all steps
@@ -286,6 +288,11 @@ confirmYes?.addEventListener("click", () => {
   // Form submissions
   document.getElementById("done-medical-form")?.addEventListener("submit", function(e) {
     e.preventDefault();
+    //DEBUG DEBUG
+    console.log("=== MEDICAL FORM SUBMIT DEBUG ===");
+    console.log("typeof currentPatientId:", typeof currentPatientId);
+    console.log("currentPatientId value:", currentPatientId);
+    console.log("window.currentPatientId:", window.currentPatientId);
     if (!currentPatientId) {
       alert("Patient ID not found. Please try again.");
       return;
@@ -1532,7 +1539,7 @@ if (doneOdontoForm && !doneOdontogramHandlerAttached) {
   doneOdontoForm.addEventListener("submit", function(e) {
     e.preventDefault();
     if (!window.currentPatientId) {
-      alert("Patient ID not found");
+      // alert("Patient ID not found");
       return;
     }
 

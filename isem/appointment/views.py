@@ -12,18 +12,69 @@ from django.contrib import messages
 import json
 from patient.models import Patient
 from django.db import transaction
+from billing.models import BillingRecord #this the model of billing
+from django.utils import timezone
 
 @csrf_exempt
 @require_POST
 def update_status(request, appointment_id):
     try:
+        #DEBUGS  
+        print("=" * 50)
+        print("UPDATE_STATUS VIEW CALLED")
+        print(f"Appointment ID: {appointment_id}")
+        print(f"Request body: {request.body}")
+        print(f"Content-Type: {request.META.get('CONTENT_TYPE')}")
+
         data = json.loads(request.body)
         status = data.get("status")
+
+        print(f"Parsed status: {status}")
+
         appointment = Appointment.objects.get(id=appointment_id)
+        print(f"Found appointment: {appointment}")
         appointment.status = status
         appointment.save()
+        print(f"✓ Appointment status updated to: {status}")
+        
+        # If status is 'done', create a billing record
+        if status == "done":
+            if not BillingRecord.objects.filter(appointment=appointment).exists():
+                print("No existing billing record, creating one...")
+                patient = None
+
+                if appointment.email:
+                    patient = Patient.objects.filter(email=appointment.email).first()
+                    print(f"Found patient: {patient}")
+
+                if patient:
+                    total_amount = sum((service.price or 0) for service in appointment.services.all())
+
+                    service_names = ", ".join([s.service_name for s in appointment.services.all()])
+                    print(f"Creating billing: amount={total_amount}, type={service_names}")
+
+                    BillingRecord.objects.create(
+                        patient=patient,
+                        appointment=appointment,
+                        type=service_names,
+                        amount=total_amount,
+                        date_issued=timezone.now())
+                    print(f"✓ Billing record created: ID {BillingRecord.pk}")
+                else:
+                    print("⚠ No patient found, billing not created")
+            else:
+                print("Billing record already exists.")
+            
+            print(">>>Returning success response")
+            return JsonResponse({"success": True, "status": status})
+            
+    except Appointment.DoesNotExist:
+        print(f"❌ Appointment {appointment_id} not found")
         return JsonResponse({"success": True, "status": status})
     except Exception as e:
+        print(f"❌ ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 def create_followup(request):

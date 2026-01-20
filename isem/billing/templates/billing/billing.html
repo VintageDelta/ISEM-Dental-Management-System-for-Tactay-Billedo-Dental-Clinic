@@ -26,6 +26,7 @@
   </div>
 </div>
 
+
 <div class="w-full mt-6">
   <div class="w-full">
     <div class="bg-white w-full p-5 md:px-8 rounded-xl shadow mb-6">
@@ -45,6 +46,7 @@
           </div>
         </div>
 
+
         <!-- Add Billing Button -->
         <div class="flex gap-2 mt-4 md:mt-0">
           <button
@@ -55,6 +57,7 @@
           </button>
         </div>
       </div>
+
 
       <!-- Billing Table -->
       <div class="overflow-x-auto">
@@ -71,28 +74,28 @@
             </tr>
           </thead>
           <tbody>
-            {% for bill in bills %}
+            {% for billing in bill %}
             <tr class="hover:bg-gray-50 border-b">
               <td class="py-3 px-4"><input type="checkbox" /></td>
-              <td class="py-3 px-4">{{ bill.patient.id }}</td>
-              <td class="py-3 px-4">{{ bill.patient.name }}</td>
-              <td class="py-3 px-4">₱{{ bill.amount }}</td>
-              <td class="py-3 px-4">{{ bill.type }}</td>
-              <td class="py-3 px-4">{{ bill.date }}</td>
+              <td class="py-3 px-4">{{ billing.patient.id }}</td>
+              <td class="py-3 px-4">{{ billing.patient.name }}</td>
+              <td class="py-3 px-4">₱{{ billing.amount }}</td>
+              <td class="py-3 px-4">{{ billing.type }}</td>
+              <td class="py-3 px-4">{{ billing.date_issued|date:"M d, Y" }}</td>
               <td class="py-3 px-4 text-right">
                 <div class="flex justify-end gap-2">
                   <a
-                    href="{% url 'billing:billing_view' bill.pk %}"
+                    href="{% url 'billing:billing_detail' billing.pk %}"
                     class="text-gray-500 hover:text-gray-700"
                     ><i class="uil uil-eye"></i
                   ></a>
                   <a
-                    href="{% url 'billing:billing_edit' bill.pk %}"
+                    href="{% url 'billing:billing_edit' billing.pk %}"
                     class="text-gray-500 hover:text-gray-700"
                     ><i class="uil uil-edit"></i
                   ></a>
                   <a
-                    href="{% url 'billing:billing_delete' bill.pk %}"
+                    href="{% url 'billing:billing_delete' billing.pk %}"
                     class="text-gray-500 hover:text-red-600"
                     ><i class="uil uil-trash-alt"></i
                   ></a>
@@ -110,6 +113,7 @@
         </table>
       </div>
 
+
       <!-- Pagination -->
       <div class="flex justify-between items-center border-t pt-4 mt-4">
         <div class="flex space-x-2 text-sm">
@@ -120,6 +124,7 @@
           {% else %}
             <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
           {% endif %}
+
 
           {# Page numbers #}
           {% for num in page_obj.paginator.page_range %}
@@ -135,6 +140,7 @@
             {% endif %}
           {% endfor %}
 
+
           {# Next #}
           {% if page_obj.has_next %}
             <a href="?page={{ page_obj.next_page_number }}"
@@ -143,7 +149,7 @@
             <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
           {% endif %}
         </div>
-                <select class="border rounded px-2 py-1 text-sm" disabled>
+        <select class="border rounded px-2 py-1 text-sm" disabled>
           <option selected>5/page</option>
         </select>
       </div>
