@@ -1203,7 +1203,21 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
+// ===== Done‑odontogram Step 3 service search =====
+const doneServiceSearchInput = document.getElementById("done-odontogram-service-search-0");
+const doneServicesContainer = document.getElementById("done-odontogram-services-checkboxes-0");
 
+if (doneServiceSearchInput && doneServicesContainer) {
+  doneServiceSearchInput.addEventListener("input", () => {
+    const q = doneServiceSearchInput.value.toLowerCase();
+
+    doneServicesContainer.querySelectorAll("label").forEach(label => {
+      const nameEl = label.querySelector("span");
+      const name = nameEl ? nameEl.textContent.toLowerCase() : "";
+      label.style.display = name.includes(q) ? "" : "none";
+    });
+  });
+}
 
 // Odontogram final step submit (attach only once)
 const doneOdontoForm = document.getElementById("done-odontogram-form");
