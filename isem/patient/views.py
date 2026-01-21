@@ -125,10 +125,24 @@ def medical_history(request, pk):
 
     medical_history_qs = patient.medical_history.all()
     financial_history_qs = patient.financial_history.all()
+
+    # ADD THIS: Fetch billing records from BillingRecord model
+    from billing.models import BillingRecord
+    billing_records = BillingRecord.objects.filter(patient=patient).order_by('-date_issued')
+    
+    print("=" * 50)
+    print(f"Patient: {patient.name}")
+    print(f"Old Financial History count: {financial_history_qs.count()}")
+    print(f"New Billing Records count: {billing_records.count()}")
+    for bill in billing_records:
+        print(f"  - ID {bill.pk}: {bill.type}, ₱{bill.amount}, {bill.date_issued}")
+    print("=" * 50)
+
+
     tooth_num = range(1, 33)
 
 
-    return render(request, "patient/medical_history.html", {"patient": patient, "medical_history": medical_history_qs, "financial_history": financial_history_qs, "tooth_num": tooth_num, "services": Service.objects.all(), "dentists": Dentist.objects.all()})
+    return render(request, "patient/medical_history.html", {"patient": patient, "medical_history": medical_history_qs, "financial_history": financial_history_qs, "billing_records": billing_records, "tooth_num": tooth_num, "services": Service.objects.all(), "dentists": Dentist.objects.all()})
 
 def add_medical_history(request, patient_id):
     # for debugging 

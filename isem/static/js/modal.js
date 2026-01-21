@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const openPopup = (url, type) => {
+    if (!popup || !popupContent) return;
     if (type) showForm(type);
     popup.classList.remove("hidden");
     popup.classList.add("flex");
@@ -58,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   const closePopup = () => {
+    if (!popup || !popupContent) return;
     popupContent.classList.remove("opacity-100", "scale-100");
     popupContent.classList.add("opacity-0", "scale-95");
 
@@ -68,12 +70,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 200);
   };
 
-
+if (closeBtn) {
   closeBtn.addEventListener("click", closePopup);
-  popup.addEventListener("click", (e) => {
-    if (e.target === popup) closePopup();
-  });
+}
 
+  // closeBtn.addEventListener("click", closePopup);
+  // popup.addEventListener("click", (e) => {
+  //   if (e.target === popup) closePopup();
+  // });
+if (medicalTab && financialTab && odontogramTab) {
   medicalTab.addEventListener("click", () => {
     document.getElementById("medicalContent").classList.remove("hidden");
     document.getElementById("financialContent").classList.add("hidden");
@@ -100,4 +105,4 @@ document.addEventListener("DOMContentLoaded", () => {
     addMedBtn.classList.add("hidden");
     addOdontogramBtn.classList.remove("hidden");
   });
-});
+}});

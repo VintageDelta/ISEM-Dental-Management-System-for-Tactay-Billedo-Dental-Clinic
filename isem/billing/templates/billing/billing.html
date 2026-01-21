@@ -83,24 +83,24 @@
               <td class="py-3 px-4">{{ billing.type }}</td>
               <td class="py-3 px-4">{{ billing.date_issued|date:"M d, Y" }}</td>
               <td class="py-3 px-4 text-right">
-                <div class="flex justify-end gap-2">
-                  <a
-                    href="{% url 'billing:billing_detail' billing.pk %}"
-                    class="text-gray-500 hover:text-gray-700"
-                    ><i class="uil uil-eye"></i
-                  ></a>
-                  <a
-                    href="{% url 'billing:billing_edit' billing.pk %}"
-                    class="text-gray-500 hover:text-gray-700"
-                    ><i class="uil uil-edit"></i
-                  ></a>
-                  <a
-                    href="{% url 'billing:billing_delete' billing.pk %}"
-                    class="text-gray-500 hover:text-red-600"
-                    ><i class="uil uil-trash-alt"></i
-                  ></a>
-                </div>
-              </td>
+  <div class="flex justify-end gap-2">
+    <a href="#" 
+       class="text-gray-500 hover:text-gray-700 view-btn" 
+       data-id="{{ billing.pk }}">
+      <i class="uil uil-eye"></i>
+    </a>
+    <a href="#"
+       class="text-gray-500 hover:text-gray-700 edit-btn"
+       data-id="{{ billing.pk }}">
+      <i class="uil uil-edit"></i>
+    </a>
+    <a href="#"
+       class="text-gray-500 hover:text-red-600 delete-btn"
+       data-id="{{ billing.pk }}">
+      <i class="uil uil-trash-alt"></i>
+    </a>
+  </div>
+</td>
             </tr>
             {% empty %}
             <tr>
@@ -156,6 +156,568 @@
     </div>
   </div>
 </div>
+<div id="billing-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="w-full h-full flex items-center justify-center">
+    <div id="billing-content" class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
+      <h2 id="modal-title" class="text-lg font-semibold mb-4 text-center">Add Billing Record</h2>
+
+      <!-- Form -->
+      <form method="post" id="billing-form" class="space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="id" id="billing-id" />
+        <input type="hidden" name="patient" id="patient-id-hidden" />
+
+               <!-- Searchable Patient Field -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+          <div class="relative">
+            <input
+              type="text"
+              id="patient-search"
+              placeholder="Search patient by name or ID..."
+              autocomplete="off"
+              class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+            <!-- Dropdown Results -->
+            <div id="patient-dropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-48 overflow-y-auto hidden shadow-lg">
+              <!-- Results will be populated here -->
+            </div>
+          </div>
+          <p id="selected-patient-display" class="text-xs text-gray-500 mt-1"></p>
+        </div>
+
+        <!-- Amount -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Amount (₱)</label>
+          <input
+            type="number"
+            name="amount"
+            id="amount"
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+            class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        <div>
+  <label class="block text-sm font-medium text-gray-700 mb-1">Services</label>
+  
+  <!-- Search and Add Services -->
+  <div class="relative mb-2">
+    <input
+      type="text"
+      id="service-search"
+      placeholder="Search and add services..."
+      autocomplete="off"
+      class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    />
+    <!-- Dropdown Results -->
+    <div id="service-dropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-48 overflow-y-auto hidden shadow-lg">
+      <!-- Results will be populated here -->
+    </div>
+  </div>
+
+  <!-- Selected Services List -->
+  <div id="selected-services-container" class="space-y-2 mb-2">
+    <!-- Selected services will appear here -->
+  </div>
+
+  <!-- Hidden input to store all service names -->
+  <input type="hidden" name="type" id="service-names-hidden" />
+  
+  <p id="selected-services-count" class="text-xs text-gray-500"></p>
+</div>
+
+        <!-- Date -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <input
+            type="date"
+            name="date_issued"
+            id="date-issued"
+            class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end gap-2 pt-3">
+          <button type="button" id="close-modal-btn" class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!--VIEW-->
+<div id="billing-view-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="w-full h-full flex items-center justify-center">
+    <div id="billing-view-content" class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
+      <h2 class="text-lg font-semibold mb-4 text-center">Billing Details</h2>
+
+      <div class="space-y-2 text-sm text-gray-700">
+        <p><strong>Patient:</strong> <span id="view-patient-name"></span></p>
+        <p><strong>Amount:</strong> ₱<span id="view-amount"></span></p>
+        <p><strong>Service Type:</strong> <span id="view-type"></span></p>
+        <p><strong>Payment Status:</strong> <span id="view-payment-status"></span></p>
+        <p><strong>Date Issued:</strong> <span id="view-date-issued"></span></p>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-4">
+        <button id="close-view-btn" class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 {% endblock %} {% block extra_js %}
 <script src="{% static 'js/modal.js' %}"></script>
+<script src="{% static 'js/modal.js' %}"></script>
+
+<script>
+const modal = document.getElementById("billing-modal");
+const modalContent = document.getElementById("billing-content");
+const closeModalBtn = document.getElementById("close-modal-btn");
+const modalTitle = document.getElementById("modal-title");
+const form = document.getElementById("billing-form");
+
+// Inputs
+const billingIdField = document.getElementById("billing-id");
+const patientSearchField = document.getElementById("patient-search");
+const patientIdHidden = document.getElementById("patient-id-hidden");
+const patientDropdown = document.getElementById("patient-dropdown");
+const selectedPatientDisplay = document.getElementById("selected-patient-display");
+const amountField = document.getElementById("amount");
+const typeField = document.getElementById("type");
+const dateIssuedField = document.getElementById("date-issued");
+
+// Check if all elements exist
+console.log("Checking elements:");
+console.log("modal:", modal);
+console.log("modalContent:", modalContent);
+console.log("form:", form);
+console.log("patientSearchField:", patientSearchField);
+console.log("patientIdHidden:", patientIdHidden);
+
+if (!modal) console.error("❌ Missing: billing-modal");
+if (!modalContent) console.error("❌ Missing: billing-content");
+if (!form) console.error("❌ Missing: billing-form");
+if (!patientSearchField) console.error("❌ Missing: patient-search");
+if (!patientIdHidden) console.error("❌ Missing: patient-id-hidden");
+// Patient data from Django
+const patients = [
+  {% for patient in patients %}
+  {
+    id: {{ patient.id }},
+    name: "{{ patient.name|escapejs }}",
+    email: "{{ patient.email|default:''}}"
+  }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
+
+// Search patients function
+if (patientSearchField) {
+  patientSearchField.addEventListener("input", function() {
+    const searchTerm = this.value.toLowerCase().trim();
+    
+    if (searchTerm.length === 0) {
+      patientDropdown.classList.add("hidden");
+      return;
+    }
+
+    // Filter patients
+    const filteredPatients = patients.filter(patient => 
+      patient.name.toLowerCase().includes(searchTerm) ||
+      patient.id.toString().includes(searchTerm) ||
+      (patient.email && patient.email.toLowerCase().includes(searchTerm))
+    );
+
+    // Display results
+    if (filteredPatients.length > 0) {
+      patientDropdown.innerHTML = filteredPatients.map(patient => `
+        <div class="patient-option px-3 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0" 
+             data-id="${patient.id}" 
+             data-name="${patient.name}">
+          <div class="font-medium text-sm">${patient.name}</div>
+          <div class="text-xs text-gray-500">ID: ${patient.id}${patient.email ? ' • ' + patient.email : ''}</div>
+        </div>
+      `).join('');
+      
+      patientDropdown.classList.remove("hidden");
+
+      // Add click handlers
+      document.querySelectorAll(".patient-option").forEach(option => {
+        option.addEventListener("click", function() {
+          const patientId = this.dataset.id;
+          const patientName = this.dataset.name;
+          
+          if (patientIdHidden) patientIdHidden.value = patientId;
+          if (patientSearchField) patientSearchField.value = patientName;
+          if (selectedPatientDisplay) selectedPatientDisplay.textContent = `Selected: ${patientName} (ID: ${patientId})`;
+          patientDropdown.classList.add("hidden");
+        });
+      });
+    } else {
+      patientDropdown.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500">No patients found</div>';
+      patientDropdown.classList.remove("hidden");
+    }
+  });
+}
+
+// Close dropdown when clicking outside
+document.addEventListener("click", function(e) {
+  if (patientSearchField && patientDropdown && !patientSearchField.contains(e.target) && !patientDropdown.contains(e.target)) {
+    patientDropdown.classList.add("hidden");
+  }
+});
+// ============================================
+// MULTIPLE SERVICES SEARCH WITH AUTO-SUM AMOUNT
+// ============================================
+const services = [
+  {% for service in services %}
+  {
+    id: {{ service.id }},
+    name: "{{ service.service_name|escapejs }}",
+    price: {{ service.price|default:0 }}
+  }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
+
+const serviceSearchField = document.getElementById("service-search");
+const serviceNamesHidden = document.getElementById("service-names-hidden");
+const serviceDropdown = document.getElementById("service-dropdown");
+const selectedServicesContainer = document.getElementById("selected-services-container");
+const selectedServicesCount = document.getElementById("selected-services-count");
+
+// Array to store selected services
+let selectedServices = [];
+
+// Update hidden field and display
+function updateSelectedServices() {
+  // Update hidden field with comma-separated service names
+  const serviceNames = selectedServices.map(s => s.name).join(", ");
+  if (serviceNamesHidden) serviceNamesHidden.value = serviceNames;
+  
+  // Calculate total amount
+  const totalAmount = selectedServices.reduce((sum, s) => sum + s.price, 0);
+  
+  // Update amount field
+  if (amountField) {
+    amountField.value = totalAmount.toFixed(2);
+    if (totalAmount > 0) {
+      amountField.classList.add("bg-yellow-100", "transition-colors", "duration-300");
+      setTimeout(() => {
+        amountField.classList.remove("bg-yellow-100");
+      }, 500);
+    }
+  }
+  
+  // Update count display
+  if (selectedServicesCount) {
+    selectedServicesCount.textContent = selectedServices.length > 0 
+      ? `${selectedServices.length} service(s) selected - Total: ₱${totalAmount.toFixed(2)}`
+      : "";
+  }
+  
+  // Render selected services
+  renderSelectedServices();
+}
+
+// Render selected services as tags
+function renderSelectedServices() {
+  if (!selectedServicesContainer) return;
+  
+  if (selectedServices.length === 0) {
+    selectedServicesContainer.innerHTML = '<p class="text-xs text-gray-400">No services selected</p>';
+    return;
+  }
+  
+  selectedServicesContainer.innerHTML = selectedServices.map((service, index) => `
+    <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-md p-2">
+      <div class="flex-1">
+        <span class="text-sm font-medium text-gray-700">${service.name}</span>
+        <span class="text-sm text-green-600 ml-2">₱${service.price.toFixed(2)}</span>
+      </div>
+      <button type="button" 
+              class="remove-service-btn text-red-500 hover:text-red-700 ml-2"
+              data-index="${index}">
+        <i class="uil uil-times"></i>
+      </button>
+    </div>
+  `).join('');
+  
+  // Add remove button handlers
+  document.querySelectorAll(".remove-service-btn").forEach(btn => {
+    btn.addEventListener("click", function() {
+      const index = parseInt(this.dataset.index);
+      selectedServices.splice(index, 1);
+      updateSelectedServices();
+    });
+  });
+}
+
+// Search services function
+if (serviceSearchField) {
+  serviceSearchField.addEventListener("input", function() {
+    const searchTerm = this.value.toLowerCase().trim();
+    
+    if (searchTerm.length === 0) {
+      serviceDropdown.classList.add("hidden");
+      return;
+    }
+
+    // Filter services (exclude already selected)
+    const selectedIds = selectedServices.map(s => s.id);
+    const filteredServices = services.filter(service => 
+      !selectedIds.includes(service.id) &&
+      (service.name.toLowerCase().includes(searchTerm) ||
+       service.id.toString().includes(searchTerm))
+    );
+
+    // Display results
+    if (filteredServices.length > 0) {
+      serviceDropdown.innerHTML = filteredServices.map(service => `
+        <div class="service-option px-3 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0" 
+             data-id="${service.id}" 
+             data-name="${service.name}"
+             data-price="${service.price}">
+          <div class="flex justify-between items-center">
+            <div class="font-medium text-sm">${service.name}</div>
+            <div class="text-sm text-green-600 font-semibold">₱${service.price.toFixed(2)}</div>
+          </div>
+        </div>
+      `).join('');
+      
+      serviceDropdown.classList.remove("hidden");
+
+      // Add click handlers
+      document.querySelectorAll(".service-option").forEach(option => {
+        option.addEventListener("click", function() {
+          const serviceId = parseInt(this.dataset.id);
+          const serviceName = this.dataset.name;
+          const servicePrice = parseFloat(this.dataset.price);
+          
+          // Add to selected services
+          selectedServices.push({
+            id: serviceId,
+            name: serviceName,
+            price: servicePrice
+          });
+          
+          // Clear search field
+          serviceSearchField.value = "";
+          
+          // Update display and amount
+          updateSelectedServices();
+          
+          // Hide dropdown
+          serviceDropdown.classList.add("hidden");
+        });
+      });
+    } else {
+      serviceDropdown.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500">No more services available</div>';
+      serviceDropdown.classList.remove("hidden");
+    }
+  });
+}
+
+// Close service dropdown when clicking outside
+document.addEventListener("click", function(e) {
+  if (serviceSearchField && serviceDropdown && 
+      !serviceSearchField.contains(e.target) && 
+      !serviceDropdown.contains(e.target)) {
+    serviceDropdown.classList.add("hidden");
+  }
+});
+
+// Open Add Modal
+const addModalBtn = document.getElementById("add-modal-btn");
+if (addModalBtn) {
+  addModalBtn.addEventListener("click", () => {
+    if (modalTitle) modalTitle.textContent = "Add Billing Record";
+    if (form) form.action = "{% url 'billing:billing_add' %}";
+    if (billingIdField) billingIdField.value = "";
+    if (patientSearchField) patientSearchField.value = "";
+    if (patientIdHidden) patientIdHidden.value = "";
+    if (selectedPatientDisplay) selectedPatientDisplay.textContent = "";
+
+    // Clear service fields ← Add these
+    if (serviceSearchField) serviceSearchField.value = "";
+    if (serviceNamesHidden) serviceNamesHidden.value = "";
+    if (selectedServicesCount) selectedServicesCount.textContent = "";
+
+    if (amountField) amountField.value = "";
+    if (typeField) typeField.value = "";
+    if (dateIssuedField) dateIssuedField.value = "";
+    updateSelectedServices(); // Clear selected services
+
+    
+    if (modal && modalContent) {
+      modal.classList.remove("hidden");
+      modal.style.display = "flex";
+      setTimeout(() => {
+        modalContent.classList.remove("opacity-0", "scale-95");
+        modalContent.classList.add("opacity-100", "scale-100");
+      }, 10);
+    }
+  });
+}
+
+// Open Edit Modal
+document.querySelectorAll(".edit-btn").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const billingId = btn.dataset.id;
+
+    fetch(`/dashboard/billing/${billingId}/edit/`, {
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (modalTitle) modalTitle.textContent = "Edit Billing Record";
+        if (form) form.action = `/dashboard/billing/${billingId}/edit/`;
+
+        if (billingIdField) billingIdField.value = data.id;
+        if (patientIdHidden) patientIdHidden.value = data.patient_id;
+        if (patientSearchField) patientSearchField.value = data.patient_name;
+        if (selectedPatientDisplay) selectedPatientDisplay.textContent = `Selected: ${data.patient_name} (ID: ${data.patient_id})`;
+        if (amountField) amountField.value = data.amount;
+        if (typeField) typeField.value = data.type;
+        if (dateIssuedField) dateIssuedField.value = data.date_issued;
+
+        if (modal && modalContent) {
+          modal.classList.remove("hidden");
+          modal.style.display = "flex";
+          setTimeout(() => {
+            modalContent.classList.remove("opacity-0", "scale-95");
+            modalContent.classList.add("opacity-100", "scale-100");
+          }, 10);
+        }
+      })
+      .catch(error => {
+        console.error("Error loading billing record:", error);
+        alert("Failed to load billing record");
+      });
+  });
+});
+
+// Close modal
+if (closeModalBtn) {
+  closeModalBtn.addEventListener("click", () => {
+    if (modalContent) {
+      modalContent.classList.remove("opacity-100", "scale-100");
+      modalContent.classList.add("opacity-0", "scale-95");
+    }
+    setTimeout(() => {
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.style.display = "none";
+      }
+    }, 200);
+  });
+}
+
+// Prevent form submission if no patient selected
+if (form) {
+  form.addEventListener("submit", function(e) {
+    if (!patientIdHidden || !patientIdHidden.value) {
+      e.preventDefault();
+      alert("Please select a patient from the dropdown");
+      if (patientSearchField) patientSearchField.focus();
+      return
+    }
+     if (!serviceNamesHidden || !serviceNamesHidden.value) {
+      e.preventDefault();
+      alert("Please select at least one service");
+      if (serviceSearchField) serviceSearchField.focus();
+      return;
+    }
+  });
+}
+const viewModal = document.getElementById("billing-view-modal");
+const viewContent = document.getElementById("billing-view-content");
+const closeViewBtn = document.getElementById("close-view-btn");
+
+const viewPatientName = document.getElementById("view-patient-name");
+const viewAmount = document.getElementById("view-amount");
+const viewType = document.getElementById("view-type");
+const viewPaymentStatus = document.getElementById("view-payment-status");
+const viewDateIssued = document.getElementById("view-date-issued");
+
+document.querySelectorAll(".view-btn").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const billingId = btn.dataset.id;
+
+    fetch(`/dashboard/billing/${billingId}/`, {
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (viewPatientName) viewPatientName.textContent = data.patient_name;
+        if (viewAmount) viewAmount.textContent = data.amount;
+        if (viewType) viewType.textContent = data.type;
+        if (viewPaymentStatus) viewPaymentStatus.innerHTML = formatStatusBadge(data.payment_status);
+        if (viewDateIssued) viewDateIssued.textContent = data.date_issued;
+
+        if (viewModal && viewContent) {
+          viewModal.classList.remove("hidden");
+          viewModal.style.display = "flex";
+          setTimeout(() => {
+            viewContent.classList.remove("opacity-0", "scale-95");
+            viewContent.classList.add("opacity-100", "scale-100");
+          }, 10);
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("Failed to load billing details.");
+      });
+  });
+});
+
+if (closeViewBtn) {
+  closeViewBtn.addEventListener("click", () => {
+    if (viewContent) {
+      viewContent.classList.remove("opacity-100", "scale-100");
+      viewContent.classList.add("opacity-0", "scale-95");
+    }
+    setTimeout(() => {
+      if (viewModal) {
+        viewModal.classList.add("hidden");
+        viewModal.style.display = "none";
+      }
+    }, 200);
+  });
+}
+
+if (viewModal) {
+  viewModal.addEventListener("click", (e) => {
+    if (e.target === viewModal && closeViewBtn) {
+      closeViewBtn.click();
+    }
+  });
+}
+
+function formatStatusBadge(status) {
+  const statusMap = {
+    'unpaid': '<span class="px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded">Unpaid</span>',
+    'paid': '<span class="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded">Paid</span>',
+    'partially_paid': '<span class="px-2 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded">Partially Paid</span>'
+  };
+  return statusMap[status] || `<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded">${status}</span>`;
+}
+</script>
+
 {% endblock %}

@@ -276,51 +276,53 @@
     </div>
   </div>
 
-  <!-- === FINANCIAL TAB CONTENT === -->
-  <div id="financialContent" class="space-y-4 hidden">
-    <div class="overflow-x-auto bg-white shadow rounded-lg">
-      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Number
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Description
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">Time</th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">Type</th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Amount
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Balance
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {% for record in financial_history %}
-          <tr class="hover:bg-gray-100">
-            <td class="px-4 py-2">{{ record.number }}</td>
-            <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
-            <td class="px-4 py-2">{{ record.description }}</td>
-            <td class="px-4 py-2">{{ record.time|time:"H:i" }}</td>
-            <td class="px-4 py-2">{{ record.type }}</td>
-            <td class="px-4 py-2">{{ record.amount }}</td>
-            <td class="px-4 py-2">{{ record.balance }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="7" class="px-4 py-6 text-center text-gray-500">
-              No financial history records yet.
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+ <!-- === BILLING TAB CONTENT === -->
+<div id="financialContent" class="space-y-4 hidden">
+  <div class="overflow-x-auto bg-white shadow rounded-lg">
+    <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Date Issued</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Type/Service</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Amount</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Payment Status</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Appointment</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for record in billing_records %}
+        <tr class="hover:bg-gray-100">
+          <td class="px-4 py-2">{{ record.date_issued|date:"Y-m-d" }}</td>
+          <td class="px-4 py-2">{{ record.type }}</td>
+          <td class="px-4 py-2">₱{{ record.amount|floatformat:2 }}</td>
+          <td class="px-4 py-2">
+            <span class="px-2 py-1 rounded text-xs font-medium
+              {% if record.payment_status == 'paid' %}bg-green-100 text-green-800
+              {% elif record.payment_status == 'pending' %}bg-yellow-100 text-yellow-800
+              {% else %}bg-red-100 text-red-800{% endif %}">
+              {{ record.payment_status|title }}
+            </span>
+          </td>
+          <td class="px-4 py-2">
+            {% if record.appointment %}
+              Appointment #{{ record.appointment.id }}
+            {% else %}
+              Manual Entry
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-4 py-6 text-center text-gray-500">
+            No billing records yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+</div>
+
   <!-- === ODONTOGRAM TAB CONTENT === -->
   <div id="odontogramContent" class="space-y-4 hidden">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

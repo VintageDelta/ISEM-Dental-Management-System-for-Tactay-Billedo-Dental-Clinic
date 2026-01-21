@@ -54,7 +54,7 @@ def update_status(request, appointment_id):
                 note=f"Status changed from {old_status} to {new_status}",
             )
 
-        return JsonResponse({"success": True, "status": new_status})
+        
         print(f"✓ Appointment status updated to: {status}")
         
         # If status is 'done', create a billing record
