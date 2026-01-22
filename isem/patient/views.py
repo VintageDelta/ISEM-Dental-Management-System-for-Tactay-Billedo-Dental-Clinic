@@ -56,6 +56,27 @@ def patient_records(request):
     if request.user.is_staff or request.user.is_superuser:
         qs = Patient.objects.all().order_by('id')
 
+        search_query = request.GET.get('search', '')  # Get search parameter
+        
+        if search_query:
+            # Search by name, email, telephone, or address
+            qs = Patient.objects.filter(
+                name__icontains=search_query
+            ) | Patient.objects.filter(
+                email__icontains=search_query
+            ) | Patient.objects.filter(
+                telephone__icontains=search_query
+            ) | Patient.objects.filter(
+                address__icontains=search_query
+            )
+            qs = qs.order_by('id')
+        else:
+            qs = Patient.objects.all().order_by('name')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            patients_data = list(qs[:10].values('id', 'name', 'email', 'telephone', 'address'))
+
+            return JsonResponse({'patients': patients_data})
         paginator = Paginator(qs, 5)  # 5 records per page
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
@@ -64,8 +85,9 @@ def patient_records(request):
             request,
             "patient/patient-records.html",
             {
-                "patients": page_obj.object_list,  # what your template loops over
-                "page_obj": page_obj,             # used by pagination links
+                "patients": page_obj.object_list,  
+                "page_obj": page_obj,            
+                "search_query": search_query,
             },
         )
     else:
