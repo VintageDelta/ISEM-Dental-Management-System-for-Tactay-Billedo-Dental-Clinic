@@ -22,7 +22,7 @@ from django.core.mail import send_mail
 @require_POST
 def update_status(request, appointment_id):
     try:
-        #DEBUGS  
+        # DEBUGS
         print("=" * 50)
         print("UPDATE_STATUS VIEW CALLED")
         print(f"Appointment ID: {appointment_id}")
@@ -31,7 +31,6 @@ def update_status(request, appointment_id):
 
         data = json.loads(request.body)
         status = data.get("status")
-
         print(f"Parsed status: {status}")
 
         appointment = Appointment.objects.get(id=appointment_id)
@@ -41,7 +40,6 @@ def update_status(request, appointment_id):
 
         appointment.status = new_status
         print(f"Found appointment: {appointment}")
-        appointment.status = status
         appointment.save()
 
         # create log only if status actually changed
@@ -55,9 +53,8 @@ def update_status(request, appointment_id):
                 note=f"Status changed from {old_status} to {new_status}",
             )
 
-        
         print(f"✓ Appointment status updated to: {status}")
-        
+
         # If status is 'done', create a billing record
         if status == "done":
             if not BillingRecord.objects.filter(appointment=appointment).exists():
@@ -69,34 +66,46 @@ def update_status(request, appointment_id):
                     print(f"Found patient: {patient}")
 
                 if patient:
-                    total_amount = sum((service.price or 0) for service in appointment.services.all())
+                    total_amount = sum(
+                        (service.price or 0)
+                        for service in appointment.services.all()
+                    )
 
-                    service_names = ", ".join([s.service_name for s in appointment.services.all()])
-                    print(f"Creating billing: amount={total_amount}, type={service_names}")
+                    service_names = ", ".join(
+                        [s.service_name for s in appointment.services.all()]
+                    )
+                    print(
+                        f"Creating billing: amount={total_amount}, "
+                        f"type={service_names}"
+                    )
 
                     BillingRecord.objects.create(
                         patient=patient,
                         appointment=appointment,
                         type=service_names,
                         amount=total_amount,
-                        date_issued=timezone.now())
-                    print(f"✓ Billing record created: ID {BillingRecord.pk}")
+                        date_issued=timezone.now(),
+                    )
+                    print("✓ Billing record created")
                 else:
                     print("⚠ No patient found, billing not created")
             else:
                 print("Billing record already exists.")
-            
-            print(">>>Returning success response")
-            return JsonResponse({"success": True, "status": status})
-            
+
+        print(">>> Returning success response")
+        return JsonResponse({"success": True, "status": status})
+
     except Appointment.DoesNotExist:
         print(f"❌ Appointment {appointment_id} not found")
-        return JsonResponse({"success": True, "status": status})
+        return JsonResponse(
+            {"success": False, "error": "Appointment not found"}, status=404
+        )
     except Exception as e:
         print(f"❌ ERROR: {str(e)}")
         import traceback
         traceback.print_exc()
         return JsonResponse({"success": False, "error": str(e)}, status=400)
+
     
 
 

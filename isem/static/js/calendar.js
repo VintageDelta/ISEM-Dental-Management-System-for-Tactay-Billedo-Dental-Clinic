@@ -512,19 +512,33 @@ document.addEventListener('DOMContentLoaded', function () {
           window.reschedAppointmentId = info.event.id;
           window.currentEventId = currentEventId;
           const props2 = info.event.extendedProps || {};
+
           document.getElementById("detail-dentist").textContent = props2.dentist || "N/A";
           document.getElementById("detail-location").textContent = props2.location || "N/A";
           document.getElementById("detail-date").textContent = props2.preferred_date || props2.date || "N/A";
           document.getElementById("detail-time").textContent = props2.preferred_time || props2.time || "N/A";
           document.getElementById("detail-service").textContent = props2.service || "N/A";
+
+          // NEW: toggle Cancel button based on status + can_manage
+          const cancelBtn = document.getElementById("status-cancel-btn");
+          if (cancelBtn) {
+            const status = props2.status;          // "not_arrived", "arrived", "ongoing", "done", "cancelled"
+            const canManage = !!props2.can_manage; // True for staff/admin
+
+            if (status === "done" && !canManage) {
+              cancelBtn.disabled = true;
+              cancelBtn.classList.add("opacity-50", "cursor-not-allowed");
+            } else {
+              cancelBtn.disabled = false;
+              cancelBtn.classList.remove("opacity-50", "cursor-not-allowed");
+            }
+          }
+
           openModal("status-modal");
         });
       }
-
       return { domNodes: [wrapper] };
     }
-
-
     });
 
     //renders the calendar
@@ -602,25 +616,48 @@ document.addEventListener('DOMContentLoaded', function () {
           li.appendChild(stripe);
           li.appendChild(content);
 
-          // cancelled / permission logic for side list item
-          const isCancelled = ev.extendedProps.status === "cancelled";
-          const canManage = !!ev.extendedProps.can_manage;
+                // cancelled / permission logic for side list item
+                const isCancelled = ev.extendedProps.status === "cancelled";
+                const canManage = !!ev.extendedProps.can_manage;
 
-          if (!isCancelled || canManage) {
-            li.addEventListener("click", () => {
-              currentEventId = ev.id;
-              window.currentEventId = currentEventId;
-              document.getElementById("detail-dentist").textContent = ev.extendedProps.dentist || "N/A";
-              document.getElementById("detail-location").textContent = ev.extendedProps.location || "N/A";
-              document.getElementById("detail-date").textContent = ev.extendedProps.preferred_date || "N/A";
-              document.getElementById("detail-time").textContent = ev.extendedProps.preferred_time || "N/A";
-              document.getElementById("detail-service").textContent = ev.extendedProps.service || "N/A";
-              openModal("status-modal");
-            });
-          } else {
-            li.style.cursor = "default";
-            li.style.opacity = "0.6";
-          }
+                if (!isCancelled || canManage) {
+                  li.addEventListener("click", () => {
+                    currentEventId = ev.id;
+                    window.currentEventId = currentEventId;
+
+                    document.getElementById("detail-dentist").textContent =
+                      ev.extendedProps.dentist || "N/A";
+                    document.getElementById("detail-location").textContent =
+                      ev.extendedProps.location || "N/A";
+                    document.getElementById("detail-date").textContent =
+                      ev.extendedProps.preferred_date || ev.extendedProps.date || "N/A";
+                    document.getElementById("detail-time").textContent =
+                      ev.extendedProps.preferred_time || ev.extendedProps.time || "N/A";
+                    document.getElementById("detail-service").textContent =
+                      ev.extendedProps.service || "N/A";
+
+                    // NEW: toggle Cancel button based on status + can_manage
+                    const cancelBtn = document.getElementById("status-cancel-btn");
+                    if (cancelBtn) {
+                      const status = ev.extendedProps.status;          // "done", etc.
+                      const canManageUser = !!ev.extendedProps.can_manage;
+
+                      if (status === "done" && !canManageUser) {
+                        cancelBtn.disabled = true;
+                        cancelBtn.classList.add("opacity-50", "cursor-not-allowed");
+                      } else {
+                        cancelBtn.disabled = false;
+                        cancelBtn.classList.remove("opacity-50", "cursor-not-allowed");
+                      }
+                    }
+
+                    openModal("status-modal");
+                  });
+                } else {
+                  li.style.cursor = "default";
+                  li.style.opacity = "0.6";
+                }
+
 
           listEl.appendChild(li);
         });
