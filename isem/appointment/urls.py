@@ -1,4 +1,5 @@
 from django.urls import path
+from . import views
 
 from . import views
 
@@ -13,4 +14,11 @@ urlpatterns = [
     path("create-followup/", views.create_followup, name="create_followup"),
     path("reschedule_appointment/<int:appointment_id>/", views.reschedule_appointment, name="reschedule_appointment"),
     path("get-appointment-details/<int:appointment_id>/", views.get_appointment_details, name="get_appointment_details"),
+
+    # emailing 
+    path(
+        "notify-email/<int:appointment_id>/",
+        views.notify_patient_email,
+        name="notify_patient_email",
+    ),
 ]

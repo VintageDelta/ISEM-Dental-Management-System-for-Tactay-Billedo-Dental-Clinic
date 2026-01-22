@@ -16,6 +16,7 @@ from billing.models import BillingRecord #this the model of billing
 from django.utils import timezone
 from django.db.models import Case, When, IntegerField
 from .models import Dentist, Service, Appointment, AppointmentLog
+from django.core.mail import send_mail
 
 @csrf_exempt
 @require_POST
@@ -96,6 +97,57 @@ def update_status(request, appointment_id):
         import traceback
         traceback.print_exc()
         return JsonResponse({"success": False, "error": str(e)}, status=400)
+    
+
+
+@csrf_exempt
+@require_POST
+def notify_patient_email(request, appointment_id):
+    try:
+        appt = Appointment.objects.get(id=appointment_id)
+
+        # Use the appointment's stored email, date, time
+        to_email = appt.email
+        if not to_email:
+            return JsonResponse(
+                {"success": False, "error": "No patient email on this appointment."},
+                status=400,
+            )
+
+        date_str = appt.date.strftime("%B %d, %Y")  # e.g. January 22, 2026
+        time_str = appt.time.strftime("%I:%M %p")   # e.g. 09:30 AM
+
+        subject = "Your appointment schedule"
+        message = (
+            f"Good day!\n\n"
+            f"This is a reminder that you have an appointment scheduled on "
+            f"{date_str} at {time_str} at Tactay Billedo Dental Clinic.\n\n"
+            f"If you need to reschedule, please contact the clinic.\n\n"
+            f"Thank you."
+        )
+
+        send_mail(
+            subject,
+            message,
+            None,        # uses DEFAULT_FROM_EMAIL from settings.py
+            [to_email],
+            fail_silently=False,
+        )
+
+        # Optionally log this action
+        AppointmentLog.objects.create(
+            appointment=appt,
+            action="updated",
+            note="Patient notified by email",
+            actor=request.user if request.user.is_authenticated else None,
+        )
+
+        return JsonResponse({"success": True})
+    except Appointment.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Appointment not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
 
 def create_followup(request):
     """

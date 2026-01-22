@@ -542,6 +542,23 @@
   </div>
 </div>
 
+<!-- Notify Email Result Modal -->
+<div id="notify-email-modal"
+     class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-2">Notification status</h3>
+    <p id="notify-email-message" class="text-xs text-gray-600">
+      Email notification sent to the patient.
+    </p>
+    <div class="mt-4 flex justify-end">
+      <button id="close-notify-email-modal"
+              type="button"
+              class="px-3 py-1.5 text-xs bg-slate-700 text-white rounded-md hover:bg-slate-800">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Follow Up Modal (new, for creating a follow-up appointment) -->
 <div id="followup-modal"

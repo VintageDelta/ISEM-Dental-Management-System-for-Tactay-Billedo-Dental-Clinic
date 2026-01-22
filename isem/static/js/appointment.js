@@ -187,6 +187,16 @@ confirmYes?.addEventListener("click", () => {
   const closeNotifyBtn = document.getElementById("close-notify-btn");
   const notifySmsBtn = document.getElementById("notify-sms-btn");
   const notifyEmailBtn = document.getElementById("notify-email-btn");
+  const notifyEmailModal = document.getElementById("notify-email-modal");
+  const notifyEmailMessage = document.getElementById("notify-email-message");
+  const closeNotifyEmailModalBtn = document.getElementById("close-notify-email-modal");
+
+  closeNotifyEmailModalBtn?.addEventListener("click", () => {
+  closeModal("notify-email-modal");
+  });
+  notifyEmailModal?.addEventListener("click", e => {
+    if (e.target === notifyEmailModal) closeModal("notify-email-modal");
+  });
 
   notifyPatientBtn?.addEventListener("click", () => {
     if (!window.currentEventId) return; // set by calendar.js when opening status modal
@@ -210,11 +220,52 @@ confirmYes?.addEventListener("click", () => {
     closeModal("notify-modal");
   });
 
+  // Email notif block
   notifyEmailBtn?.addEventListener("click", () => {
-    console.log("Send EMAIL to patient for event", window.currentEventId);
-    // TODO: call your Email endpoint here
-    closeModal("notify-modal");
+    if (!window.currentEventId) return;
+
+    const idStr = String(window.currentEventId);
+
+    notifyEmailBtn.disabled = true;
+    notifyEmailBtn.classList.add("opacity-50", "cursor-not-allowed");
+
+    fetch(`/dashboard/appointment/notify-email/${idStr}/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        notifyEmailBtn.disabled = false;
+        notifyEmailBtn.classList.remove("opacity-50", "cursor-not-allowed");
+
+        if (!data.success) {
+          console.error("Notify email failed:", data.error);
+          notifyEmailMessage.textContent =
+            data.error || "Failed to send email notification.";
+          closeModal("notify-modal");
+          openModal("notify-email-modal");
+          return;
+        }
+
+        // Success UX: show notify-email modal
+        notifyEmailMessage.textContent = "Email notification sent to the patient.";
+        closeModal("notify-modal");
+        openModal("notify-email-modal");
+      })
+      .catch(err => {
+        notifyEmailBtn.disabled = false;
+        notifyEmailBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        console.error("Notify email error:", err);
+        notifyEmailMessage.textContent = "Network error while sending email.";
+        closeModal("notify-modal");
+        openModal("notify-email-modal");
+      });
   });
+
+
 
     // --- Two-step create appointment flow (loading + confirm) ---
   addForm = document.querySelector("#appointment-modal form");

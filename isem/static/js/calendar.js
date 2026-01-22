@@ -36,12 +36,12 @@ document.addEventListener('DOMContentLoaded', function () {
     let url = eventsUrl;
     if (branch) url += `?branch=${branch}`;
 
-    console.log("FETCHING:", url);   // ← ADD THIS LINE
+    console.log("FETCHING:", url);
 
     fetch(url)
       .then(res => res.json())
       .then(events => {
-        console.log("RECEIVED EVENTS:", events); // ← ADD THIS TOO
+        console.log("RECEIVED EVENTS:", events);
         successCallback(events)
       })
       .catch(err => failureCallback(err));
@@ -184,25 +184,21 @@ document.addEventListener('DOMContentLoaded', function () {
       events: fetchEvents,
 
     eventContent: function(info) {
-  // Only customize in month view
   if (info.view.type !== "dayGridMonth") {
-    return {}; // let timeline/etc use normal rendering
+    return {};
   }
 
   const calendar = info.view.calendar;
   const allEvents = calendar.getEvents();
   const dateStr = info.event.startStr.split("T")[0];
 
-  // All events this day
   const sameDayEvents = allEvents.filter(ev => ev.startStr.startsWith(dateStr));
 
-  // Only render for the first event of the day
   sameDayEvents.sort((a, b) => a.start - b.start);
   if (sameDayEvents[0].id !== info.event.id) {
-    return null;   // hide this event completely (no harness row)
+    return { domNodes: [] };
   }
 
-  // Count by status
   const counts = {
     not_arrived: 0,
     arrived: 0,
@@ -220,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   if (!total) {
-    return null;  // no pills, no row
+    return { domNodes: [] };
   }
 
   const statusColors = {
@@ -233,15 +229,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const statusOrder = ["done", "ongoing", "arrived", "not_arrived", "cancelled"];
 
+  // Outer container
   const container = document.createElement("div");
   container.style.display = "flex";
-  container.style.flexWrap = "wrap";
+  container.style.flexWrap = "wrap";          // allow multiple lines
   container.style.alignItems = "center";
   container.style.gap = "4px";
   container.style.fontSize = "0.7rem";
   container.style.fontWeight = "600";
-  container.style.maxWidth = "100%";
-  container.style.pointerEvents = "none";
+  container.style.maxWidth = "100%";          // stay inside the cell
+  container.style.pointerEvents = "none";     // do NOT block clicks on the day cell
+  container.style.overflow = "hidden";        // avoid overflow into next day
 
   function makePill(count, colorHex) {
     const wrapper = document.createElement("div");
@@ -249,6 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
     wrapper.style.alignItems = "center";
     wrapper.style.gap = "3px";
     wrapper.style.flexShrink = "0";
+    wrapper.style.maxWidth = "100%";
 
     const num = document.createElement("span");
     num.textContent = count;
@@ -274,7 +273,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   return { domNodes: [container] };
 },
-
 
 
 
@@ -329,10 +327,9 @@ document.addEventListener('DOMContentLoaded', function () {
       },
 
       //displaying of cards and buttons
-      eventContent: function(info) 
-      {const status = info.event.extendedProps && info.event.extendedProps.status
-      ? info.event.extendedProps.status
-      : "not_arrived";
+        eventContent: function(info) {const status = info.event.extendedProps && info.event.extendedProps.status
+    ? info.event.extendedProps.status
+    : "not_arrived";
       const base = colorMap[status] || "#9CA3AF";
       const tinted = hexToRgba(base, 0.3);
 
