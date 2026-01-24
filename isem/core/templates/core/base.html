@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -22,13 +23,17 @@
       <aside id="sidebar" class="bg-white shadow-md border-r flex flex-col transition-all duration-300 w-64 md:w-64">
 
         <!-- Sidebar Header (Logo) -->
-        <div class="flex items-center p-4 border-b space-x-2">
-          <div class="w-10 h-10 bg-gray-200 rounded-full"></div>
-          <div class="sidebar-text">
-            <h1 class="text-green-700 font-bold leading-tight">Tactay-Billedo</h1>
-            <p class="text-green-700 text-sm">Dental Clinic</p>
+          <div class="flex items-center p-4 border-b space-x-2">
+            <img src="{% static 'landingpage/logo_only.png' %}" 
+                alt="Tactay-Billedo Logo"
+                class="w-10 h-10 object-contain">
+
+            <div class="sidebar-text">
+              <h1 class="font-bold leading-tight" style="color: #00b94a;">Tactay-Billedo</h1>
+              <p class="text-sm" style="color: #00b94a;">Dental Clinic</p>
+            </div>
           </div>
-        </div>
+
 
         <!-- Hamburger Button -->
         <div class="px-4 py-2">
