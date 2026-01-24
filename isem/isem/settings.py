@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -85,7 +86,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'isem_db',         # database name you created
         'USER': 'root',            # default WAMP username
-        'PASSWORD': '',             # WAMP password of your account (e.g. p@ssw0rd) #renuupassword = admin123
+        'PASSWORD': 'admin123',             # WAMP password of your account (e.g. p@ssw0rd) #renuupassword = admin123
         'HOST': 'localhost',       # or 'localhost'
         'PORT': '3306',            # default MySQL port in WAMP
     }
@@ -127,6 +128,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+
+#MEDIA FILES
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Add this for development
 STATICFILES_DIRS = [

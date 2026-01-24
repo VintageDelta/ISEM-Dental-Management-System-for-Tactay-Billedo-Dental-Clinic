@@ -153,23 +153,29 @@
             </a> {% endcomment %}
 
             <!-- User Dropdown -->
-            <div class="relative inline-block text-left">
-              <button id="userMenuButton" class="flex items-center space-x-2 focus:outline-none hover:opacity-80">
-                <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
-                <div class="text-left">
-                  <p class="font-semibold">{{ user.first_name }}</p>
-                  <p class="text-xs text-gray-500">{% if user.is_superuser %}Admin{% elif user.is_staff %}Staff{% else %}Patient{% endif %}</p>
-                </div>
-                <span class="material-icons text-gray-500">expand_more</span>
-              </button>
-
-              <div id="userDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg">
-                <a href="{% url 'userprofile:profile' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
-                <a href="{% url 'userprofile:logout' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Log Out</a>
-              </div>
-            </div>
+<!-- User Dropdown -->
+          <div class="relative inline-block text-left">
+            <button id="userMenuButton" class="flex items-center space-x-2 focus:outline-none hover:opacity-80">
+              <div class="w-8 h-8 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
+                {% if user.profile.avatar %}
+                <img src="{{ user.profile.avatar.url }}" alt="{{ user.first_name }}" class="w-full h-full object-cover">
+            {% else %}
+          <span class="material-icons text-gray-500 text-lg">person</span>
+        {% endif %}
           </div>
-        </header>
+            <div class="text-left">   
+              <p class="font-semibold">{{ user.first_name }}</p>
+              <p class="text-xs text-gray-500">{% if user.is_superuser %}Admin{% elif user.is_staff %}Staff{% else %}Patient{% endif %}</p>
+            </div>
+              <span class="material-icons text-gray-500">expand_more</span>
+          </button>
+        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+          <a href="{% url 'userprofile:profile' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+          <a href="{% url 'userprofile:logout' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Log Out</a>
+        </div>
+      </div>
+    </div>
+  </header>
 
         <!-- Dashboard Content -->
         <main class="p-6">
@@ -221,14 +227,23 @@
       // User dropdown toggle
       const btn = document.getElementById('userMenuButton');
       const menu = document.getElementById('userDropdown');
+        console.log('User button:', btn); // Debug
+        console.log('User menu:', menu);   // Debug
+      if (btn && menu) {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
+        e.preventDefault();
         menu.classList.toggle('hidden');
       });
-      document.addEventListener('click', function () {
+      document.addEventListener('click', function (e) {
+        if (!btn.contains(e.target) && !menu.contains(e.target)){
         menu.classList.add('hidden');
-        
+        }
       });
+      menu.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+      }
     });
     </script>
 

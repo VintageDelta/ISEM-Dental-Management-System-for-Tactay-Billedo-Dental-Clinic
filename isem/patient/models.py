@@ -63,6 +63,11 @@ class Odontogram(models.Model):
     status = models.CharField(max_length=100, blank=True, null=True)
     # notes = models.TextField(blank=True, null=True)
     
+class Xray(models.Model):
+    patient = models.ForeignKey(Patient, related_name = 'xrays', on_delete=models.CASCADE)
+    file = models.FileField(upload_to='xrays/')
+    description = models.TextField(max_length=255, blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
 def __str__(self):
-        return f"Odontogram for {self.patient.name} - Tooth {self.tooth_number}"
+        return f"Xray for {self.patient.name} uploaded on {self.uploaded_at}"

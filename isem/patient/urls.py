@@ -17,5 +17,6 @@ urlpatterns = [
     path("<int:patient_id>/odontogram_history/", views.odontogram_history, name="odontogram_history"),
     path("<int:patient_id>/update_odontogram/", views.update_odontogram, name="update_odontogram"),
     path("<int:patient_id>/odontogram/history/<int:tooth_number>/", views.odontogram_history, name="odontogram_tooth_history"),
+    path('<int:xray_id>/delete-xray/', views.delete_xray, name='delete_xray'),
 
 ]

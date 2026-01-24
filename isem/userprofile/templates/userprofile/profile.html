@@ -9,18 +9,28 @@
 
     <!-- Profile Photo -->
     <div class="flex items-center space-x-4">
-      <div
-        class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden"
-      >
-        <!-- Existing avatar if available -->
+      <div class="relative">
+        <div
+          class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden"
+        >
+          <!-- Existing avatar if available -->
+          {% if user.profile.avatar %}
+          <img
+            src="{{ user.profile.avatar.url }}"
+            alt="Profile Photo"
+            class="w-full h-full object-cover"
+          />
+          {% else %}
+          <span class="text-gray-500 text-sm">No Photo</span>
+          {% endif %}
+        </div>
+        <!-- Remove button (only shows if avatar exists) -->
         {% if user.profile.avatar %}
-        <img
-          src="{{ user.profile.avatar.url }}"
-          alt="Profile Photo"
-          class="w-full h-full object-cover"
-        />
-        {% else %}
-        <span class="text-gray-500 text-sm">No Photo</span>
+        <button type="button"
+                onclick="deleteAvatar()"
+                class="absolute bottom-0 right-0 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-md transition-colors">
+          <span class="material-icons text-base">close</span>
+        </button>
         {% endif %}
       </div>
       <div>
@@ -98,4 +108,24 @@
     </div>
   </form>
 </div>
+
+<script>
+function deleteAvatar() {
+    if (confirm('Are you sure you want to remove your profile picture?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{% url 'userprofile:delete_avatar' %}";
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        
+        form.appendChild(csrfInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
 {% endblock %}

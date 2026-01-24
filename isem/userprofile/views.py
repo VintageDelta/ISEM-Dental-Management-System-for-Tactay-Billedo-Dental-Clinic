@@ -6,6 +6,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib import messages
 from django.contrib.auth.views import LoginView as Loginview
 from django.db import models
+from userprofile.models import Profile
 from patient.models import Patient
 from appointment.models import Appointment
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -187,6 +188,8 @@ def profile(request):
     if not request.user.is_authenticated:
         return redirect("userprofile:signin")
     
+    profile, created = Profile.objects.get_or_create(user=request.user)
+    
     if request.method == "POST":
         first_name = request.POST.get("first_name")
         last_name = request.POST.get("last_name")
@@ -210,9 +213,33 @@ def profile(request):
                 
                 return redirect("userprofile:profile")
         user.save()
+
+        if 'avatar' in request.FILES:
+            if profile.avatar:
+                profile.avatar.delete()
+            profile.avatar = request.FILES['avatar']
+            profile.save()
         messages.success(request, "Profile updated successfully.")
         return redirect("userprofile:profile")
     return render(request, 'userprofile/profile.html')
+
+@login_required
+def delete_avatar(request):
+    """Delete user's profile avatar"""
+    if request.method == "POST":
+        profile = request.user.profile
+        
+        if profile.avatar:
+            # Delete the file from disk
+            profile.avatar.delete()
+            profile.save()
+            messages.success(request, "Profile picture removed successfully.")
+        else:
+            messages.info(request, "No profile picture to remove.")
+        
+        return redirect('userprofile:profile')
+    
+    return redirect('userprofile:profile')
 
 def logout(request):
     auth_logout(request)

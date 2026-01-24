@@ -141,7 +141,19 @@ def medical_history(request, pk):
         patient.abnormal_bleeding_history = request.POST.get("abnormal_bleeding_history") or patient.abnormal_bleeding_history
         
         patient.save()
-        messages.success(request, "Patient information updated successfully.")
+
+        xray_files = request.FILES.getlist('xray_images')
+        if xray_files:
+            from .models import Xray
+            for xray_file in xray_files:
+                Xray.objects.create(
+                    patient=patient,
+                    file=xray_file,
+                    description=request.POST.get("xray_description", "")
+                )
+                messages.success(request, f"Patient information and {len(xray_files)} X-ray images updated successfully.")
+            else:
+                messages.success(request, "Patient information updated successfully.")
         return redirect("patient:medical_history", pk=pk)
 
 
@@ -418,6 +430,29 @@ def update_odontogram(request, patient_id):
         })
 
     return JsonResponse({"success": False, "error": "Invalid request method."}, status=400)
+
+def delete_xray(request, xray_id):
+    """Delete an X-ray image"""
+    if request.method == "POST":
+        try:
+            from .models import Xray
+            xray = Xray.objects.get(id=xray_id)
+            patient_id = xray.patient.id
+            
+            # Delete the file from disk
+            if xray.file:
+                xray.file.delete()
+            
+            # Delete the database record
+            xray.delete()
+            
+            messages.success(request, "X-ray deleted successfully.")
+            return redirect('patient:medical_history', pk=patient_id)
+        except Xray.DoesNotExist:
+            messages.error(request, "X-ray not found.")
+            return redirect('patient:list')
+    
+    return redirect('patient:list')
 
 
 
