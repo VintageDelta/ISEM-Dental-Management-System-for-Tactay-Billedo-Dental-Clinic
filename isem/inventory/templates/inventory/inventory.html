@@ -470,98 +470,74 @@
   });
 </script>
 
-  <!-- Deleting-->
-  <script>
-  const deleteButtons = document.querySelectorAll(".delete-btn");
-  const deleteModal = document.getElementById("inventory-delete-modal");
-  const deleteContent = document.getElementById("inventory-delete-content");
-  const closeDeleteBtn = document.getElementById("close-delete-btn");
-  const deleteForm = document.getElementById("delete-inventory-form");
+<!-- Delete Inventory Script -->
+<script>
+const deleteButtons = document.querySelectorAll(".delete-btn");
+const deleteModal = document.getElementById("inventory-delete-modal");
+const deleteContent = document.getElementById("inventory-delete-content");
+const closeDeleteBtn = document.getElementById("close-delete-btn");
+const deleteForm = document.getElementById("delete-inventory-form");
 
-  let deleteId = null;
+let deleteId = null;
 
-  deleteButtons.forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      deleteId = btn.dataset.id;
+deleteButtons.forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    deleteId = btn.dataset.id;
 
-      // show modal
-      deleteModal.classList.remove("hidden");
-      setTimeout(() => {
-        deleteContent.classList.remove("opacity-0", "scale-95");
-        deleteContent.classList.add("opacity-100", "scale-100");
-      }, 10);
-    });
+    // Show modal
+    deleteModal.classList.remove("hidden");
+    deleteModal.style.display = "flex";
+    setTimeout(() => {
+      deleteContent.classList.remove("opacity-0", "scale-95");
+      deleteContent.classList.add("opacity-100", "scale-100");
+    }, 10);
   });
+});
 
-  // Cancel button
-  closeDeleteBtn.addEventListener("click", () => {
-    deleteContent.classList.remove("opacity-100", "scale-100");
-    deleteContent.classList.add("opacity-0", "scale-95");
-    setTimeout(() => deleteModal.classList.add("hidden"), 200);
-  });
-
-  // Handle form submit with AJAX
-  deleteForm.addEventListener("submit", function (e) {
-    e.preventDefault(); // prevent full-page reload
-
-    fetch(`/dashboard/inventory/${deleteId}/delete/`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
-        "X-Requested-With": "XMLHttpRequest",
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Delete response:", data);
-
-        if (data.success) {
-          // Close modal
-          deleteContent.classList.remove("opacity-100", "scale-100");
-          deleteContent.classList.add("opacity-0", "scale-95");
-          setTimeout(() => deleteModal.classList.add("hidden"), 200);
-
-          // Remove the deleted row from the table
-          const row = document.querySelector(`[data-row-id="${deleteId}"]`);
-          if (row) row.remove();
-
-          // Show success popup 
-          function showNotification(message) {
-  const modal = document.getElementById("notification-modal");
-  const content = document.getElementById("notification-content");
-  const msg = document.getElementById("notification-message");
-  const closeBtn = document.getElementById("close-notification-btn");
-  const row = document.querySelector(`[data-row-id="${document.getElementById("delete-id").value}"]`);
-  if (row) {
-    row.remove();
-  }
-  msg.textContent = message;
-  modal.classList.remove("hidden");
-
+// Cancel button
+closeDeleteBtn.addEventListener("click", () => {
+  deleteContent.classList.remove("opacity-100", "scale-100");
+  deleteContent.classList.add("opacity-0", "scale-95");
   setTimeout(() => {
-    content.classList.remove("opacity-0", "scale-95");
-    content.classList.add("opacity-100", "scale-100");
-  }, 10);
+    deleteModal.classList.add("hidden");
+    deleteModal.style.display = "none";
+  }, 200);
+});
 
-  closeBtn.onclick = () => {
-    content.classList.remove("opacity-100", "scale-100");
-    content.classList.add("opacity-0", "scale-95");
-    setTimeout(() => modal.classList.add("hidden"), 200);
-  };
-}
-  
-          showNotification(data.message);
-        } else {
-          alert(data.message || "Failed to delete item.");
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        alert("An error occurred. Please try again.");
-      });
+// Handle form submit with AJAX
+deleteForm.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  fetch(`/dashboard/inventory/${deleteId}/delete/`, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+    },
+  })
+  .then((res) => res.json())
+  .then((data) => {
+    if (data.status === 'ok') {
+      // Close modal
+      deleteContent.classList.remove("opacity-100", "scale-100");
+      deleteContent.classList.add("opacity-0", "scale-95");
+      setTimeout(() => {
+        deleteModal.classList.add("hidden");
+        deleteModal.style.display = "none";
+        // Reload page to show toast
+        location.reload();
+      }, 200);
+    } else {
+      alert('Failed to delete item.');
+    }
+  })
+  .catch((error) => {
+    console.error("Error:", error);
+    alert("An error occurred. Please try again.");
   });
+});
 </script>
+
 <!-- View Script-->
 
 <script>

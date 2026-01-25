@@ -36,8 +36,11 @@ def patient_records(request):
                 occupation=occupation,
                 email=email,
                 is_guest=False
+                
             )
+            messages.success(request, "Patient record created successfully.")
         else:
+            
             # Guest patient: temporary ID
             total = Patient.objects.filter(is_guest=True).count() + 1
             temp_id = f"P-{total:06d}-T"
@@ -94,11 +97,11 @@ def patient_records(request):
         patient = get_object_or_404(Patient, email=request.user.email)
     return medical_history(request, pk=patient.id)
 
-
 def delete_patient(request, pk):
     if request.method == "POST":
         patient = get_object_or_404(Patient, pk=pk)
         patient.delete()
+        messages.success(request, "Patient record deleted successfully.")
         return JsonResponse({"status": "ok"})
     return JsonResponse({"status": "error"}, status=400)
 
@@ -114,6 +117,7 @@ def update_patient(request):
         patient.age = request.POST.get("age")
         patient.occupation = request.POST.get("occupation")
         patient.save()
+        messages.success(request, "Patient information updated successfully.")
         return redirect("patient:list")
 
 def medical_history(request, pk):

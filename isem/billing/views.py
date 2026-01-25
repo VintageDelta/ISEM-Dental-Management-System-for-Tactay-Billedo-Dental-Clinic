@@ -3,6 +3,7 @@ from django.utils import timezone
 from urllib import request
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
 
 from patient.models import Patient
 from appointment.models import Appointment, Service
@@ -122,9 +123,10 @@ def billing_edit(request, pk):
         
         date_issued = request.POST.get("date_issued")
         if date_issued:
-            billing.date_issued = datetime.datetime.strptime(date_issued, "%Y-%m-%d").date()
+            billing.date_issued = datetime.strptime(date_issued, "%Y-%m-%d").date()
         
         billing.save()
+        messages.success(request, "Billing record updated successfully.")
         return redirect("billing:billing_view")
 
     return redirect("billing:billing_view")
@@ -132,10 +134,9 @@ def billing_edit(request, pk):
 def billing_delete(request, pk):
     """Delete a billing record"""
     if request.method == "POST":
-        try:
-            billing = BillingRecord.objects.get(pk=pk)
-            billing.delete()
-            return JsonResponse({"success": True, "message": "Billing record deleted successfully."})
-        except BillingRecord.DoesNotExist:
-            return JsonResponse({"success": False, "message": "Billing record not found."}, status=404)
-    return JsonResponse({"success": False, "message": "Invalid request"}, status=400)
+        billing = get_object_or_404(BillingRecord, pk=pk)
+        billing.delete()
+        messages.success(request, "Billing record deleted successfully!")
+        return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "error"}, status=400)
+

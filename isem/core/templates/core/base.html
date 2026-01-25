@@ -16,6 +16,64 @@
     {% block extra_css %}{% endblock %}
   </head>
   <body class="bg-gray-100">
+       <!-- Modal Notifications (Centered) -->
+  {% if messages %}
+    {% for message in messages %}
+      <div id="notification-modal-{{ forloop.counter }}" 
+           class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
+        <div class="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full mx-4 animate-scale-in">
+          <!-- Header with Icon -->
+          <div class="flex items-center space-x-4 mb-4">
+            {% if message.tags == 'success' %}
+              <div class="flex-shrink-0 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <span class="material-icons text-green-600 text-2xl">check_circle</span>
+              </div>
+            {% elif message.tags == 'error' %}
+              <div class="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <span class="material-icons text-red-600 text-2xl">error</span>
+              </div>
+            {% elif message.tags == 'warning' %}
+              <div class="flex-shrink-0 w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                <span class="material-icons text-yellow-600 text-2xl">warning</span>
+              </div>
+            {% else %}
+              <div class="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <span class="material-icons text-blue-600 text-2xl">info</span>
+              </div>
+            {% endif %}
+            
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-gray-800">
+                {% if message.tags == 'success' %}Success
+                {% elif message.tags == 'error' %}Error
+                {% elif message.tags == 'warning' %}Warning
+                {% else %}Information{% endif %}
+              </h3>
+            </div>
+            
+            <!-- Close button -->
+            <button onclick="closeModal('notification-modal-{{ forloop.counter }}')" 
+                    class="text-gray-400 hover:text-gray-600">
+              <span class="material-icons">close</span>
+            </button>
+          </div>
+          
+          <!-- Message Content -->
+          <div class="mb-6">
+            <p class="text-gray-700">{{ message }}</p>
+          </div>
+          
+          <!-- OK Button -->
+          <div class="flex justify-end">
+            <button onclick="closeModal('notification-modal-{{ forloop.counter }}')" 
+                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
 
     <div class="flex min-h-screen">
 
@@ -289,6 +347,79 @@
         });
       });
     </script> {% endcomment %}
+      <!-- Modal Notification Styles and Script -->
+  <style>
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
     
+    @keyframes scale-in {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes fade-out {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
+    }
+    
+    .animate-fade-in {
+      animation: fade-in 0.2s ease-out;
+    }
+    
+    .animate-scale-in {
+      animation: scale-in 0.3s ease-out;
+    }
+    
+    .animate-fade-out {
+      animation: fade-out 0.2s ease-out;
+    }
+  </style>
+
+  <script>
+    // close after 3 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+      const modals = document.querySelectorAll('[id^="notification-modal-"]');
+      modals.forEach(modal => {
+        setTimeout(() => {
+          closeModal(modal.id);
+        }, 3000);
+      });
+    });
+
+    // Close modal function
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.add('animate-fade-out');
+        setTimeout(() => {
+          modal.remove();
+        }, 200);
+      }
+    }
+    
+    // Close on background click
+    document.addEventListener('click', function(e) {
+      if (e.target.id && e.target.id.startsWith('notification-modal-')) {
+        closeModal(e.target.id);
+      }
+    });
+  </script>
+
   </body>
 </html>

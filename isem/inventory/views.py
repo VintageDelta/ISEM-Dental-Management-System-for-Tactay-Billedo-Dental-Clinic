@@ -7,6 +7,7 @@ from .forms import InventoryItemForm
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from django.shortcuts import render
+from django.contrib import messages
 
 # LIST
 def inventory_list(request):
@@ -55,11 +56,11 @@ def inventory_add(request):
             item = form.save(commit=False)
             item.update_status()
             item.save()
-             
+            messages.success(request, "Item added successfully.")
             return redirect('inventory:list')
         else:
             print("FORM ERRORS:", form.errors)  
-
+            
     return redirect('inventory:list')
 
 # EDIT
@@ -100,21 +101,21 @@ def inventory_edit(request, pk):
         # item.expiry_date = request.POST.get("expiry_date")
         # item.status = request.POST.get("status")
         item.save()
-
+        messages.success(request, "Item updated successfully.")
         return redirect("inventory:list")  
 
     # fallback
     return render(request, "inventory/edit.html", {"item": item})
 # DELETE
 def inventory_delete(request, pk):
+    """Delete an inventory item"""
     if request.method == "POST":
-        try:
-            item = InventoryItem.objects.get(pk=pk)
-            item.delete()
-            return JsonResponse({"success": True, "message": "Item deleted successfully."})
-        except InventoryItem.DoesNotExist:
-            return JsonResponse({"success": False, "message": "Item already deleted."}, status=404)
-    return JsonResponse({"success": False, "message": "Invalid request"}, status=400)
+        item = get_object_or_404(InventoryItem, pk=pk)
+        item.delete()
+        messages.success(request, "Inventory item deleted successfully!")
+        return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "error"}, status=400)
+
 
 def inventory_view(request, pk):
     
