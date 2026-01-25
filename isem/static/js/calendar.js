@@ -16,6 +16,27 @@ document.addEventListener('DOMContentLoaded', function () {
   const branchFilterEl = document.getElementById("branch-filter");
   const eventsUrl = "/dashboard/appointment/events/";
 
+  // NEW: sync timeline height with main calendar (desktop only)
+  function syncTimelineHeight() {
+    const wrapper = document.getElementById("timeline-scroll");
+    if (!wrapper || !mainCalendarEl) return;
+
+    const isMobile = window.innerWidth < 768;
+
+    if (isMobile) {
+      // On mobile: cap height and allow scroll
+      wrapper.style.maxHeight = "400px";   // similar to your old 400px
+      wrapper.style.height = "auto";
+    } else {
+      // On desktop: match main calendar height
+      const calHeight = mainCalendarEl.offsetHeight;
+      if (calHeight > 0) {
+        wrapper.style.height = calHeight + "px";
+        wrapper.style.maxHeight = calHeight + "px";
+      }
+    }
+  }
+
   branchFilterEl.addEventListener("change", function () {
     if (mainCalendar) mainCalendar.refetchEvents();
     if (timelineCalendar) timelineCalendar.refetchEvents();
@@ -76,7 +97,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Special handling for "Done" button - open steps modal
       if (chosen === "done") {
-        // Initialize the steps modal with appointment ID
         if (typeof window.initDoneStepsModal === "function") {
           window.initDoneStepsModal(currentEventId);
         }
@@ -93,22 +113,30 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         body: JSON.stringify({ status: chosen })
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          if (timelineCalendar) timelineCalendar.refetchEvents();
-          if (mainCalendar) mainCalendar.refetchEvents();
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            if (timelineCalendar) timelineCalendar.refetchEvents();
+            if (mainCalendar) mainCalendar.refetchEvents();
 
-          setTimeout(() => {
-            if (typeof window.renderTodaysAppointments === "function") {
-              window.renderTodaysAppointments();
+            setTimeout(() => {
+              if (typeof window.renderTodaysAppointments === "function") {
+                window.renderTodaysAppointments();
+              }
+            }, 250);
+
+            closeModal("status-modal");
+
+            // NEW: show status-updated modal with the label
+            const msgEl = document.getElementById("status-updated-message");
+            if (msgEl) {
+              const label = btn.textContent.trim();
+              msgEl.textContent = `Status has been changed to "${label}".`;
             }
-          }, 250);
+            openModal("status-updated-modal");
 
-
-          closeModal("status-modal");
-        }
-      });
+          }
+        });
     });
   });
 
@@ -299,7 +327,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Timeline calendar
     timelineCalendar = new FullCalendar.Calendar(timelineCalendarEl, {
       initialView: 'timeGridDay',
-      height: window.innerWidth < 768 ? 400 : "auto", // Fixed height on mobile
+      height: "100%",
       expandRows: true,
       headerToolbar: {
         left: "prev,next today",
@@ -516,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function () {
           document.getElementById("detail-dentist").textContent = props2.dentist || "N/A";
           document.getElementById("detail-location").textContent = props2.location || "N/A";
           document.getElementById("detail-date").textContent = props2.preferred_date || props2.date || "N/A";
-          document.getElementById("detail-time").textContent = props2.preferred_time || props2.time || "N/A";
+          document.getElementById("detail-time").textContent = props2.time || props2.preferred_time || "N/A";
           document.getElementById("detail-service").textContent = props2.service || "N/A";
 
           // NEW: toggle Cancel button based on status + can_manage
@@ -543,6 +571,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //renders the calendar
     timelineCalendar.render();
+
+    syncTimelineHeight();
+    window.addEventListener("resize", syncTimelineHeight);
 
     // EXPOSE THEM GLOBALLY so appointment.js can use them
     window.mainCalendar = mainCalendar;
@@ -632,7 +663,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById("detail-date").textContent =
                       ev.extendedProps.preferred_date || ev.extendedProps.date || "N/A";
                     document.getElementById("detail-time").textContent =
-                      ev.extendedProps.preferred_time || ev.extendedProps.time || "N/A";
+                      ev.extendedProps.time || ev.extendedProps.preferred_time || "N/A";
                     document.getElementById("detail-service").textContent =
                       ev.extendedProps.service || "N/A";
 

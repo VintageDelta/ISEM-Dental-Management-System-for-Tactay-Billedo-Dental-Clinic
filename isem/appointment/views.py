@@ -1,22 +1,23 @@
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from .models import Dentist, Service, Appointment
+import json
 from datetime import datetime, timedelta
-#appoitnmetn form diffy name
-from .forms import AppointmentForm
+
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.db import transaction
+from django.db.models import Case, When, IntegerField
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from .utils import find_next_available_slot
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.contrib import messages
-import json
+
+from billing.models import BillingRecord
 from patient.models import Patient
-from django.db import transaction
-from billing.models import BillingRecord #this the model of billing
-from django.utils import timezone
-from django.db.models import Case, When, IntegerField
+
+from .forms import AppointmentForm
 from .models import Dentist, Service, Appointment, AppointmentLog
-from django.core.mail import send_mail
+from .utils import find_next_available_slot
+
 
 @csrf_exempt
 @require_POST
@@ -105,8 +106,6 @@ def update_status(request, appointment_id):
         import traceback
         traceback.print_exc()
         return JsonResponse({"success": False, "error": str(e)}, status=400)
-
-    
 
 
 @csrf_exempt
@@ -605,4 +604,48 @@ def get_appointment_details(request, appointment_id):
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
+@require_POST
+def precompute_appointment_slot(request):
+    """
+    Given dentist, services, date, preferred time, location,
+    return the actual start/end time that the algorithm will pick.
+    """
+    try:
+        dentist_id = request.POST.get("dentist")
+        location = request.POST.get("location")
+        date_str = request.POST.get("date")
+        time_str = request.POST.get("time")  # "HH:MM" 24h, from your hidden field
+        service_ids = request.POST.getlist("services")
 
+        if not (dentist_id and location and date_str and time_str and service_ids):
+            return JsonResponse({"success": False, "error": "Missing fields"}, status=400)
+
+        dentist = Dentist.objects.get(id=dentist_id)
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        preferred_time = datetime.strptime(time_str, "%H:%M").time()
+        selected_services = Service.objects.filter(id__in=service_ids)
+        total_minutes = sum(s.duration for s in selected_services)
+
+        with transaction.atomic():
+            start_time, end_time = find_next_available_slot(
+                dentist,
+                date_obj,
+                total_minutes,
+                preferred_time,
+                location=location,
+            )
+
+        if not start_time or not end_time:
+            return JsonResponse({
+                "success": False,
+                "error": "No available time slot for the selected date and services."
+            }, status=400)
+
+        return JsonResponse({
+            "success": True,
+            "date": date_obj.strftime("%Y-%m-%d"),
+            "start_time": start_time.strftime("%H:%M"),
+            "end_time": end_time.strftime("%H:%M"),
+        })
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)

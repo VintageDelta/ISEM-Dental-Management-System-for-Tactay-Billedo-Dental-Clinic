@@ -307,27 +307,60 @@ confirmYes?.addEventListener("click", () => {
 
       // After ~5 seconds, switch to confirmation step
       if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
-      pendingSubmitTimeout = setTimeout(() => {
-        // Compute the picked date / time from the form
-        const dateVal = document.getElementById("date")?.value || "";
-        const hourVal = document.getElementById("hour")?.value || "";
-        const minuteVal = document.getElementById("minute")?.value || "";
-        const ampmVal = document.getElementById("ampm")?.value || "";
+      
+        pendingSubmitTimeout = setTimeout(() => {
+          // Build form data to send to precompute API
+          const formData = new FormData(addForm);
 
-        // Format date as YYYY-MM-DD (as stored)
-        confirmDateEl.textContent = dateVal || "N/A";
+          fetch("/dashboard/appointment/precompute-slot/", {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: formData,
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (!data.success) {
+                // If API fails, you can show an error and close overlay
+                confirmDateEl.textContent = "N/A";
+                confirmTimeEl.textContent = "No available slot";
+              } else {
+                // Use the actual scheduled slot from the server
+                const dateVal = data.date;               // "YYYY-MM-DD"
+                const start = data.start_time;           // "HH:MM" 24h
+                const end = data.end_time;               // "HH:MM" 24h
 
-        // Format time into something like "09:30 AM"
-        if (hourVal && minuteVal && ampmVal) {
-          const hourStr = hourVal.toString().padStart(2, "0");
-          confirmTimeEl.textContent = `${hourStr}:${minuteVal} ${ampmVal}`;
-        } else {
-          confirmTimeEl.textContent = "N/A";
-        }
+                confirmDateEl.textContent = dateVal || "N/A";
 
-        loadingStep.classList.add("hidden");
-        confirmStep.classList.remove("hidden");
-      }, 5000); // 5 seconds
+                if (start && end) {
+                  // Convert to AM/PM for display if you want
+                  const format12 = (t) => {
+                    const [h, m] = t.split(":");
+                    let hour = parseInt(h, 10);
+                    const ampm = hour >= 12 ? "PM" : "AM";
+                    hour = hour % 12;
+                    if (hour === 0) hour = 12;
+                    return `${hour.toString().padStart(2, "0")}:${m} ${ampm}`;
+                  };
+
+                  confirmTimeEl.textContent =
+                    `${format12(start)} – ${format12(end)}`;
+                } else {
+                  confirmTimeEl.textContent = "N/A";
+                }
+              }
+
+              loadingStep.classList.add("hidden");
+              confirmStep.classList.remove("hidden");
+            })
+            .catch(() => {
+              confirmDateEl.textContent = "N/A";
+              confirmTimeEl.textContent = "Error computing slot";
+              loadingStep.classList.add("hidden");
+              confirmStep.classList.remove("hidden");
+            });
+        }, 5000);
     });
 
     // User confirms: actually submit form to Django
@@ -629,6 +662,18 @@ function initTimeValidation() {
 
 }
 
+// ===== Status Updated Modal =====
+const statusUpdatedModal = document.getElementById("status-updated-modal");
+const statusUpdatedMessage = document.getElementById("status-updated-message");
+const closeStatusUpdatedBtn = document.getElementById("close-status-updated-modal");
+
+closeStatusUpdatedBtn?.addEventListener("click", () => {
+  closeModal("status-updated-modal");
+});
+
+statusUpdatedModal?.addEventListener("click", e => {
+  if (e.target === statusUpdatedModal) closeModal("status-updated-modal");
+});
 
 // ===== Success Modal =====
 const successModal = document.getElementById("success-modal");
