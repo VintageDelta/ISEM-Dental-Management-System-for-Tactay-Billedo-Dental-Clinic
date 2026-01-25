@@ -1,0 +1,82 @@
+<!-- Follow Up Modal (new, for creating a follow-up appointment) -->
+<div id="followup-modal"
+  class="fixed inset-0 z-40 hidden flex items-center justify-center bg-black/40">
+  <div class="modal-content bg-white p-6 rounded-xl shadow-xl w-full max-w-md transform transition-all duration-200 opacity-0 scale-95">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">
+      Create Follow Up Appointment
+    </h2>
+
+<form
+      id="followup-form"
+      method="POST"
+      action="{% url 'appointment:create_followup' %}"
+      class="space-y-4"
+    >
+      {% csrf_token %}
+
+      <!-- Follow-up date -->
+      <div>
+        <label class="block text-sm font-medium mb-1">Follow Up Date</label>
+        <input
+          type="date"
+          id="followup-date"
+          name="date"
+          class="w-full border rounded-md p-2 text-sm"
+          required
+        >
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <div class="w-full text-sm font-medium">Follow Up Time</div>
+
+        <!-- AM/PM -->
+        <select
+          id="followup-ampm"
+          class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+          required
+        >
+          <option value="" disabled selected>AM/PM</option>
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+
+        <!-- Hour -->
+        <select
+          id="followup-hour"
+          class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+          required
+        >
+          <option value="" disabled selected>Hour</option>
+        </select>
+
+        <!-- Minute -->
+        <select
+          id="followup-minute"
+          class="w-full sm:flex-1 border rounded-md p-2 text-sm"
+          required
+        >
+          <option value="" disabled selected>Min</option>
+          <option value="00">00</option>
+          <option value="15">15</option>
+          <option value="30">30</option>
+          <option value="45">45</option>
+        </select>
+      </div>
+
+      <input type="hidden" id="followup-time-hidden" name="time">
+      <input type="hidden" id="followup-original-id" name="original_id">
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-2 pt-3">
+        <button type="button" id="close-followup-btn"
+                class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
+          Cancel
+        </button>
+        <button type="submit"
+                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+          Save Follow Up
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

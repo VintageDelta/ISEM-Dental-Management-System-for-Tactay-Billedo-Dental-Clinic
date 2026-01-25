@@ -1,0 +1,85 @@
+<!-- Status Updated Modal -->
+<div id="status-updated-modal"
+     class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-2">Status updated</h3>
+    <p id="status-updated-message" class="text-xs text-gray-600">
+      The status has been updated.
+    </p>
+    <div class="mt-4 flex justify-end">
+      <button id="close-status-updated-modal"
+              type="button"
+              class="px-3 py-1.5 text-xs bg-slate-700 text-white rounded-md hover:bg-slate-800">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Notify Email Result Modal -->
+<div id="notify-email-modal"
+     class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-2">Notification status</h3>
+    <p id="notify-email-message" class="text-xs text-gray-600">
+      Email notification sent to the patient.
+    </p>
+    <div class="mt-4 flex justify-end">
+      <button id="close-notify-email-modal"
+              type="button"
+              class="px-3 py-1.5 text-xs bg-slate-700 text-white rounded-md hover:bg-slate-800">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div id="success-modal"
+     class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center transform transition-all duration-200 opacity-0 scale-95">
+    <h2 class="text-lg font-semibold mb-2">Success!</h2>
+    <p class="mb-4">Appointment has been successfully created.</p>
+    <button id="close-success-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">OK</button>
+  </div>
+</div>
+
+<!-- Failed Modal -->
+<div id="failed-modal"
+     class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center transform transition-all duration-200 opacity-0 scale-95">
+    <h2 class="text-lg font-semibold mb-2 text-red-600">Failed</h2>
+    <p id="failed-message-text" class="mb-4 text-gray-700">
+      Something went wrong.
+    </p>
+    <button id="close-failed-btn"
+            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+      OK
+    </button>
+  </div>
+</div>
+
+
+<!-- Cancel Confirmation Modal -->
+<div id="cancel-confirm-modal"
+     class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-4 md:p-5 transform transition-all duration-200 opacity-0 scale-95">
+    <h2 class="text-base md:text-lg font-semibold text-gray-800 mb-2 text-center">
+      Cancel appointment?
+    </h2>
+    <p class="text-sm text-gray-600 mb-4 text-center">
+      Are you sure you want to cancel this appointment? This action cannot be undone.
+    </p>
+
+    <div class="flex flex-col sm:flex-row sm:justify-end gap-2">
+      <button id="cancel-confirm-no"
+              class="w-full sm:w-auto px-4 py-2 text-sm rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300">
+        No, go back
+      </button>
+      <button id="cancel-confirm-yes"
+              class="w-full sm:w-auto px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">
+        Yes, cancel
+      </button>
+    </div>
+  </div>
+</div>

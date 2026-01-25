@@ -1,0 +1,154 @@
+<!-- Reschedule Modal -->
+<div id="reschedule-modal" class="fixed inset-0 z-40 hidden flex items-center justify-center bg-black/40">
+  <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md transform transition-all duration-200 opacity-0 scale-95">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">
+      Reschedule Appointment
+    </h2>
+
+    <form id="reschedule-form" class="space-y-4">
+      {% csrf_token %}
+
+      <!-- Dentist Name -->
+      <div>
+        <select id="resched-dentist" name="dentist" required class="w-full border rounded-md p-2 text-sm">
+          <option value="" disabled selected>Select Dentist</option>
+          {% for dentist in dentists %}
+            <option value="{{ dentist.id }}">{{ dentist.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Location -->
+      <div>
+        <select id="resched-location" name="location" required class="w-full border rounded-md p-2 text-sm">
+          <option value="" disabled selected>Select location</option>
+          <option value="Vigan">Vigan</option>
+          <option value="Santo Domingo">Santo Domingo</option>
+        </select>
+      </div>
+
+      <!-- Date + Time (same style as create) -->
+      <div class="flex flex-wrap gap-2">
+        <input type="date" id="resched-date" name="date"
+              class="w-full sm:flex-1 border rounded-md p-2 text-sm"
+              required>
+
+        <!-- AM/PM -->
+        <select id="resched-ampm"
+                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+                required>
+          <option value="" disabled selected >AM/PM</option>
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+
+        <!-- Hour -->
+        <select id="resched-hour"
+                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+                required>
+          <option value="" disabled selected >Hour</option>
+        </select>
+
+        <!-- Minute -->
+        <select id="resched-minute"
+                class="w-full sm:flex-1 border rounded-md p-2 text-sm"
+                required>
+          <option value="" disabled selected >Min</option>
+          <option value="00">00</option>
+          <option value="05">05</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20">20</option>
+          <option value="25">25</option>
+          <option value="30">30</option>
+          <option value="35">35</option>
+          <option value="40">40</option>
+          <option value="45">45</option>
+          <option value="50">50</option>
+          <option value="55">55</option>
+        </select>
+      </div>
+
+
+      <input type="hidden" name="time" id="resched-time-hidden">
+
+      <!-- Service (same search + tags UI, but with resched- IDs) -->
+      <div>
+        <p class="font-semibold mb-1">Select Service:</p>
+
+        <!-- Search bar -->
+        <input
+          type="text"
+          id="resched-service-search"
+          placeholder="Search services..."
+          class="w-full mb-2 border rounded-md p-2 text-sm"
+        >
+
+        <!-- Checkboxes list -->
+        <div
+          id="resched-services-checkboxes"
+          class="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2"
+        >
+          {% for service in services %}
+            <label class="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="services"
+                value="{{ service.id }}"
+                class="h-4 w-4 accent-blue-600 resched-service-checkbox"
+              >
+              <span>{{ service.service_name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+
+        <!-- Selected services box -->
+        <div class="mt-2 border rounded-md p-2 text-xs">
+          <p id="resched-selected-services-empty" class="text-gray-500">
+            No services selected.
+          </p>
+          <div
+            id="resched-selected-services-tags"
+            class="mt-1 flex flex-wrap gap-1"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Email (prefilled from appointment) -->
+      <div>
+        <input
+          type="email"
+          id="resched-email"
+          name="email"
+          placeholder="Email"
+          required
+          class="w-full border rounded-md p-2 text-sm"
+        >
+      </div>
+
+      <!-- Currently Scheduled -->
+      <div class="bg-gray-100 p-3 rounded-md text-sm text-gray-700">
+        <p><strong>Current Schedule:</strong></p>
+        <p id="resched-current-time" class="mt-1"></p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-2 pt-3">
+        <button type="button" id="close-reschedule-btn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Changes</button>
+      </div>
+      
+            <!-- Small loading row inside reschedule modal -->
+      <div
+        id="resched-loading-row"
+        class="hidden mt-3 flex items-center gap-2 text-sm text-gray-600"
+      >
+        <div
+          class="h-4 w-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"
+        ></div>
+        <span>Updating appointment…</span>
+      </div>
+
+    </form>
+  </div>
+</div>

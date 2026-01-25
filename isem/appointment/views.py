@@ -427,30 +427,30 @@ def events(request):
 def get_booked_times(request):
     dentist_id = request.GET.get("dentist")
     date_str = request.GET.get("date")
-    location = request.GET.get("location")
+    branch_id = request.GET.get("location")  # this is now a BRANCH ID from the form
 
-    if not (dentist_id and date_str and location):
+    if not (dentist_id and date_str and branch_id):
         return JsonResponse({"error": "Missing parameters"}, status=400)
 
     try:
         date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
-    except:
+    except ValueError:
         return JsonResponse({"error": "Invalid date"}, status=400)
 
-    # Filter appointments by dentist, date, and LOCATION (important)
+    # Filter by FK ids instead of name + location string
     appointments = Appointment.objects.filter(
-        dentist_name=Dentist.objects.get(id=dentist_id).name,
+        dentist_id=dentist_id,
+        branch_id=branch_id,
         date=date_obj,
-        location=location  # ← This makes branches separate!
     ).exclude(status="cancelled")
 
-    # Return start/end times so the front-end can block these
-    booked = []
-    for a in appointments:
-        booked.append({
+    booked = [
+        {
             "start": a.time.strftime("%H:%M"),
-            "end": a.end_time.strftime("%H:%M") if a.end_time else None
-        })
+            "end": a.end_time.strftime("%H:%M") if a.end_time else None,
+        }
+        for a in appointments
+    ]
 
     return JsonResponse({"booked": booked})
 

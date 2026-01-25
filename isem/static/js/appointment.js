@@ -427,6 +427,32 @@ function closeModal(id) {
   }, 200);
 }
 
+
+// Return a map: { hour24: Set(blockedMinutes) }
+function buildBlockedMinuteMap(booked) {
+  const blocked = {};
+
+  booked.forEach(slot => {
+    if (!slot.start || !slot.end) return;
+
+    const [sh, sm] = slot.start.split(":").map(Number);
+    const [eh, em] = slot.end.split(":").map(Number);
+
+    let startMinutes = sh * 60 + sm;
+    let endMinutes = eh * 60 + em;
+
+    // Treat [start, end) so an appointment 08:00-08:30 blocks 00,05,...,25 but not 30+
+    for (let m = startMinutes; m < endMinutes; m += 5) {
+      const h = Math.floor(m / 60);
+      const mm = m % 60;
+      if (!blocked[h]) blocked[h] = new Set();
+      blocked[h].add(mm);
+    }
+  });
+
+  return blocked;
+}
+
 // ===== Fetch Booked Times =====
 async function fetchBookedTimes(dentistId, date, location) {
   if (!dentistId || !date || !location) return [];
@@ -459,43 +485,97 @@ function initTimeValidation() {
   const timeError = document.getElementById("time-error");
   const timeHidden = document.getElementById("time_hidden");
 
-  async function toggleTimeInputs() {
-    const ready = dentistSelect.value && dateInput.value && locationSelect.value;
+async function toggleTimeInputs() {
+  const ready = dentistSelect.value && dateInput.value && locationSelect.value;
 
-    // Enable/disable selects
-    hourSelect.disabled = !ready;
-    minuteSelect.disabled = !ready;
-    ampmSelect.disabled = !ready;
+  hourSelect.disabled = !ready;
+  minuteSelect.disabled = !ready;
+  ampmSelect.disabled = !ready;
 
-    timeError.textContent = ready ? "" : "Please select dentist, location, and date first.";
+  timeError.textContent = ready
+    ? ""
+    : "Please select dentist, location, and date first.";
 
-    if (ready) {
-      const booked = await fetchBookedTimes(
-        dentistSelect.value,
-        dateInput.value,
-        locationSelect.value
-      );
+  if (!ready) return;
 
-      // Reset hour options (if they exist)
-      Array.from(hourSelect.options).forEach(o => {
-        o.disabled = false;
-      });
+  const booked = await fetchBookedTimes(
+    dentistSelect.value,
+    dateInput.value,
+    locationSelect.value
+  );
 
-      // Disable booked hours
-      booked.forEach(slot => {
-        const [sh] = slot.start.split(":").map(Number);
-        const [eh] = slot.end.split(":").map(Number);
+  const blockedMap = buildBlockedMinuteMap(booked);
 
-        for (let h = sh; h <= eh; h++) {
-          const hour12 = (h % 12) || 12;
-          const opt = hourSelect.querySelector(`option[value="${hour12}"]`);
-          if (opt) {
-            opt.disabled = true; // browser will gray it out
-          }
-        }
-      });
+  // 1) Hour-level disabling: disable an hour only if all minutes 0–59 are blocked
+  Array.from(hourSelect.options).forEach(opt => {
+    if (!opt.value || opt.disabled && opt.value === "") return; // skip placeholder
+    const hour12 = parseInt(opt.value, 10);
+
+    // convert 12h + current AM/PM to 24h
+    const ampm = ampmSelect.value;
+    if (!ampm) {
+      opt.disabled = false;
+      return;
     }
+
+    let h24 = hour12;
+    if (ampm === "AM" && hour12 === 12) h24 = 0;
+    if (ampm === "PM" && hour12 !== 12) h24 = hour12 + 12;
+
+    const blockedMinutes = blockedMap[h24] || new Set();
+    // check if ANY minute in this hour is free
+    let hasFree = false;
+    for (let mm = 0; mm < 60; mm += 5) {
+      if (!blockedMinutes.has(mm)) {
+        hasFree = true;
+        break;
+      }
+    }
+    opt.disabled = !hasFree;
+  });
+
+  // 2) Minute-level disabling: whenever hour or ampm changes, disable only blocked minutes
+  function updateMinuteOptions() {
+    const hourStr = hourSelect.value;
+    const ampm = ampmSelect.value;
+
+    // re-enable all minutes first
+    Array.from(minuteSelect.options).forEach(opt => {
+      if (!opt.value) return;
+      opt.disabled = false;
+    });
+
+    if (!hourStr || !ampm) return;
+
+    const hour12 = parseInt(hourStr, 10);
+    let h24 = hour12;
+    if (ampm === "AM" && hour12 === 12) h24 = 0;
+    if (ampm === "PM" && hour12 !== 12) h24 = hour12 + 12;
+
+    const blockedMinutes = blockedMap[h24] || new Set();
+
+    Array.from(minuteSelect.options).forEach(opt => {
+      if (!opt.value) return;
+      const mm = parseInt(opt.value, 10);
+      if (blockedMinutes.has(mm)) {
+        opt.disabled = true;
+      }
+    });
   }
+
+  // hook the minute update; ensure you don't add multiple listeners
+  hourSelect.removeEventListener("change", updateMinuteOptions);
+  ampmSelect.removeEventListener("change", updateMinuteOptions);
+  minuteSelect.removeEventListener("change", updateMinuteOptions);
+
+  hourSelect.addEventListener("change", updateMinuteOptions);
+  ampmSelect.addEventListener("change", updateMinuteOptions);
+  minuteSelect.addEventListener("change", updateMinuteOptions);
+
+  // run once for current selection
+  updateMinuteOptions();
+}
+
 
   // When dentist/date/location change, (re)fetch and apply booked times
   dentistSelect.addEventListener("change", toggleTimeInputs);

@@ -1,0 +1,218 @@
+<!-- Done Steps Modal -->
+<div id="done-steps-modal" class="fixed inset-0 z-40 hidden flex items-center justify-center bg-black/40 p-2 md:p-4">
+  <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col transform transition-all duration-200 opacity-0 scale-95">
+    <!-- Header -->
+    <div class="px-4 md:px-6 pt-4 md:pt-6 pb-3 md:pb-4 border-b">
+      <h2 class="text-lg md:text-xl font-semibold text-gray-800 mb-1">Complete Appointment</h2>
+      <p class="text-xs md:text-sm text-gray-500">Follow these steps to mark the appointment as done</p>
+    </div>
+
+    <!-- Main Content: Steps on Left, Forms on Right -->
+    <div class="flex-1 overflow-hidden flex flex-col md:flex-row">
+      <!-- Left Side: Steps -->
+      <div class="w-full md:w-64 border-b md:border-b-0 md:border-r bg-gray-50 p-3 md:p-4 overflow-y-auto max-h-48 md:max-h-none">
+        <div class="space-y-3">
+          <!-- Step 1 -->
+          <div id="step-1" class="flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200 step-container bg-white">
+            <div class="step-circle flex-shrink-0 w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center bg-white transition-all duration-200">
+              <i class="la la-check text-lg text-gray-400"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-gray-800 text-sm">Step 1: Treatment Form</p>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div id="step-2" class="flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200 step-container opacity-50 bg-white">
+            <div class="step-circle flex-shrink-0 w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center bg-white transition-all duration-200">
+              <i class="la la-check text-lg text-gray-400"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-gray-800 text-sm">Step 2: Billing Form</p>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div id="step-3" class="flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200 step-container opacity-50 bg-white">
+            <div class="step-circle flex-shrink-0 w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center bg-white transition-all duration-200">
+              <i class="la la-check text-lg text-gray-400"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-gray-800 text-sm">Step 3: Odontogram</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Side: Forms -->
+      <div class="flex-1 overflow-y-auto p-4 md:p-6">
+        <!-- Step 1: Medical History Form -->
+        <form id="done-medical-form" method="post" action="" class="space-y-3 step-form" data-step="1">
+          {% csrf_token %}
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Patient Name</label>
+            <input type="text" name="patient_name" id="done-medical-patient-name" placeholder="Patient Name" class="w-full border rounded-md p-2 text-sm bg-gray-100" readonly>
+          </div>
+          <input type="date" name="date" id="done-medical-date" placeholder="Date" required class="w-full border rounded-md p-2 text-sm">
+          <input type="text" name="dentist" id="done-medical-dentist" placeholder="Dentist" class="w-full border rounded-md p-2 text-sm">
+          <input type="text" name="reason" id="done-medical-reason" placeholder="Reason" required class="w-full border rounded-md p-2 text-sm">
+          <input type="text" name="diagnosis" id="done-medical-diagnosis" placeholder="Diagnosis" required class="w-full border rounded-md p-2 text-sm">
+          <input type="text" name="service" id="done-medical-service" placeholder="Service" required class="w-full border rounded-md p-2 text-sm">
+          <input type="text" name="treatment" id="done-medical-treatment" placeholder="Treatment" class="w-full border rounded-md p-2 text-sm">
+          <input type="text" name="prescriptions" id="done-medical-prescriptions" placeholder="Prescriptions" class="w-full border rounded-md p-2 text-sm">
+        </form>
+
+        <!-- Step 2: Financial History Form -->
+        <form id="done-financial-form" method="post" action="" class="space-y-3 step-form hidden" data-step="2">
+          {% csrf_token %}
+
+          <!-- Total Due (computed from services) -->
+          <div class="flex items-center justify-center gap-3">
+            <span class="text-sm font-medium text-gray-800">Total Due</span>
+            <div class="flex items-center gap-1">
+              <span class="text-2xl font-semibold text-gray-800">₱</span>
+
+              {% if request.user.is_staff or request.user.is_superuser %}
+                <input
+                  type="number"
+                  step="0.01"
+                  name="total_due"
+                  id="done-financial-total-due"
+                  class="w-40 border rounded-md p-3 text-2xl font-semibold text-center text-gray-800"
+                >
+              {% else %}
+                <input
+                  type="number"
+                  step="0.01"
+                  name="total_due"
+                  id="done-financial-total-due"
+                  class="w-40 border rounded-md p-3 text-2xl font-semibold text-center text-gray-800 bg-gray-100"
+                  readonly
+                >
+              {% endif %}
+            </div>
+          </div>
+
+
+          <input type="date" name="date" id="done-financial-date" required placeholder="Date" class="w-full border rounded-md p-2 text-sm">
+          <input type="text" name="description" id="done-financial-description" placeholder="Description" required class="w-full border rounded-md p-2 text-sm">
+          <input type="time" name="time" id="done-financial-time" placeholder="Time" required class="w-full border rounded-md p-2 text-sm">
+          <input type="text" name="type" id="done-financial-type" placeholder="Type" required class="w-full border rounded-md p-2 text-sm">
+          <input type="number" step="0.01" name="amount" id="done-financial-amount" placeholder="Amount paid" class="w-full border rounded-md p-2 text-sm">
+          <input type="number" step="0.01" name="balance" id="done-financial-balance" placeholder="Balance" class="w-full border rounded-md p-2 text-sm">
+        </form>
+
+        <!-- Step 3: Odontogram Form -->
+        <form id="done-odontogram-form" method="post" action="" class="flex flex-col gap-3 step-form hidden" data-step="3">
+          {% csrf_token %}
+          <div id="done-odontogram-records" class="space-y-4 overflow-y-auto pr-2">
+            <!-- ONE RECORD TEMPLATE -->
+            <div class="odontogram-record border rounded-md p-3 space-y-3">
+              <input type="date" name="date_0" id="done-odontogram-date-0" placeholder="Date of Operation" required class="w-full border rounded-md p-2 text-sm">
+
+              <label class="font-semibold text-sm">Tooth Number:</label>
+              <!-- Check All-->
+              <div class="flex items-center gap-2 mb-1 text-xs">
+                <input type="checkbox" class="tooth-check-all rounded border-gray-300" />
+                <span class="text-gray-600">Check all teeth</span>
+              </div>
+              <div class="grid grid-cols-8 gap-2 max-h-40 overflow-y-auto mb-2" id="done-odontogram-teeth-container">
+                {% for tooth in tooth_num %}
+                  <label class="text-center text-sm">
+                    <input type="checkbox" name="tooth_number_0" value="{{ tooth }}" class="mr-1 done-tooth-checkbox">
+                    <span>{{ tooth }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <label class="font-semibold text-sm">Select Services:</label>
+
+              <!-- Search bar (for this odontogram record) -->
+              <input
+                type="text"
+                id="done-odontogram-service-search-0"
+                placeholder="Search services..."
+                class="w-full mb-2 border rounded-md p-2 text-sm"
+              ww>
+
+              <!-- Checkboxes list (grouped by category, same as creation modal) -->
+              <div
+                id="done-odontogram-services-checkboxes-0"
+                class="border rounded-md p-2 max-h-40 overflow-y-auto text-xs"
+              >
+                {% regroup services by category as category_list %}
+                {% for group in category_list %}
+                  <div class="mb-2">
+                    <p class="text-[11px] font-semibold text-gray-600 uppercase mb-1">
+                      {{ group.grouper|title }}
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {% for service in group.list %}
+                        <label class="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            name="services_0"  
+                        
+                            value="{{ service.id }}"
+                            class="mt-0.5 h-4 w-4 accent-blue-600 done-odontogram-service-checkbox"
+                          >
+                          <span class="flex-1">
+                            <span class="block font-medium text-gray-800">
+                              {{ service.service_name }}
+                            </span>
+                            <span class="block text-[11px] text-gray-500">
+                              ⏱︎ {{ service.duration }} min
+                            </span>
+                          </span>
+                        </label>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+
+              <!-- Dentist Name -->
+              <select name="dentist_0" id="done-odontogram-dentist-0" required class="w-full border rounded-md p-2 text-sm">
+                <option value="" disabled selected>Select Dentist</option>
+                {% for dentist in dentists %}
+                <option value="{{ dentist.id }}">{{ dentist.name }}</option>
+                {% endfor %}
+              </select>
+
+              <input type="text" name="status_0" id="done-odontogram-status-0" placeholder="Status" required class="w-full border rounded-md p-2 text-sm">
+
+              <!-- Remove button for extra records -->
+              <button type="button" class="remove-record hidden mt-2 text-xs text-red-600 hover:underline">
+                Remove this record
+              </button>
+            </div>
+          </div>
+
+          <div class="flex justify-between gap-2 pt-3 border-t mt-3">
+            <button type="button" id="done-add-more-odontogram" class="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700">
+              + Add More
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer: Navigation Buttons -->
+    <div class="px-4 md:px-6 py-3 md:py-4 border-t bg-gray-50 flex flex-col sm:flex-row justify-between gap-2 sm:gap-3">
+      <button id="done-steps-back-btn" class="w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+        Back
+      </button>
+      <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <button type="button" id="done-steps-close-btn" class="w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
+          Close
+        </button>
+        <button type="submit" form="" id="done-steps-submit-btn" class="w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700">
+          Save
+        </button>
+        <button id="done-steps-next-btn" class="w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-md bg-emerald-500 text-white hover:bg-emerald-600">
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

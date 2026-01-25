@@ -1,0 +1,68 @@
+<!-- Notify Patient Modal -->
+<div
+  id="notify-modal"
+  class="fixed inset-0 z-40 hidden flex items-center justify-center bg-black/40"
+>
+  <div
+    class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 md:p-6 max-h-[90vh] overflow-y-auto transform transition-all duration-200 opacity-0 scale-95"
+  >
+    <!-- Header -->
+    <div class="mb-3">
+      <h2 class="text-base md:text-lg font-semibold text-gray-900 text-center">
+        Notify Patient
+      </h2>
+      <p class="mt-1 text-xs text-gray-500 text-center">
+        Choose how you want to notify the patient about this appointment.
+      </p>
+    </div>
+
+    <!-- Body: buttons -->
+    <div class="space-y-3 mt-4">
+      <button
+        id="notify-sms-btn"
+        type="button"
+        class="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition text-sm"
+      >
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            📱
+          </div>
+
+          <div class="text-left">
+            <p class="font-semibold text-slate-800 text-sm">SMS</p>
+            <p class="text-[11px] text-slate-500">Send a text reminder to the patient.</p>
+          </div>
+        </div>
+        <span class="text-xs text-slate-400">&rarr;</span>
+      </button>
+
+      <button
+        id="notify-email-btn"
+        type="button"
+        class="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition text-sm"
+      >
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+            ✉️
+          </div>
+          <div class="text-left">
+            <p class="font-semibold text-slate-800 text-sm">Email</p>
+            <p class="text-[11px] text-slate-500">Send a detailed email notification.</p>
+          </div>
+        </div>
+        <span class="text-xs text-slate-400">&rarr;</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-5 flex justify-end">
+      <button
+        id="close-notify-btn"
+        type="button"
+        class="px-4 py-2 text-sm bg-slate-700 text-white rounded-md hover:bg-slate-800"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>

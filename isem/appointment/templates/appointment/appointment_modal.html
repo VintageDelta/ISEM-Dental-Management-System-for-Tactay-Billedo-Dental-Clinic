@@ -1,0 +1,237 @@
+<!-- Add Appointment Modal -->
+<div id="appointment-modal"
+  class="modal-content fixed inset-0 bg-black bg-opacity-50 hidden z-40 flex items-center justify-center">
+  <div id="appointment-modal-content"
+    class="bg-white rounded-lg shadow-lg w-full max-w-md p-4 md:p-6 max-h-[90vh] overflow-y-auto transform transition-all duration-200 opacity-0 scale-95">
+
+    <h2 class="text-lg font-semibold mb-4 text-center">Add Appointment</h2>
+    <form method="POST" class="space-y-4">
+
+      {% csrf_token %}
+      <!-- Dentist Name -->
+      <div>
+        <select id="dentist_name" name="dentist" required
+          class="w-full border rounded-md p-2 text-sm">
+          <option value="" disabled selected>Select Dentist</option>
+          {% for dentist in dentists %}
+            <option value="{{ dentist.id }}">{{ dentist.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Location -->
+      <div>
+        <select id="location" name="location" required
+          class="w-full border rounded-md p-2 text-sm">
+          <option value="" disabled selected>Select location</option>
+          {% for branch in branches %}
+            <option value="{{ branch.id }}">{{ branch.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Date Time -->
+      <div class="flex flex-wrap gap-2">
+        <input type="date" id="date" name="date" required
+              class="w-full sm:flex-1 border rounded-md p-2 text-sm">
+
+        <!-- AM/PM -->
+        <select id="ampm"
+                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+                disabled>
+          <option value="" disabled selected >am/pm</option>
+          <option value="AM">am</option>
+          <option value="PM">pm</option>
+        </select>
+
+        <!-- Hour -->
+        <select id="hour"
+                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+                disabled>
+          <option value="" disabled selected >hour</option>
+        </select>
+
+        <!-- Minute -->
+        <select id="minute"
+                class="w-full sm:flex-1 border rounded-md p-2 text-sm"
+                disabled>
+          <option value="" disabled selected >Min</option>
+          <option value="00">00</option>
+          <option value="05">05</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20">20</option>
+          <option value="25">25</option>
+          <option value="30">30</option>
+          <option value="35">35</option>
+          <option value="40">40</option>
+          <option value="45">45</option>
+          <option value="50">50</option>
+          <option value="55">55</option>
+        </select>
+      </div>
+
+      <input type="hidden" name="time" id="time_hidden">
+      <p id="time-error" class="text-red-600 text-sm"></p>
+
+      <!-- Service (Checkboxes + search + selected box) -->
+      <div>
+        <p class="font-semibold mb-1">Select Service:</p>
+
+        <!-- Search bar -->
+        <input
+          type="text"
+          id="service-search"
+          placeholder="Search services..."
+          class="w-full mb-2 border rounded-md p-2 text-sm"
+        >
+
+        <!-- Checkboxes list -->
+        <div
+          id="services-checkboxes"
+          class="max-h-60 overflow-y-auto border rounded-md p-2 text-xs"
+        >
+          {% regroup services by category as category_list %}
+
+          {% for group in category_list %}
+            <div class="mb-2">
+              <p class="text-[11px] font-semibold text-gray-600 uppercase mb-1">
+                {{ group.grouper|title }}
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {% for service in group.list %}
+                  <label class="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      name="services"
+                      value="{{ service.id }}"
+                      class="mt-0.5 h-4 w-4 accent-blue-600 service-checkbox"
+                    >
+                    <span class="flex-1">
+                      <span class="block font-medium text-gray-800">
+                       {{ service.service_name }}
+                      </span>
+                      <span class="block text-[11px] text-gray-500">
+                      ⏱︎ {{ service.duration }} min
+                      </span>
+                    </span>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+
+        <!-- Selected services box -->
+        <div class="mt-2 border rounded-md p-2 text-xs">
+          <p id="selected-services-empty" class="text-gray-500">
+            No services selected.
+          </p>
+          <div
+            id="selected-services-tags"
+            class="mt-1 flex flex-wrap gap-1"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Email -->
+      {% if request.user.is_staff or request.user.is_superuser %}
+        <!-- Email (admin/staff can edit) -->
+        <div>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Email"
+            value="{{ request.user.email }}"
+            required
+            class="w-full border rounded-md p-2 text-sm"
+          >
+        </div>
+      {% else %}
+        <!-- For normal logged-in users: use their email automatically, no visible field -->
+        <input
+          type="hidden"
+          id="email"
+          name="email"
+          value="{{ request.user.email }}"
+        >
+      {% endif %}
+      <!-- Actions -->
+      <div class="flex justify-end gap-2 pt-3">
+        <button type="button" id="close-appointment-btn"
+          class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+        <button type="submit"
+          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 opacity-50 cursor-not-allowed"
+          disabled>
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Create Appointment Loading + Confirm Overlay -->
+<div
+  id="appointment-loading-overlay"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform transition-all duration-200 opacity-0 scale-95"
+  >
+    <!-- Step 1: loading -->
+    <div id="appointment-loading-step">
+      <div class="flex flex-col items-center gap-3">
+        <div
+          class="h-10 w-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"
+        ></div>
+        <h2 class="text-lg font-semibold text-gray-800">
+          Creating appointment…
+        </h2>
+        <p class="text-sm text-gray-500">
+          Please wait while the system finds the best available time.
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 2: confirmation -->
+    <div id="appointment-confirm-step" class="hidden text-left">
+      <h2 class="text-lg font-semibold text-gray-800 mb-2 text-center">
+        Confirm Appointment
+      </h2>
+      <p class="text-sm text-gray-500 mb-4 text-center">
+        Review the schedule the system picked before saving.
+      </p>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
+        <p class="text-xs font-semibold text-slate-500 uppercase mb-2">
+          Scheduled Time
+        </p>
+        <p class="text-sm text-slate-700">
+          <span class="font-medium">Date:</span>
+          <span id="confirm-picked-date"></span>
+        </p>
+        <p class="text-sm text-slate-700 mt-1">
+          <span class="font-medium">Time:</span>
+          <span id="confirm-picked-time"></span>
+        </p>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-2 justify-end">
+        <button
+          id="confirm-reschedule-btn"
+          type="button"
+          class="w-full sm:w-auto px-4 py-2 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+        >
+          Change schedule
+        </button>
+        <button
+          id="confirm-save-btn"
+          type="button"
+          class="w-full sm:w-auto px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+        >
+          Save appointment
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
