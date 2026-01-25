@@ -126,8 +126,9 @@
         <select id="location" name="location" required
           class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select location</option>
-          <option value="Vigan">Vigan</option>
-          <option value="Santo Domingo">Santo Domingo</option>
+          {% for branch in branches %}
+            <option value="{{ branch.id }}">{{ branch.name }}</option>
+          {% endfor %}
         </select>
       </div>
       <!-- Date Time -->
@@ -842,7 +843,7 @@
                     </p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {% for service in group.list %}
-                        <label class="flex items-start gap-2">33423
+                        <label class="flex items-start gap-2">
                           <input
                             type="checkbox"
                             name="services_0"  
@@ -1092,8 +1093,8 @@
   const eventsUrl = "{% url 'appointment:events' %}";
 </script>
 
-
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="{% static 'vendor/fullcalendar/index.global.min.js' %}"></script>
+{% comment %} <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script> {% endcomment %}
 <script src="{% static 'js/calendar.js' %}"></script>
 <script src="{% static 'js/appointment.js' %}"></script>
 

@@ -15,7 +15,7 @@ from billing.models import BillingRecord
 from patient.models import Patient
 
 from .forms import AppointmentForm
-from .models import Dentist, Service, Appointment, AppointmentLog
+from .models import Dentist, Service, Appointment, AppointmentLog,Branch
 from .utils import find_next_available_slot
 
 
@@ -256,21 +256,22 @@ def appointment_page(request):
         .order_by("category_order", "category", "service_name")
     )
 
+    branches = Branch.objects.filter(is_active=True)
+
     if request.method == "POST":
         dentist_id = request.POST.get("dentist")
-        service_id = request.POST.get("service")
-        location = request.POST.get("location")
+        branch_id = request.POST.get("location")      # <-- now this is BRANCH ID
         date_str = request.POST.get("date")
         time_str = request.POST.get("time")
-        reason = request.POST.get("reason")
         email = request.POST.get("email")
 
         service_ids = request.POST.getlist("services")
         selected_services = Service.objects.filter(id__in=service_ids)
 
         dentist = Dentist.objects.get(id=dentist_id)
-        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        branch_obj = Branch.objects.get(id=branch_id)   # <-- get Branch instance
 
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
         if date_obj < datetime.now().date():
             messages.error(request, "You cannot create an appointment in the past.")
             return redirect("appointment:appointment_page")
@@ -278,13 +279,35 @@ def appointment_page(request):
         preferred_time = datetime.strptime(time_str, "%H:%M").time()
         total_minutes = sum(s.duration for s in selected_services)
 
-        start_time, end_time = find_next_available_slot(
-            dentist,
-            date_obj,
-            total_minutes,
-            preferred_time,
-            location=location,
-        )
+        # We will use branch name as the location key for your greedy util
+        location_key = branch_obj.name
+
+        # Create or find patient by email (keep your existing code)
+        patient = None
+        if email:
+            patient = Patient.objects.filter(email=email).first()
+            if not patient:
+                total = Patient.objects.filter(is_guest=True).count() + 1
+                temp_id = f"P-{total:06d}-T"
+                patient = Patient.objects.create(
+                    name=email.split("@")[0] or "Guest Patient",
+                    email=email,
+                    address="TBD",
+                    telephone="00000000000",
+                    age=0,
+                    occupation="",
+                    is_guest=True,
+                    guest_id=temp_id,
+                )
+
+        with transaction.atomic():
+            start_time, end_time = find_next_available_slot(
+                dentist,
+                date_obj,
+                total_minutes,
+                preferred_time,
+                location=location_key,
+            )
 
         if not start_time or not end_time:
             messages.error(
@@ -293,45 +316,12 @@ def appointment_page(request):
             )
             return redirect("appointment:appointment_page")
 
-        # Create or find patient by email
-        patient = None
-        if email:
-            patient = Patient.objects.filter(email=email).first()
-            if not patient:
-                # Create a guest patient for appointment
-                total = Patient.objects.filter(is_guest=True).count() + 1
-                temp_id = f"P-{total:06d}-T"
-                patient = Patient.objects.create(
-                    name=email.split("@")[0] or "Guest Patient",  # Use email prefix as default name
-                    email=email,
-                    address="TBD",  # Will be filled later in the done steps modal
-                    telephone="00000000000",  # Default phone number (required field)
-                    age=0,  # Will be filled later
-                    occupation="",
-                    is_guest=True,
-                    guest_id=temp_id
-                )
-
-        with transaction.atomic():
-            start_time, end_time = find_next_available_slot(
-            dentist,
-            date_obj,
-            total_minutes,
-            preferred_time,
-            location=location
-        )
-
-        if not start_time or not end_time:
-            messages.error(
-                request,
-                "No available time slot for the selected date and services."
-            )
-            return redirect("appointment:appointment_page")
-
         appointment = Appointment.objects.create(
             user=request.user if request.user.is_authenticated else None,
-            dentist_name=dentist.name,
-            location=location,
+            dentist=dentist,                 # <-- set FK
+            branch=branch_obj,               # <-- set FK
+            dentist_name=dentist.name,       # legacy text
+            location=location_key,           # branch name string
             date=date_obj,
             time=start_time,
             end_time=end_time,
@@ -349,17 +339,14 @@ def appointment_page(request):
             note="Appointment created from appointment_page",
         )
 
-        
-        # Store patient_id in appointment (if you want to add a FK later)
-        # For now, we'll use email to find patient when needed
-
         messages.add_message(
             request,
             messages.SUCCESS,
             "Appointment successfully created!",
-            extra_tags="appointment_created"
+            extra_tags="appointment_created",
         )
         return redirect("appointment:appointment_page")
+
 
     # Import here to avoid circular imports
     from patient.models import Patient as PatientModel
@@ -371,6 +358,7 @@ def appointment_page(request):
         "dentists": dentists,
         "services": services,
         "tooth_num": tooth_num,
+        "branches": branches,
     })
 
 
@@ -395,6 +383,7 @@ def events(request):
 
     if branch:
         appointments = appointments.filter(location=branch)
+        appointments = appointments.filter(branch__name=branch)
 
     events = []
     for a in appointments:
@@ -412,14 +401,14 @@ def events(request):
 
         events.append({
             "id": str(a.id),
-            "title": f"{service_names} - {a.dentist_name or 'N/A'}",
+            "title": f"{service_names} - {(a.dentist.name if a.dentist else a.dentist_name) or 'N/A'}",
             "start": f"{a.date}T{a.time}",
             "end": f"{a.date}T{a.end_time}" if a.end_time else None,
             "color": color_map.get(a.status, "gray"),
             "extendedProps": {
-                "dentist": a.dentist_name,
-                "dentist_id": dentist_obj.id if dentist_obj else None,
-                "location": a.location,
+                "dentist": a.dentist.name if a.dentist else a.dentist_name,
+                "dentist_id": a.dentist.id if a.dentist else None,
+                "location": a.branch.name if a.branch else a.location,
                 "date": str(a.date),
                 "time": a.time.strftime("%I:%M %p"),
                 "preferred_date": str(a.preferred_date) if a.preferred_date else None,
