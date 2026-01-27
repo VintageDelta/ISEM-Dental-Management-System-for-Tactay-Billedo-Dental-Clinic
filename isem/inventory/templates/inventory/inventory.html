@@ -34,17 +34,21 @@
       <div
         class="flex flex-col md:flex-row md:justify-between md:items-center mb-6"
       >
-        <div class="flex flex-wrap items-center gap-4">
-          <!-- Search bar -->
-          <div class="flex items-center bg-gray-100 rounded px-3 py-2">
-            <input
-              id="search-bar"
-              type="search"
-              placeholder="Search items..."
-              class="bg-transparent outline-none text-sm w-56"
-            />
-          </div>
-        </div>
+  <!-- Search bar with dropdown -->
+        <div class="relative flex items-center bg-gray-300 rounded px-3 py-2 w-full md:w-96">
+        <input
+    id="search-bar"
+    type="search"
+    name="search"
+    placeholder="Search items..."
+    autocomplete="off"
+    class="bg-transparent outline-none text-sm w-full"
+  />
+  <!-- Dropdown results -->
+    <div id="search-results" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto z-50">
+    <!-- Results -->
+  </div>
+</div>
 
         <!-- Add Item Button -->
         <div class="flex gap-2 mt-4 md:mt-0">
@@ -647,6 +651,82 @@ if(expiringModal) {
   });
 }
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-bar');
+    const searchResults = document.getElementById('search-results');
+    let searchTimeout;
+
+    if (searchInput && searchResults) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const searchValue = searchInput.value.trim();
+
+            if (searchValue === '') {
+                searchResults.classList.add('hidden');
+                searchResults.innerHTML = '';
+                return;
+            }
+
+            // Wait 300ms before searching
+            searchTimeout = setTimeout(() => {
+                fetch(`{% url 'inventory:search_inventory' %}?search=${encodeURIComponent(searchValue)}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.items && data.items.length > 0) {
+                        let html = '';
+                        data.items.forEach(item => {
+                            // Status badge color
+                            let statusColor = 'bg-gray-500';
+                            if (item.status === 'in_stock') statusColor = 'bg-green-500';
+                            else if (item.status === 'low_stock') statusColor = 'bg-yellow-500';
+                            else if (item.status === 'out_of_stock') statusColor = 'bg-red-500';
+                            else if (item.status === 'expired') statusColor = 'bg-red-700';
+                            
+                            html += `
+                                <div class="block px-4 py-2 hover:bg-gray-100 border-b last:border-b-0 cursor-pointer">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <div class="font-medium">${item.item_name}</div>
+                                            <div class="text-xs text-gray-500">
+                                                ${item.category} | Stock: ${item.stock}
+                                            </div>
+                                        </div>
+                                        <span class="text-xs px-2 py-1 rounded text-white ${statusColor}">
+                                            ${item.status.replace('_', ' ')}
+                                        </span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        searchResults.innerHTML = html;
+                        searchResults.classList.remove('hidden');
+                    } else {
+                        searchResults.innerHTML = '<div class="px-4 py-2 text-gray-500 text-sm">No items found</div>';
+                        searchResults.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    searchResults.classList.add('hidden');
+                });
+            }, 300);
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.add('hidden');
+            }
+        });
+    }
+});
+</script>
+
 
   {% endblock %}
 </div>

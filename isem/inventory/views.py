@@ -8,6 +8,7 @@ from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.contrib import messages
+from django.db.models import Q
 
 # LIST
 def inventory_list(request):
@@ -129,3 +130,32 @@ def inventory_view(request, pk):
         "expiry_date": item.expiry_date.strftime("%Y-%m-%d") if item.expiry_date else "",
         "status": item.status,
     })
+
+def search_inventory(request):
+    """AJAX endpoint for live inventory search"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        search_query = request.GET.get('search', '').strip()
+        
+        if search_query:
+            # Search by item_name, category, or description
+            items = InventoryItem.objects.filter(
+                Q(item_name__icontains=search_query) |
+                Q(category__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )[:10]  # Limit to 10 results
+            
+            items_data = []
+            for item in items:
+                items_data.append({
+                    'id': item.id,
+                    'item_name': item.item_name,
+                    'category': item.category,
+                    'stock': item.stock,
+                    'status': item.status,
+                })
+            
+            return JsonResponse({'items': items_data})
+        else:
+            return JsonResponse({'items': []})
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)

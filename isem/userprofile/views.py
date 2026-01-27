@@ -12,6 +12,9 @@ from appointment.models import Appointment
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import views as auth_views
 
+#pagination import
+from django.core.paginator import Paginator
+from django.shortcuts import render
 
 class RoleBasedLoginView(Loginview):
     template_name = 'userprofile/sign-in.html'
@@ -282,6 +285,132 @@ def patient_data(request):
         return redirect("userprofile:homepage")
 
     return render(request, 'userprofile/patient_data.html', {'patient': patient})
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_dashboard(request):
+    pending_staff = User.objects.filter(is_staff=False, is_active=False)
+    
+    # Get all users and paginate
+    all_users_qs = User.objects.all().order_by('-date_joined')
+    
+    # Pagination
+    paginator = Paginator(all_users_qs, 10)  # 10 users per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Import models
+    from appointment.models import Service, Dentist
+    
+    return render(request, 'userprofile/admin/admin-dashboard.html', {
+        'pending_staff': pending_staff,
+        'all_users': page_obj.object_list,  # Paginated users
+        'page_obj': page_obj,  # Pagination object
+        'services': Service.objects.all(),
+        'dentists': Dentist.objects.all(),
+        'branches': [],
+    })
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def add_staff(request):
+    """Admin can add staff directly (already active)"""
+    if request.method == "POST":
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        password1 = request.POST.get("password1")
+        password2 = request.POST.get("password2")
+        
+        if password1 != password2:
+            messages.error(request, "Passwords do not match.")
+            return redirect("userprofile:admin_dashboard")
+        
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists.")
+            return redirect("userprofile:admin_dashboard")
+        
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already exists.")
+            return redirect("userprofile:admin_dashboard")
+        
+        # Create staff user (active and is_staff=True)
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password1,
+            first_name=first_name,
+            last_name=last_name,
+            is_staff=True,
+            is_active=True
+        )
+        
+        staff_group, created = Group.objects.get_or_create(name='Staff')
+        user.groups.add(staff_group)
+        
+        messages.success(request, f"Staff {username} added successfully!")
+        return redirect("userprofile:admin_dashboard")
+    
+    return redirect("userprofile:admin_dashboard")
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def add_user(request):
+    """Admin can add patient users"""
+    if request.method == "POST":
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        password1 = request.POST.get("password1")
+        password2 = request.POST.get("password2")
+        
+        if password1 != password2:
+            messages.error(request, "Passwords do not match.")
+            return redirect("userprofile:admin_dashboard")
+        
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists.")
+            return redirect("userprofile:admin_dashboard")
+        
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already exists.")
+            return redirect("userprofile:admin_dashboard")
+        
+        # Create patient user
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password1,
+            first_name=first_name,
+            last_name=last_name
+        )
+        
+        patient_group, created = Group.objects.get_or_create(name='Patient')
+        user.groups.add(patient_group)
+        
+        # Create patient record
+        Patient.objects.create(
+            user=user,
+            name=f"{first_name} {last_name}",
+            email=email,
+            address="",
+            telephone="",
+            age=0,
+            occupation="",
+            is_guest=False,
+            gender="",
+            particular_condition="",
+            allergy="",
+            pregnancy_status="",
+            medications="",
+            abnormal_bleeding_history=""
+        )
+        
+        messages.success(request, f"Patient user {username} added successfully!")
+        return redirect("userprofile:admin_dashboard")
+    
+    return redirect("userprofile:admin_dashboard")
+
 
 @login_required
 def homepage(request):

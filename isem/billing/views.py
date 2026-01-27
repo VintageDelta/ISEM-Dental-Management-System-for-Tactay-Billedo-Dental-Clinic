@@ -4,6 +4,7 @@ from urllib import request
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
+from django.db.models import Q
 
 from patient.models import Patient
 from appointment.models import Appointment, Service
@@ -140,3 +141,34 @@ def billing_delete(request, pk):
         return JsonResponse({"status": "ok"})
     return JsonResponse({"status": "error"}, status=400)
 
+def search_billing(request):
+    """AJAX endpoint for live billing search"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        search_query = request.GET.get('search', '').strip()
+        
+        if search_query:
+            # Search by patient name, patient ID, amount, or type
+            billings = BillingRecord.objects.filter(
+                Q(patient__name__icontains=search_query) |
+                Q(patient__id__icontains=search_query) |
+                Q(amount__icontains=search_query) |
+                Q(type__icontains=search_query)
+            ).select_related('patient')[:10]  # Limit to 10 results
+            
+            billings_data = []
+            for billing in billings:
+                billings_data.append({
+                    'id': billing.id,
+                    'patient_name': billing.patient.name,
+                    'patient_id': billing.patient.id,
+                    'amount': str(billing.amount),
+                    'type': billing.type,
+                    'date_issued': billing.date_issued.strftime('%b %d, %Y'),
+                    'payment_status': billing.payment_status if hasattr(billing, 'payment_status') else 'unpaid'
+                })
+            
+            return JsonResponse({'billings': billings_data})
+        else:
+            return JsonResponse({'billings': []})
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
