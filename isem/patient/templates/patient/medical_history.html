@@ -1,385 +1,353 @@
-  {% extends "core/base.html" %} {% load static %} {% block content %}
-  <div class="container mx-auto px-4 py-6">
-    <h1 class="text-2xl font-semibold mb-4">{{ patient.name }}'s Patient Record</h1>
+{% extends "core/base.html" %} 
+{% load static %} 
+{% block content %}
+
+<div class="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
+  <h1 class="text-xl sm:text-2xl font-semibold mb-4">{{ patient.name }}'s Patient Record</h1>
+  
   <!-- === TAB BUTTONS === -->
-  <div class="flex items-center mb-6 w-full">
+<div class="mb-6 space-y-3">
+  <!-- Tab Navigation - Scrollable on mobile -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <!-- Tab Buttons -->
+    <div class="overflow-x-auto pb-2">
+      <div class="flex items-center space-x-2 sm:space-x-4 min-w-max">
+        <button
+          id="patientInfoTab"
+          class="px-3 sm:px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none text-sm whitespace-nowrap"
+        >
+          Patient Information
+        </button>
+        <button
+          id="medicalTab"
+          class="px-3 sm:px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none text-sm whitespace-nowrap"
+        >
+          Treatment History
+        </button>
+        <button
+          id="financialTab"
+          class="px-3 sm:px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none text-sm whitespace-nowrap"
+        >
+          Billing History
+        </button>
+        <button
+          id="odontogramTab"
+          class="px-3 sm:px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none text-sm whitespace-nowrap"
+        >
+          Odontogram
+        </button>
+      </div>
+    </div>
 
-    <div class="flex items-center space-x-4">
-              <!-- Patient Information part--> <!-- NEED TO CONTINUE LATER FOR THE LOGIC-->
-      <button
-        id="patientInfoTab"
-        class="ml-auto px-4 py-2 rounded-lg bg-blue-600 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
-      >
-        Patient Information
-      </button>
-    <button
-      id="medicalTab"
-      class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
-    >
-      Treatment History
-    </button>
-    <button
-      id="financialTab"
-      class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
-    >
-      Billing History
-    </button>
-    <button
-      id="odontogramTab"
-      class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium shadow hover:bg-gray-300 focus:outline-none"
-    >
-      Odontogram
-    </button>
-
+    <!-- Add Record Buttons (on the right side) -->
     {% if user.is_staff or user.is_superuser %}
-    <button
-      id="add-medical-btn"
-      class="items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
-    >
-      + Add Record
-    </button>
-    <button
-      id="add-financial-btn"
-      class="hidden items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
-    >
-      + Add Record
-    </button>
-    <button
-    id="add-odontogram-btn"
-    class="hidden items-center px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none"
-  >
-    + Add Record
-  </button>
+    <div class="flex-shrink-0">
+      <button
+        id="add-medical-btn"
+        class="w-full sm:w-auto px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none text-sm whitespace-nowrap hidden"
+      >
+        + Add Record
+      </button>
+      <button
+        id="add-financial-btn"
+        class="w-full sm:w-auto px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none text-sm whitespace-nowrap hidden"
+      >
+        + Add Record
+      </button>
+      <button
+        id="add-odontogram-btn"
+        class="w-full sm:w-auto px-4 py-2 rounded-lg bg-green-600 text-white font-semibold shadow hover:bg-green-700 focus:outline-none text-sm whitespace-nowrap hidden"
+      >
+        + Add Record
+      </button>
+    </div>
     {% endif %}
-</div>
-
   </div>
+</div>
 
   <!--======================= TAB CONTENTS =======================-->
 
   <!-- === PATIENT INFO TAB CONTENT === -->
   <div id="patientInfoContent" class="space-y-4">
-    <div class="bg-white shadow rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4">Patient Information</h2>
+    <div class="bg-white shadow rounded-lg p-4 sm:p-6">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Patient Information</h2>
       <button type="button" id="editPatientBtn"
-        class="mb-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+        class="mb-4 w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
         Edit Information
       </button>
-      <!--PatienT data-->
-      <div id="patientInfoView">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-     <div>
-      <h2 class="text-md font-semibold mb-2">Patient Data</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-        <p><span class="font-semibold">Age:</span> {{ patient.age }}</p>
-        <p><span class="font-semibold">Gender:</span> {{ patient.gender }}</p>
-        <p><span class="font-semibold">Occupation:</span> {{ patient.occupation }}</p>
-
-        <p><span class="font-semibold">Telephone:</span> {{ patient.telephone }}</p>
-        <p><span class="font-semibold">Address:</span> {{ patient.address }}</p>
-        <p><span class="font-semibold">Email:</span> {{ patient.email }}</p>
-      </div>
-    </div>
-
-    <!-- Medical Data -->
-    <div>
-      <h3 class="text-md font-semibold mb-2">Medical Data</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-        <p><span class="font-semibold">Particular Condition:</span> {{ patient.particular_condition }}</p>
-        <p><span class="font-semibold">Allergy:</span> {{ patient.allergy }}</p>
-        <p><span class="font-semibold">Pregnancy Status:</span> {{ patient.pregnancy_status }}</p>
-        <p><span class="font-semibold">Medications:</span> {{ patient.medications }}</p>
-        <p class="md:col-span-2">
-          <span class="font-semibold">Abnormal Bleeding History:</span> {{ patient.abnormal_bleeding_history }}
-        </p>
-      </div>
-    </div>
-
-<!-- X-ray Images -->
-<div>
-  <h3 class="text-md font-semibold mb-2">X-ray Attachments</h3>
-  {% if patient.xrays.all %}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {% for xray in patient.xrays.all %}
-        <div class="relative group border rounded-md overflow-hidden hover:shadow">
-          <a href="{{ xray.file.url }}" target="_blank" class="block">
-            <img src="{{ xray.file.url }}" alt="X-ray" class="w-full h-32 object-cover">
-          </a>
-          {% if user.is_staff or user.is_superuser %}
-          <!-- Delete button (shows on hover) -->
-          <form method="post" action="{% url 'patient:delete_xray' xray.id %}" 
-                class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                onsubmit="return confirm('Are you sure you want to delete this X-ray?');">
-            {% csrf_token %}
-            <button type="submit" 
-                    class="bg-red-600 text-white p-1 rounded-full hover:bg-red-700 shadow-lg">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </form>
-          {% endif %}
-          {% if xray.description %}
-          <p class="text-xs text-gray-600 p-2 bg-gray-50">{{ xray.description }}</p>
-          {% endif %}
-        </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <p class="text-sm text-gray-500">No X-ray images uploaded.</p>
-  {% endif %}
-</div>
-
-  </div>
-  </div>
-  <form method="post" action="{% url 'patient:medical_history' pk=patient.id %}" id="patientInfoForm" class="hidden space-y-6" enctype="multipart/form-data">
-      {% csrf_token %}
-      <input type="hidden" name="update_patient_info" value="1">
       
-      <!-- Patient Data Section -->
-      <div>
-        <h3 class="text-md font-semibold mb-3 text-gray-700">Patient Data</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Age -->
+      <!--Patient data view-->
+      <div id="patientInfoView">
+        <div class="space-y-6">
+          <!-- Patient Data -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
-            <input type="number" name="age" value="{{ patient.age }}" 
-                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <h2 class="text-md font-semibold mb-3">Patient Data</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+              <p><span class="font-semibold">Age:</span> {{ patient.age }}</p>
+              <p><span class="font-semibold">Gender:</span> {{ patient.gender }}</p>
+              <p><span class="font-semibold">Occupation:</span> {{ patient.occupation }}</p>
+              <p><span class="font-semibold">Telephone:</span> {{ patient.telephone }}</p>
+              <p><span class="font-semibold">Address:</span> {{ patient.address }}</p>
+              <p><span class="font-semibold">Email:</span> {{ patient.email }}</p>
+            </div>
           </div>
-          
-          <!-- Gender -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-            <select name="gender" class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Select</option>
-              <option value="Male" {% if patient.gender == "Male" %}selected{% endif %}>Male</option>
-              <option value="Female" {% if patient.gender == "Female" %}selected{% endif %}>Female</option>
-              <option value="Other" {% if patient.gender == "Other" %}selected{% endif %}>Other</option>
-            </select>
-          </div>
-          
-          <!-- Occupation -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
-            <input type="text" name="occupation" value="{{ patient.occupation }}" 
-                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
-          
-          <!-- Telephone -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Telephone</label>
-            <input type="text" name="telephone" value="{{ patient.telephone }}" 
-                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
-          
-          <!-- Address -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-            <input type="text" name="address" value="{{ patient.address }}" 
-                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
-          
-          <!-- Email -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" name="email" value="{{ patient.email }}" 
-                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
-        </div>
-      </div>
 
-      <!-- Medical Data Section -->
-      <div>
-        <h3 class="text-md font-semibold mb-3 text-gray-700">Medical Data</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Particular Condition -->
+          <!-- Medical Data -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Particular Condition</label>
-            <textarea name="particular_condition" rows="2" 
-                      class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.particular_condition }}</textarea>
+            <h3 class="text-md font-semibold mb-3">Medical Data</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <p><span class="font-semibold">Particular Condition:</span> {{ patient.particular_condition }}</p>
+              <p><span class="font-semibold">Allergy:</span> {{ patient.allergy }}</p>
+              <p><span class="font-semibold">Pregnancy Status:</span> {{ patient.pregnancy_status }}</p>
+              <p><span class="font-semibold">Medications:</span> {{ patient.medications }}</p>
+              <p class="sm:col-span-2">
+                <span class="font-semibold">Abnormal Bleeding History:</span> {{ patient.abnormal_bleeding_history }}
+              </p>
+            </div>
           </div>
-          
-          <!-- Allergy -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Allergy</label>
-            <textarea name="allergy" rows="2" 
-                      class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.allergy }}</textarea>
-          </div>
-          
-          <!-- Pregnancy Status -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Pregnancy Status</label>
-            <input type="text" name="pregnancy_status" value="{{ patient.pregnancy_status }}" 
-                   class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
-          
-          <!-- Medications -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Medications</label>
-            <textarea name="medications" rows="2" 
-                      class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.medications }}</textarea>
-          </div>
-          
-          <!-- Abnormal Bleeding History -->
-          <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Abnormal Bleeding History</label>
-            <textarea name="abnormal_bleeding_history" rows="2" 
-                      class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.abnormal_bleeding_history }}</textarea>
-          </div>
-        </div>
-      </div>
-      <!-- X-ray Upload Section -->
-      <div>
-        <h3 class="text-md font-semibold mb-3 text-gray-700">Upload X-ray Images</h3>
-        <div class="space-y-3">
-          <!-- File input -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Select X-ray Images (Multiple allowed)</label>
-            <input 
-              type="file" 
-              name="xray_images" 
-              accept="image/*"
-              multiple
-              class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p class="text-xs text-gray-500 mt-1">You can select multiple images at once</p>
-          </div>
-          
-          <!-- Optional description -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
-            <input 
-              type="text" 
-              name="xray_description"
-              placeholder="e.g., Panoramic X-ray, Right molar, etc."
-              class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-      </div>
-      <!-- Save and Cancel Buttons -->
-      <div class="flex justify-end gap-3">
-        <button type="button" id="cancelEditBtn"
-                class="px-6 py-2 bg-gray-500 text-white font-medium rounded-md hover:bg-gray-600 focus:outline-none">
-          Cancel
-        </button>
-        <button type="submit" 
-                class="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none">
-          Update Information
-        </button>
-      </div>
-    </form>
-    </div>
-  </div>
 
-  <!-- === MEDICAL TAB CONTENT === -->
-  <div id="medicalContent" class="space-y-4 hidden">
-    <div class="overflow-x-auto bg-white shadow rounded-lg">
-      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Dentist
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Reason
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Diagnosis
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Service
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Treatment
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Prescriptions
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {% for record in medical_history %}
-          <tr class="hover:bg-gray-100">
-            <td class="px-4 py-2">{{ record.date|date:"Y-m-d" }}</td>
-            <td class="px-4 py-2">{{ record.dentist }}</td>
-            <td class="px-4 py-2">{{ record.reason }}</td>
-            <td class="px-4 py-2">{{ record.diagnosis }}</td>
-            <td class="px-4 py-2">{{ record.service }}</td>
-            <td class="px-4 py-2">{{ record.treatment }}</td>
-            <td class="px-4 py-2">{{ record.prescriptions }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="7" class="px-4 py-6 text-center text-gray-500">
-              No medical history records yet.
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
- <!-- === BILLING TAB CONTENT === -->
-<div id="financialContent" class="space-y-4 hidden">
-  <div class="overflow-x-auto bg-white shadow rounded-lg">
-    <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">Date Issued</th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">Type/Service</th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">Amount</th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">Payment Status</th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">Appointment</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        {% for record in billing_records %}
-        <tr class="hover:bg-gray-100">
-          <td class="px-4 py-2">{{ record.date_issued|date:"Y-m-d" }}</td>
-          <td class="px-4 py-2">{{ record.type }}</td>
-          <td class="px-4 py-2">₱{{ record.amount|floatformat:2 }}</td>
-          <td class="px-4 py-2">
-            <span class="px-2 py-1 rounded text-xs font-medium
-              {% if record.payment_status == 'paid' %}bg-green-100 text-green-800
-              {% elif record.payment_status == 'pending' %}bg-yellow-100 text-yellow-800
-              {% else %}bg-red-100 text-red-800{% endif %}">
-              {{ record.payment_status|title }}
-            </span>
-          </td>
-          <td class="px-4 py-2">
-            {% if record.appointment %}
-              Appointment #{{ record.appointment.id }}
+          <!-- X-ray Images -->
+          <div>
+            <h3 class="text-md font-semibold mb-3">X-ray Attachments</h3>
+            {% if patient.xrays.all %}
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {% for xray in patient.xrays.all %}
+                  <div class="relative group border rounded-md overflow-hidden hover:shadow">
+                    <a href="{{ xray.file.url }}" target="_blank" class="block">
+                      <img src="{{ xray.file.url }}" alt="X-ray" class="w-full h-24 sm:h-32 object-cover">
+                    </a>
+                    {% if user.is_staff or user.is_superuser %}
+                    <form method="post" action="{% url 'patient:delete_xray' xray.id %}" 
+                          class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onsubmit="return confirm('Are you sure you want to delete this X-ray?');">
+                      {% csrf_token %}
+                      <button type="submit" 
+                              class="bg-red-600 text-white p-1 rounded-full hover:bg-red-700 shadow-lg">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                      </button>
+                    </form>
+                    {% endif %}
+                    {% if xray.description %}
+                    <p class="text-xs text-gray-600 p-2 bg-gray-50">{{ xray.description }}</p>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
             {% else %}
-              Manual Entry
+              <p class="text-sm text-gray-500">No X-ray images uploaded.</p>
             {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5" class="px-4 py-6 text-center text-gray-500">
-            No billing records yet.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Form -->
+      <form method="post" action="{% url 'patient:medical_history' pk=patient.id %}" id="patientInfoForm" class="hidden space-y-6" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="update_patient_info" value="1">
+        
+        <!-- Patient Data Section -->
+        <div>
+          <h3 class="text-md font-semibold mb-3 text-gray-700">Patient Data</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
+              <input type="number" name="age" value="{{ patient.age }}" 
+                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+              <select name="gender" class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Select</option>
+                <option value="Male" {% if patient.gender == "Male" %}selected{% endif %}>Male</option>
+                <option value="Female" {% if patient.gender == "Female" %}selected{% endif %}>Female</option>
+                <option value="Other" {% if patient.gender == "Other" %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
+              <input type="text" name="occupation" value="{{ patient.occupation }}" 
+                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Telephone</label>
+              <input type="text" name="telephone" value="{{ patient.telephone }}" 
+                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+              <input type="text" name="address" value="{{ patient.address }}" 
+                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" name="email" value="{{ patient.email }}" 
+                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- Medical Data Section -->
+        <div>
+          <h3 class="text-md font-semibold mb-3 text-gray-700">Medical Data</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Particular Condition</label>
+              <textarea name="particular_condition" rows="2" 
+                        class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.particular_condition }}</textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Allergy</label>
+              <textarea name="allergy" rows="2" 
+                        class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.allergy }}</textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Pregnancy Status</label>
+              <input type="text" name="pregnancy_status" value="{{ patient.pregnancy_status }}" 
+                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Medications</label>
+              <textarea name="medications" rows="2" 
+                        class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.medications }}</textarea>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Abnormal Bleeding History</label>
+              <textarea name="abnormal_bleeding_history" rows="2" 
+                        class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.abnormal_bleeding_history }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- X-ray Upload Section -->
+        <div>
+          <h3 class="text-md font-semibold mb-3 text-gray-700">Upload X-ray Images</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Select X-ray Images (Multiple allowed)</label>
+              <input 
+                type="file" 
+                name="xray_images" 
+                accept="image/*"
+                multiple
+                class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p class="text-xs text-gray-500 mt-1">You can select multiple images at once</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+              <input 
+                type="text" 
+                name="xray_description"
+                placeholder="e.g., Panoramic X-ray, Right molar, etc."
+                class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Save and Cancel Buttons -->
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
+          <button type="button" id="cancelEditBtn"
+                  class="w-full sm:w-auto px-6 py-2 bg-gray-500 text-white font-medium rounded-md hover:bg-gray-600 focus:outline-none text-sm">
+            Cancel
+          </button>
+          <button type="submit" 
+                  class="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none text-sm">
+            Update Information
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
+
+  <!-- === TREATMENT HISTORY TAB CONTENT === -->
+  <div id="medicalContent" class="space-y-4 hidden">
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-max divide-y divide-gray-200 text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700 whitespace-nowrap">Date</th>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700 whitespace-nowrap">Dentist</th>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700">Services</th>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700 whitespace-nowrap">Amount</th>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700">Findings</th>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700">Prescriptions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for record in medical_history %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ record.date|date:"M d, Y" }}</td>
+              <td class="px-3 sm:px-4 py-2">{{ record.dentist }}</td>
+              <td class="px-3 sm:px-4 py-2">{{ record.services }}</td>
+              <td class="px-3 sm:px-4 py-2 whitespace-nowrap">₱{{ record.amount|floatformat:2 }}</td>
+              <td class="px-3 sm:px-4 py-2">{{ record.findings }}</td>
+              <td class="px-3 sm:px-4 py-2">{{ record.prescriptions }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="px-4 py-6 text-center text-gray-500">
+                No treatment history records yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- === BILLING TAB CONTENT === -->
+  <div id="financialContent" class="space-y-4 hidden">
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-max divide-y divide-gray-200 text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700 whitespace-nowrap">Date</th>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700 whitespace-nowrap">Bill Type</th>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700 whitespace-nowrap">Payment Mode</th>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700 whitespace-nowrap">Amount</th>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700 whitespace-nowrap">Total Bill</th>
+              <th class="px-3 sm:px-4 py-2 text-left font-semibold text-gray-700 whitespace-nowrap">Balance</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for record in financial_history %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ record.date|date:"M d, Y" }}</td>
+              <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ record.bill_type }}</td>
+              <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ record.payment_mode }}</td>
+              <td class="px-3 sm:px-4 py-2 whitespace-nowrap">₱{{ record.amount|floatformat:2 }}</td>
+              <td class="px-3 sm:px-4 py-2 whitespace-nowrap">₱{{ record.total_bill|floatformat:2 }}</td>
+              <td class="px-3 sm:px-4 py-2 whitespace-nowrap">₱{{ record.balance|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="px-4 py-6 text-center text-gray-500">
+                No billing records yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
   <!-- === ODONTOGRAM TAB CONTENT === -->
   <div id="odontogramContent" class="space-y-4 hidden">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
       <!-- Odontogram -->
-      <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-lg font-semibold mb-4 text-center">Odontogram</h2>
-        <div class="grid grid-cols-1 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+        <h2 class="text-base sm:text-lg font-semibold mb-4 text-center">Odontogram</h2>
+        <div class="grid grid-cols-8 gap-1 sm:gap-2">
           {% for tooth_num in tooth_num %}
           <button
-            class="w-10 h-10 flex items-center justify-center border rounded hover:bg-blue-100 text-sm"
+            class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center border rounded hover:bg-blue-100 text-xs sm:text-sm"
             onclick="selectTooth('{{ tooth_num }}')"
           >
             {{ tooth_num }}
@@ -388,370 +356,424 @@
         </div>
       </div>
 
-      <!-- Show Selection-->
-      <div class="bg-white rounded-lg shadow p-6">
+      <!-- Tooth History -->
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6">
         <div id="tooth-history">
-          <p class="text-gray-500 text-center">
+          <p class="text-gray-500 text-center text-sm">
             Select a tooth to view its history
           </p>
         </div>
       </div>
-
     </div>
   </div>
+
   <!-- Add Record Popup -->
   <div
     id="modal-popup"
-    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4"
   >
     <div
       id="popup-content"
-      class="bg-white rounded-lg shadow-lg w-full max-w-lg max-h-[80vh] flex flex-col transform transition-all duration-200 opacity-0 scale-95"
+      class="bg-white rounded-lg shadow-lg w-full max-w-lg max-h-[90vh] sm:max-h-[80vh] flex flex-col transform transition-all duration-200 opacity-0 scale-95"
     >
-    <div class="px-6 pt-5 pb-3 border-b">
-      <h2 class="text-lg font-semibold mb-4 text-center">Add Record</h2>
-    </div>
-     <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-      <!-- Medical History Form -->
-      <div class="flex-1 overflow-y-auto pr-2">
-      <form
-        id="medicalForm" 
-        method="post"
-        action="{% url 'patient:add_medical_history' patient.id %}"
-        class="space-y-3 hidden"
-      >
-        {% csrf_token %}
-        <input
-          type="date"
-          name="date"
-          placeholder="Date"
-          required
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="text"
-          name="dentist"
-          placeholder="Dentist"
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="text"
-          name="reason"
-          placeholder="Reason"
-          required
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="text"
-          name="diagnosis"
-          placeholder="Diagnosis"
-          required
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="text"
-          name="service"
-          placeholder="Service"
-          required
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="text"
-          name="treatment"
-          placeholder="Treatment"
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="text"
-          name="prescriptions"
-          placeholder="Prescriptions"
-          class="w-full border rounded-md p-2 text-sm"
-        />
-
-        <div class="flex justify-end gap-2 pt-3">
-          <button
-            type="button"
-            id="close-popup-btn"
-            class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Save
-          </button>
-        </div>
-      </form>
-  <!-- Financial Form  -->
-      <form
-        id="financialForm"
-        method="post"
-        action="{% url 'patient:add_financial_history' patient.id %}"
-        class="space-y-3 hidden"
-      >
-        {% csrf_token %}
-        <input
-          type="number"
-          name="number"
-          placeholder="Number"
-          required
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="date"
-          name="date" required
-          placeholder="Date"
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="text"
-          name="description" 
-          placeholder="Description"
-          required
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="time"
-          name="time"
-          placeholder="Time"
-          required
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="text"
-          name="type"
-          placeholder="Type"
-          required
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="number"
-          name="amount"
-          placeholder="Amount"
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <input
-          type="number"
-          name="balance"
-          placeholder="Balance"
-          class="w-full border rounded-md p-2 text-sm"
-        />
-        <div class="flex justify-end gap-2 pt-3">
-          <button
-            type="button"
-            id="close-popup-btn"
-            class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Save
-          </button>
-        </div>
-      </form>
-      <!-- Odontogram Form -->
-      <form
-        id="odontogramForm"
-        method="post"
-        action="{% url 'patient:add_odontogram' patient.id %}"
-        class="flex flex-col gap-3 h-full hidden"
-      >
-        {% csrf_token %}
-
-        <div id="odontogram-records" class="space-y-4 overflow-y-auto pr-2">
-          <!-- ONE RECORD TEMPLATE -->
-          <div class="odontogram-record border rounded-md p-3 space-y-3">
-            <input
-              type="date"
-              name="date_0"
-              placeholder="Date of Operation"
-              required
-              class="w-full border rounded-md p-2 text-sm"
-            />
-
-            <label class="font-semibold">Tooth Number:</label>
-            <!-- Check All-->
-            <div class="flex items-center gap-2 mb-1 text-xs">
-  <input
-    type="checkbox"
-    class="tooth-check-all rounded border-gray-300"
-  />
-  <span class="text-gray-600">Check all teeth</span>
-</div>
-            <div class="grid grid-cols-8 gap-2 max-h-40 overflow-y-auto mb-2">
-              {% for tooth_num in tooth_num %}
-              <label class="text-center text-sm">
-                <input type="checkbox" name="tooth_number_0" value="{{ tooth_num }}" class="mr-1 tooth-checkbox">
-                <span>{{ tooth_num }}</span>
-              </label>
-              {% endfor %}
-            </div>
-
-            <label class="font-semibold">Select Services:</label>
-            <div class="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1">
-              {% for service in services %}
-              <label class="flex items-center space-x-2">
-                <input type="checkbox" name="services_0" value="{{ service.id }}" class="rounded border-gray-300">
-                <span>{{ service.service_name }}</span>
-              </label>
-              {% endfor %}
-            </div>
-
-            <!-- Dentist Name -->
-            <select name="dentist_0" required class="w-full border rounded-md p-2 text-sm">
-              <option value="" disabled selected>Select Dentist</option>
-              {% for dentist in dentists %}
-              <option value="{{ dentist.id }}">{{ dentist.name }}</option>
-              {% endfor %}
-            </select>
-
+      <div class="px-4 sm:px-6 pt-4 sm:pt-5 pb-3 border-b flex-shrink-0">
+        <h2 class="text-base sm:text-lg font-semibold text-center">Add Record</h2>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
+        <!-- Medical History Form -->
+        <form
+          id="medicalForm" 
+          method="post"
+          action="{% url 'patient:add_medical_history' patient.id %}"
+          class="space-y-3 hidden"
+        >
+          {% csrf_token %}
+          <input
+            type="date"
+            name="date"
+            placeholder="Date"
+            required
+            class="w-full border rounded-md p-2 text-sm"
+          />
+          <input
+            type="text"
+            name="dentist"
+            placeholder="Dentist"
+            class="w-full border rounded-md p-2 text-sm"
+          />
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Services</label>
             <input
               type="text"
-              name="status_0"
-              placeholder="Status"
-              required
-              class="w-full border rounded-md p-2 text-sm"
+              id="medical-service-search"
+              placeholder="Search services..."
+              autocomplete="off"
+              class="w-full border rounded-md p-2 text-sm mb-2"
             />
-
-            <!-- Remove button for extra records -->
-            <button
-              type="button"
-              class="remove-record hidden mt-2 text-xs text-red-600 hover:underline"
-            >
-              Remove this record
-            </button>
+            <div class="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1" id="medical-services-list">
+              {% for service in services %}
+              <label class="flex items-center justify-between hover:bg-gray-50 p-1 rounded medical-service-item">
+                <div class="flex items-center space-x-2">
+                  <input 
+                    type="checkbox" 
+                    name="services" 
+                    value="{{ service.id }}" 
+                    data-price="{{ service.price }}"
+                    data-name="{{ service.service_name }}"
+                    class="medical-service-checkbox rounded border-gray-300"
+                  >
+                  <span class="service-name text-sm">{{ service.service_name }}</span>
+                </div>
+                <span class="text-xs sm:text-sm text-gray-600">₱{{ service.price }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            <div id="selected-services" class="mt-2 text-xs text-gray-600"></div>
           </div>
-        </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Total Amount</label>
+            <input
+              type="number"
+              id="medical-amount"
+              name="amount"
+              placeholder="Amount will be calculated automatically"
+              step="0.01"
+              readonly
+              class="w-full border rounded-md p-2 text-sm bg-gray-50"
+            />
+          </div>
+          
+          <input
+            type="text"
+            name="findings"
+            placeholder="Findings"
+            class="w-full border rounded-md p-2 text-sm"
+          />
+          <input
+            type="text"
+            name="prescriptions"
+            placeholder="Prescriptions"
+            class="w-full border rounded-md p-2 text-sm"
+          />
 
-        <div class="flex justify-between gap-2 pt-3 border-t mt-3 pt-3">
-          <button
-            type="button"
-            id="add-more-odontogram"
-            class="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
-          >
-            + Add More
-          </button>
-
-          <div class="flex gap-2">
+          <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3">
             <button
               type="button"
-              id="close-popup-btn"
-              class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+              class="close-popup-btn w-full sm:w-auto px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
             >
               Cancel
             </button>
             <button
               type="submit"
-              class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              class="w-full sm:w-auto px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               Save
             </button>
           </div>
-        </div>
-      </form>
+        </form>
+
+        <!-- Financial Form -->
+        <form
+          id="financialForm"
+          method="post"
+          action="{% url 'patient:add_financial_history' patient.id %}"
+          class="space-y-3 hidden"
+        >
+          {% csrf_token %}
+          
+          <input
+            type="date"
+            name="date" 
+            required
+            placeholder="Date"
+            class="w-full border rounded-md p-2 text-sm"
+          />
+          
+          <select
+            name="bill_type" 
+            required
+            class="w-full border rounded-md p-2 text-sm"
+          >
+            <option value="">Select Bill Type</option>
+            <option value="Services">Services</option>
+            <option value="Product">Product</option>
+            <option value="Consultation">Consultation</option>
+          </select>
+          
+          <select
+            name="payment"
+            required
+            class="w-full border rounded-md p-2 text-sm"
+          >
+            <option value="">Select Payment Mode</option>
+            <option value="Cash">Cash</option>
+            <option value="Bank">Bank</option>
+            <option value="GCash">GCash</option>
+            <option value="Paymaya">Paymaya</option>
+          </select>
+          
+          <input
+            type="number"
+            name="amount"
+            placeholder="Amount"
+            step="0.01"
+            class="w-full border rounded-md p-2 text-sm"
+          />
+          
+          <input
+            type="number"
+            name="total_bill"
+            placeholder="Total Bill"
+            required
+            step="0.01"
+            class="w-full border rounded-md p-2 text-sm"
+          />
+          
+          <input
+            type="number"
+            name="balance"
+            placeholder="Balance"
+            step="0.01"
+            class="w-full border rounded-md p-2 text-sm"
+          />
+          
+          <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3">
+            <button
+              type="button"
+              class="close-popup-btn w-full sm:w-auto px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="w-full sm:w-auto px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+
+        <!-- Odontogram Form -->
+        <form
+          id="odontogramForm"
+          method="post"
+          action="{% url 'patient:add_odontogram' patient.id %}"
+          class="flex flex-col gap-3 h-full hidden"
+        >
+          {% csrf_token %}
+
+          <div id="odontogram-records" class="space-y-4 overflow-y-auto pr-2">
+            <div class="odontogram-record border rounded-md p-3 space-y-3">
+              <input
+                type="date"
+                name="date_0"
+                placeholder="Date of Operation"
+                required
+                class="w-full border rounded-md p-2 text-sm"
+              />
+
+              <label class="font-semibold text-sm">Tooth Number:</label>
+              <div class="flex items-center gap-2 mb-1 text-xs">
+                <input
+                  type="checkbox"
+                  class="tooth-check-all rounded border-gray-300"
+                />
+                <span class="text-gray-600">Check all teeth</span>
+              </div>
+              
+              <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 max-h-40 overflow-y-auto mb-2">
+                {% for tooth_num in tooth_num %}
+                <label class="text-center text-xs sm:text-sm">
+                  <input type="checkbox" name="tooth_number_0" value="{{ tooth_num }}" class="mr-1 tooth-checkbox">
+                  <span>{{ tooth_num }}</span>
+                </label>
+                {% endfor %}
+              </div>
+
+              <label class="font-semibold text-sm">Select Services:</label>
+              <div class="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1">
+                {% for service in services %}
+                <label class="flex items-center space-x-2 text-sm">
+                  <input type="checkbox" name="services_0" value="{{ service.id }}" class="rounded border-gray-300">
+                  <span>{{ service.service_name }}</span>
+                </label>
+                {% endfor %}
+              </div>
+
+              <select name="dentist_0" required class="w-full border rounded-md p-2 text-sm">
+                <option value="" disabled selected>Select Dentist</option>
+                {% for dentist in dentists %}
+                <option value="{{ dentist.id }}">{{ dentist.name }}</option>
+                {% endfor %}
+              </select>
+
+              <input
+                type="text"
+                name="status_0"
+                placeholder="Status"
+                required
+                class="w-full border rounded-md p-2 text-sm"
+              />
+
+              <button
+                type="button"
+                class="remove-record hidden mt-2 text-xs text-red-600 hover:underline"
+              >
+                Remove this record
+              </button>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row justify-between gap-2 pt-3 border-t mt-3">
+            <button
+              type="button"
+              id="add-more-odontogram"
+              class="w-full sm:w-auto px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
+            >
+              + Add More
+            </button>
+
+            <div class="flex flex-col-reverse sm:flex-row gap-2">
+              <button
+                type="button"
+                class="close-popup-btn w-full sm:w-auto px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="w-full sm:w-auto px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </div>
-    
-  </div>
 
+{% endblock %} 
 
+{% block extra_js %}
+<script src="{% static 'js/modal.js' %}"></script>
 
-  {% endblock %} {% block extra_js %}
-  <script src="{% static 'js/modal.js' %}"></script>
+//scripts for tab functionality
+<script>
+  const medicalTab = document.getElementById("medicalTab");
+  const financialTab = document.getElementById("financialTab");
+  const medicalContent = document.getElementById("medicalContent");
+  const financialContent = document.getElementById("financialContent");
+  const odontogramTab = document.getElementById("odontogramTab");
+  const odontogramContent = document.getElementById("odontogramContent"); 
+  const patientInfoTab = document.getElementById("patientInfoTab");
+  const patientInfoContent = document.getElementById("patientInfoContent");
+  
+  // Add Record Buttons
+  const addMedicalBtn = document.getElementById("add-medical-btn");
+  const addFinancialBtn = document.getElementById("add-financial-btn");
+  const addOdontogramBtn = document.getElementById("add-odontogram-btn");
+  
+  medicalTab.addEventListener("click", () => {
+    medicalContent.classList.remove("hidden");
+    financialContent.classList.add("hidden");
+    odontogramContent.classList.add("hidden");
+    patientInfoContent.classList.add("hidden");
 
-  <script>
-    const medicalTab = document.getElementById("medicalTab");
-    const financialTab = document.getElementById("financialTab");
-    const medicalContent = document.getElementById("medicalContent");
-    const financialContent = document.getElementById("financialContent");
-    const odontogramTab = document.getElementById("odontogramTab");
-    const odontogramContent = document.getElementById("odontogramContent"); 
-    const patientInfoTab = document.getElementById("patientInfoTab");
-    const patientInfoContent = document.getElementById("patientInfoContent");
-    
+    // Show only medical add button
+    addMedicalBtn.classList.remove("hidden");
+    addFinancialBtn.classList.add("hidden");
+    addOdontogramBtn.classList.add("hidden");
 
-    medicalTab.addEventListener("click", () => {
-      medicalContent.classList.remove("hidden");
-      financialContent.classList.add("hidden");
-      odontogramContent.classList.add("hidden");
-      patientInfoContent.classList.add("hidden");
+    odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
+    odontogramTab.classList.replace("text-white", "text-gray-700");
 
-      odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
-      odontogramTab.classList.replace("text-white", "text-gray-700");
+    medicalTab.classList.replace("bg-gray-200", "bg-blue-600");
+    medicalTab.classList.replace("text-gray-700", "text-white");
 
-      medicalTab.classList.replace("bg-gray-200", "bg-blue-600");
-      medicalTab.classList.replace("text-gray-700", "text-white");
+    financialTab.classList.replace("bg-blue-600", "bg-gray-200");
+    financialTab.classList.replace("text-white", "text-gray-700");
 
-      financialTab.classList.replace("bg-blue-600", "bg-gray-200");
-      financialTab.classList.replace("text-white", "text-gray-700");
+    patientInfoTab.classList.replace("bg-blue-600", "bg-gray-200");
+    patientInfoTab.classList.replace("text-white", "text-gray-700");
+  });
 
-      patientInfoTab.classList.replace("bg-blue-600", "bg-gray-200");
-      patientInfoTab.classList.replace("text-white", "text-gray-700");
-    });
+  financialTab.addEventListener("click", () => {
+    financialContent.classList.remove("hidden");
+    medicalContent.classList.add("hidden");
+    odontogramContent.classList.add("hidden");
+    patientInfoContent.classList.add("hidden");
 
-    financialTab.addEventListener("click", () => {
-      financialContent.classList.remove("hidden");
-      medicalContent.classList.add("hidden");
-      odontogramContent.classList.add("hidden");
-      patientInfoContent.classList.add("hidden");
+    // Show only financial add button
+    addMedicalBtn.classList.add("hidden");
+    addFinancialBtn.classList.remove("hidden");
+    addOdontogramBtn.classList.add("hidden");
 
-      odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
-      odontogramTab.classList.replace("text-white", "text-gray-700");
+    odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
+    odontogramTab.classList.replace("text-white", "text-gray-700");
 
-      financialTab.classList.replace("bg-gray-200", "bg-blue-600");
-      financialTab.classList.replace("text-gray-700", "text-white");
+    financialTab.classList.replace("bg-gray-200", "bg-blue-600");
+    financialTab.classList.replace("text-gray-700", "text-white");
 
-      medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
-      medicalTab.classList.replace("text-white", "text-gray-700");
+    medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
+    medicalTab.classList.replace("text-white", "text-gray-700");
 
-      patientInfoTab.classList.replace("bg-blue-600", "bg-gray-200");
-      patientInfoTab.classList.replace("text-white", "text-gray-700");
-    });
+    patientInfoTab.classList.replace("bg-blue-600", "bg-gray-200");
+    patientInfoTab.classList.replace("text-white", "text-gray-700");
+  });
 
-    odontogramTab.addEventListener("click", () => {
-      odontogramContent.classList.remove("hidden");
-      medicalContent.classList.add("hidden");
-      financialContent.classList.add("hidden");
-      patientInfoContent.classList.add("hidden");
+  odontogramTab.addEventListener("click", () => {
+    odontogramContent.classList.remove("hidden");
+    medicalContent.classList.add("hidden");
+    financialContent.classList.add("hidden");
+    patientInfoContent.classList.add("hidden");
 
-      odontogramTab.classList.replace("bg-gray-200", "bg-blue-600");
-      odontogramTab.classList.replace("text-gray-700", "text-white");
+    // Show only odontogram add button
+    addMedicalBtn.classList.add("hidden");
+    addFinancialBtn.classList.add("hidden");
+    addOdontogramBtn.classList.remove("hidden");
 
-      medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
-      medicalTab.classList.replace("text-white", "text-gray-700");
+    odontogramTab.classList.replace("bg-gray-200", "bg-blue-600");
+    odontogramTab.classList.replace("text-gray-700", "text-white");
 
-      financialTab.classList.replace("bg-blue-600", "bg-gray-200");
-      financialTab.classList.replace("text-white", "text-gray-700");
+    medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
+    medicalTab.classList.replace("text-white", "text-gray-700");
 
-      patientInfoTab.classList.replace("bg-blue-600", "bg-gray-200");
-      patientInfoTab.classList.replace("text-white", "text-gray-700");
-    });
+    financialTab.classList.replace("bg-blue-600", "bg-gray-200");
+    financialTab.classList.replace("text-white", "text-gray-700");
 
-    patientInfoTab.addEventListener("click", () =>{
-      patientInfoContent.classList.remove("hidden");
-      medicalContent.classList.add("hidden");
-      financialContent.classList.add("hidden");
-      odontogramContent.classList.add("hidden");
+    patientInfoTab.classList.replace("bg-blue-600", "bg-gray-200");
+    patientInfoTab.classList.replace("text-white", "text-gray-700");
+  });
 
-      patientInfoTab.classList.replace("bg-gray-200", "bg-blue-600");
-      patientInfoTab.classList.replace("text-gray-700", "text-white");
+  patientInfoTab.addEventListener("click", () => {
+    patientInfoContent.classList.remove("hidden");
+    medicalContent.classList.add("hidden");
+    financialContent.classList.add("hidden");
+    odontogramContent.classList.add("hidden");
 
-      medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
-      medicalTab.classList.replace("text-white", "text-gray-700");
+    // Hide all add buttons for patient info
+    addMedicalBtn.classList.add("hidden");
+    addFinancialBtn.classList.add("hidden");
+    addOdontogramBtn.classList.add("hidden");
 
-      financialTab.classList.replace("bg-blue-600", "bg-gray-200");
-      financialTab.classList.replace("text-white", "text-gray-700");
+    patientInfoTab.classList.replace("bg-gray-200", "bg-blue-600");
+    patientInfoTab.classList.replace("text-gray-700", "text-white");
 
-      odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
-      odontogramTab.classList.replace("text-white", "text-gray-700");
-    });
-  </script>
+    medicalTab.classList.replace("bg-blue-600", "bg-gray-200");
+    medicalTab.classList.replace("text-white", "text-gray-700");
+
+    financialTab.classList.replace("bg-blue-600", "bg-gray-200");
+    financialTab.classList.replace("text-white", "text-gray-700");
+
+    odontogramTab.classList.replace("bg-blue-600", "bg-gray-200");
+    odontogramTab.classList.replace("text-white", "text-gray-700");
+  });
+</script>
 
   <script>
     const medicalUrl = "{% url 'patient:add_medical_history' patient.id %}";
@@ -763,15 +785,13 @@
 function selectTooth(tooth_num) {
   const patient_id = {{ patient.id }};
   
-  // Highlight selected tooth
-  document.querySelectorAll('.w-10').forEach(btn => {
+  document.querySelectorAll('.w-8, .w-10').forEach(btn => {
     btn.classList.remove('bg-blue-500', 'text-white');
     btn.classList.add('border-gray-300','hover:bg-blue-100','text-black');
   });
   const currentBtn = document.querySelector(`button[onclick="selectTooth('${tooth_num}')"]`);
   currentBtn.classList.add('bg-blue-500','text-white');
 
-  // Fetch tooth history
   fetch(`/dashboard/patient/${ patient_id }/odontogram/history/${tooth_num}/`)
       .then(response => response.json())
       .then(result => {
@@ -780,26 +800,23 @@ function selectTooth(tooth_num) {
       .catch(error => console.error("Fetch Error:", error));
 }
 
-
-// Render tooth history
 function displayToothHistory(tooth_num, data) {
     const historyDiv = document.getElementById("tooth-history");
     let html = `
-      <h3 class="text-lg font-semibold text-center mb-3">Tooth ${tooth_num}</h3>
+      <h3 class="text-base sm:text-lg font-semibold text-center mb-3">Tooth ${tooth_num}</h3>
     `;
 
     if (data.length === 0) {
-      historyDiv.innerHTML = html + `<p class="text-center text-gray-500">No records yet.</p>`
+      historyDiv.innerHTML = html + `<p class="text-center text-gray-500 text-sm">No records yet.</p>`
       return;
     }
 
     data.forEach(record => {
       html += `
-        <div class="p-3 mb-2 border bg-gray-50 rounded">
+        <div class="p-3 mb-2 border bg-gray-50 rounded text-sm">
           <p><strong>Date:</strong> ${record.date || "-"}</p>
           <p><strong>Dentist:</strong> ${record.dentist || "-"}</p>
           <p><strong>Status:</strong> ${record.status || "-"}</p>
-
           <p><strong>Services:</strong> 
             ${record.services &&  record.services.length > 0 
               ? record.services.join(", ")
@@ -820,7 +837,7 @@ function displayToothHistory(tooth_num, data) {
 
     if (!recordsWrapper || !addMoreBtn) return;
 
-    let recordIndex = 0; // highest index used
+    let recordIndex = 0;
 
     function wireCheckAll(recordEl) {
       const checkAllBox = recordEl.querySelector(".tooth-check-all");
@@ -828,7 +845,6 @@ function displayToothHistory(tooth_num, data) {
 
       if (!checkAllBox) return;
 
-      // remove existing listeners by cloning (simple reset)
       const newCheckAll = checkAllBox.cloneNode(true);
       checkAllBox.parentNode.replaceChild(newCheckAll, checkAllBox);
 
@@ -858,7 +874,6 @@ function displayToothHistory(tooth_num, data) {
       wireCheckAll(recordEl);
     }
 
-    // initialise first record
     wireCheckAll(recordsWrapper.querySelector(".odontogram-record"));
 
     addMoreBtn.addEventListener("click", () => {
@@ -880,7 +895,6 @@ function displayToothHistory(tooth_num, data) {
       recordsWrapper.appendChild(newRecord);
     });
 
-    // keep first block non-removable
     const firstRemoveBtn = recordsWrapper.querySelector(".odontogram-record .remove-record");
     if (firstRemoveBtn) {
       firstRemoveBtn.classList.add("hidden");
@@ -888,20 +902,12 @@ function displayToothHistory(tooth_num, data) {
   });
 </script>
 
-<!--Patient Data Script-->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // Toggle between view and edit mode for Patient Information
     const editPatientBtn = document.getElementById("editPatientBtn");
     const cancelEditBtn = document.getElementById("cancelEditBtn");
     const patientInfoView = document.getElementById("patientInfoView");
     const patientInfoForm = document.getElementById("patientInfoForm");
-
-    // Debug: Check if elements exist
-    console.log("Edit button:", editPatientBtn);
-    console.log("Cancel button:", cancelEditBtn);
-    console.log("Info view:", patientInfoView);
-    console.log("Info form:", patientInfoForm);
 
     if (editPatientBtn && cancelEditBtn && patientInfoView && patientInfoForm) {
       editPatientBtn.addEventListener("click", () => {
@@ -915,12 +921,68 @@ function displayToothHistory(tooth_num, data) {
         patientInfoView.classList.remove("hidden");
         editPatientBtn.classList.remove("hidden");
       });
-    } else {
-      console.error("Patient info toggle elements not found!");
     }
   });
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const medicalServiceSearch = document.getElementById('medical-service-search');
+  const medicalServiceCheckboxes = document.querySelectorAll('.medical-service-checkbox');
+  const medicalAmountInput = document.getElementById('medical-amount');
+  const selectedServicesDiv = document.getElementById('selected-services');
+  
+  if (medicalServiceSearch) {
+    medicalServiceSearch.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const serviceItems = document.querySelectorAll('.medical-service-item');
+      
+      serviceItems.forEach(item => {
+        const serviceName = item.querySelector('.service-name');
+        if (serviceName) {
+          const text = serviceName.textContent.toLowerCase();
+          if (text.includes(searchTerm)) {
+            item.style.display = 'flex';
+          } else {
+            item.style.display = 'none';
+          }
+        }
+      });
+    });
+  }
+  
+  function updateMedicalAmount() {
+    let total = 0;
+    let selectedServices = [];
+    
+    medicalServiceCheckboxes.forEach(checkbox => {
+      if (checkbox.checked) {
+        const price = parseFloat(checkbox.dataset.price) || 0;
+        const name = checkbox.dataset.name;
+        total += price;
+        selectedServices.push(name);
+      }
+    });
+    
+    if (medicalAmountInput) {
+      medicalAmountInput.value = total.toFixed(2);
+    }
+    
+    if (selectedServicesDiv) {
+      if (selectedServices.length > 0) {
+        selectedServicesDiv.innerHTML = `<strong>Selected:</strong> ${selectedServices.join(', ')}`;
+      } else {
+        selectedServicesDiv.innerHTML = '';
+      }
+    }
+  }
+  
+  medicalServiceCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', updateMedicalAmount);
+  });
+  
+  updateMedicalAmount();
+});
+</script>
 
-
-  {% endblock %}
+{% endblock %}

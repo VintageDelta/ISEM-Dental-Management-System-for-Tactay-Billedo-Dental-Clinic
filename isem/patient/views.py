@@ -183,33 +183,62 @@ def medical_history(request, pk):
     return render(request, "patient/medical_history.html", {"patient": patient, "medical_history": medical_history_qs, "financial_history": financial_history_qs, "billing_records": billing_records, "tooth_num": tooth_num, "services": Service.objects.all(), "dentists": Dentist.objects.all()})
 
 def add_medical_history(request, patient_id):
-    # for debugging 
-    print("=" * 50)
-    print("ADD_MEDICAL_HISTORY VIEW CALLED")
-    print(f"Patient ID: {patient_id}")
-    print(f"Method: {request.method}")
-    print(f"POST data: {request.POST}")
-    print(f"Is AJAX: {request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
-    print("=" * 50)
-
     patient = get_object_or_404(Patient, pk=patient_id)
+    
     if request.method == "POST":
+        # Get form data first
+        date = request.POST.get("date")
+        dentist = request.POST.get("dentist")
+        service_ids = request.POST.getlist("services")
+        amount = request.POST.get("amount")
+        findings = request.POST.get("findings")
+        prescriptions = request.POST.get("prescriptions")
+        
+        # DEBUG prints
+        print("=" * 50)
+        print("POST DATA:", request.POST)
+        print("Service IDs:", service_ids)
+        
+        # Get service names from IDs
+        from appointment.models import Service
+        
+        # DEBUG: Check what services exist
+        all_services = Service.objects.all()
+        print(f"Total services in database: {all_services.count()}")
+        for s in all_services:
+            print(f"  - ID: {s.id}, Name: {s.service_name}")
+        
+        selected_services = Service.objects.filter(id__in=service_ids)
+        
+        # DEBUG: Print what services were found
+        print(f"Selected Services Objects: {selected_services}")
+        print(f"Found {selected_services.count()} services")
+        for s in selected_services:
+            print(f"  - ID: {s.id}, Name: {s.service_name}")
+        
+        services_text = ", ".join([s.service_name for s in selected_services])
+        
+        print("Final Services Text to Save:", services_text)
+        print("=" * 50)
+        
+        # Convert empty amount to 0
+        amount = amount if amount and amount.strip() else "0"
+
+        # Create medical history record
         MedicalHistory.objects.create(
             patient=patient,
-            date=request.POST.get("date"),
-            dentist=request.POST.get("dentist"),
-            reason=request.POST.get("reason"),
-            diagnosis=request.POST.get("diagnosis"),
-            service=request.POST.get("service"),
-            treatment=request.POST.get("treatment"),
-            prescriptions=request.POST.get("prescriptions"),
+            date=date,
+            dentist=dentist,
+            services=services_text,
+            amount=amount,
+            findings=findings,
+            prescriptions=prescriptions or "",
         )
-        # Return JSON response for AJAX requests
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            print("RETURNING JSON SUCCESS")
-            return JsonResponse({"success": True, "message": "Medical history saved successfully"})
+        
+        messages.success(request, "Treatment history added successfully")
         return redirect("patient:medical_history", pk=patient_id)
-    return render(request, "patient/medical_history.html", {"patient": patient})
+    
+    return redirect("patient:medical_history", pk=patient_id)
 
 # def financial_history(request, patient_id):
 #     patient = get_object_or_404(Patient, pk=patient_id)
@@ -219,7 +248,7 @@ def add_medical_history(request, patient_id):
 #     return render(request, "patient/medical_history.html", {"patient": patient, "history": history, "tooth_num": tooth_num})
 
 def add_financial_history(request, patient_id):
-    #for debugging , really need fucking logs RN!
+    # Debugging logs
     print("=" * 50)
     print("ADD_FINANCIAL_HISTORY VIEW CALLED")
     print(f"Patient ID: {patient_id}")
@@ -229,31 +258,45 @@ def add_financial_history(request, patient_id):
     print("=" * 50)
 
     patient = get_object_or_404(Patient, pk=patient_id)
+    
     if request.method == "POST":
-        # Handle empty strings for decimal fields
+        # Get form data
+        date = request.POST.get("date")
+        bill_type = request.POST.get("bill_type")
+        payment_mode = request.POST.get("payment_mode")
         amount = request.POST.get("amount")
+        total_bill = request.POST.get("total_bill")
         balance = request.POST.get("balance")
         
-        # Convert empty strings to None or 0
-        amount = None if not amount or amount.strip() == '' else amount
-        balance = None if not balance or balance.strip() == '' else balance
+        # Convert empty strings to 0 for decimal fields
+        amount = amount if amount and amount.strip() else "0"
+        total_bill = total_bill if total_bill and total_bill.strip() else "0"
+        balance = balance if balance and balance.strip() else "0"
+
+        print(f"Creating FinancialHistory with: date={date}, bill_type={bill_type}, payment_mode={payment_mode}, amount={amount}, total_bill={total_bill}, balance={balance}")
 
         FinancialHistory.objects.create(
             patient=patient,
-            number=request.POST.get("number"),
-            date=request.POST.get("date"),
-            description=request.POST.get("description"),
-            time=request.POST.get("time"),
-            type=request.POST.get("type"),
-            amount=request.POST.get("amount") or "0",
-            balance=request.POST.get("balance") or "0",
+            date=date,
+            bill_type=bill_type,
+            payment_mode=payment_mode,
+            amount=amount,
+            total_bill=total_bill,
+            balance=balance,
         )
+        
+        print("FinancialHistory created successfully")
+        
         # Return JSON response for AJAX requests
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             print("RETURNING JSON SUCCESS")
-            return JsonResponse({"success": True, "message": "Financial history saved successfully"})
+            return JsonResponse({"success": True, "message": "Billing history saved successfully"})
+        
+        messages.success(request, "Billing history added successfully")
         return redirect("patient:medical_history", pk=patient_id)
-    return render(request, "patient/medical_history", pk=patient_id)
+    
+    return redirect("patient:medical_history", pk=patient_id)
+
 
 TOOTH_NAMES = {
   1: "Upper Right Third Molar (Wisdom Tooth)",

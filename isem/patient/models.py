@@ -29,28 +29,44 @@ class Patient(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 class MedicalHistory(models.Model):
-    patient = models.ForeignKey(Patient, related_name="medical_history", on_delete=models.CASCADE)
-    date = models.DateField(null=True, blank=True)
-    dentist = models.CharField(max_length=255, blank=True)
-    reason = models.TextField(blank=True)
-    diagnosis = models.TextField(null=True, blank=True)
-    service = models.CharField(blank=True, max_length=255)
-    treatment = models.TextField(blank=True)
-    prescriptions = models.TextField(blank=True)   
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='medical_history')
+    date = models.DateField()
+    dentist = models.CharField(max_length=200)
+    services = models.TextField(default='', blank=True)  # Previously "service" or "treatment"
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    findings = models.TextField()  # Previously "diagnosis"
+    prescriptions = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-date', '-created_at']
+        verbose_name = 'Treatment History'
+        verbose_name_plural = 'Treatment Histories'
+    
+    def __str__(self):
+        return f"{self.patient.name} - {self.date} - {self.procedure}"
+    
     
 
 
 class FinancialHistory(models.Model):
-    patient = models.ForeignKey(Patient,
-                                on_delete=models.CASCADE,
-                                related_name='financial_history')  
-    date = models.DateField(blank=True, null=True)
-    number = models.AutoField(primary_key=True) 
-    description = models.TextField(blank=True, null=True)
-    time = models.TimeField()
-    type = models.CharField(max_length=100, null=True, blank=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    balance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='financial_history')
+    date = models.DateField()
+    bill_type = models.CharField(max_length=100, default="")  # e.g., "Consultation", "Treatment", "Cleaning"
+    payment_mode = models.CharField(max_length=50, default="Cash")  # e.g., "Cash", "Card", "GCash"
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Amount paid
+    total_bill = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Total bill amount
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Remaining balance
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-date', '-created_at']
+        verbose_name = 'Billing History'
+        verbose_name_plural = 'Billing Histories'
+    
+    def __str__(self):
+        return f"{self.patient.name} - {self.date} - ₱{self.amount}"
+
 
 class Odontogram(models.Model):
     patient = models.ForeignKey(Patient, related_name="odontograms", on_delete=models.CASCADE)

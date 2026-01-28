@@ -301,11 +301,18 @@ def admin_dashboard(request):
     # Import models
     from appointment.models import Service, Dentist
     
+    # Services Pagination
+    services_qs = Service.objects.all().order_by('service_name')
+    services_paginator = Paginator(services_qs, 10)  # 10 services per page
+    services_page_number = request.GET.get('services_page')
+    services_page_obj = services_paginator.get_page(services_page_number)
+
     return render(request, 'userprofile/admin/admin-dashboard.html', {
         'pending_staff': pending_staff,
         'all_users': page_obj.object_list,  # Paginated users
         'page_obj': page_obj,  # Pagination object
-        'services': Service.objects.all(),
+        'services_page_obj': services_page_obj,  # Paginated services
+        # 'services': Service.objects.all(),
         'dentists': Dentist.objects.all(),
         'branches': [],
     })

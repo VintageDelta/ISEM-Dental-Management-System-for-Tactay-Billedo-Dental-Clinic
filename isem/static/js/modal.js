@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const popup = document.getElementById("modal-popup");
   const popupContent = document.getElementById("popup-content");
   const addBtn = document.getElementById("add-modal-btn");
-  const closeBtn = document.getElementById("close-popup-btn");
+  const closeBtn = document.querySelectorAll(".close-popup-btn");
   const addMedBtn = document.getElementById("add-medical-btn");
   const addFinBtn = document.getElementById("add-financial-btn");
   const addOdontogramBtn = document.getElementById("add-odontogram-btn");
@@ -70,9 +70,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 200);
   };
 
-if (closeBtn) {
-  closeBtn.addEventListener("click", closePopup);
-}
+  // Loop through all close buttons and add event listener
+  closeBtn.forEach(button => {
+    button.addEventListener("click", closePopup);
+  });
+
+  // Optional: Close when clicking outside the modal
+  popup.addEventListener("click", (e) => {
+    if (e.target === popup) closePopup();
+  });
 
   // closeBtn.addEventListener("click", closePopup);
   // popup.addEventListener("click", (e) => {

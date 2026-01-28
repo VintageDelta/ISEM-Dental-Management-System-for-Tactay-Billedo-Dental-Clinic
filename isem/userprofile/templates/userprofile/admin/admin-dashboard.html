@@ -225,7 +225,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          {% for s in services %}
+          {% for s in services_page_obj %}
           <tr class="hover:bg-gray-100">
             <td class="px-4 py-2">{{ s.service_name }}</td>
             <td class="px-4 py-2">₱{{ s.price }}</td>
@@ -240,6 +240,46 @@
         </tbody>
       </table>
     </div>
+      <!-- Services Pagination -->
+  {% if services_page_obj.paginator.num_pages > 1 %}
+  <div class="flex justify-between items-center mt-4 pt-4 border-t">
+    <div class="flex space-x-2 text-sm">
+      {# Previous #}
+      {% if services_page_obj.has_previous %}
+        <a href="?services_page={{ services_page_obj.previous_page_number }}"
+           class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
+      {% else %}
+        <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
+      {% endif %}
+
+      {# Page numbers #}
+      {% for num in services_page_obj.paginator.page_range %}
+        {% if num == services_page_obj.number %}
+          <span class="px-3 py-1 border rounded bg-green-500 text-white">
+            {{ num }}
+          </span>
+        {% else %}
+          <a href="?services_page={{ num }}"
+             class="px-3 py-1 border rounded hover:bg-gray-100">
+            {{ num }}
+          </a>
+        {% endif %}
+      {% endfor %}
+
+      {# Next #}
+      {% if services_page_obj.has_next %}
+        <a href="?services_page={{ services_page_obj.next_page_number }}"
+           class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
+      {% else %}
+        <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
+      {% endif %}
+    </div>
+
+    <span class="text-sm text-gray-600">
+      Page {{ services_page_obj.number }} of {{ services_page_obj.paginator.num_pages }}
+    </span>
+  </div>
+  {% endif %}
   </div>
 
   <!-- Branch -->
@@ -599,4 +639,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<script>
+// Check URL parameters on page load to show correct tab
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // If services_page parameter exists, show clinic section and services tab
+  if (urlParams.has('services_page')) {
+    // Switch to Clinic tab
+    clinicSection.classList.remove("hidden");
+    userSection.classList.add("hidden");
+    clinicTab.classList.replace("bg-gray-200", "bg-blue-600");
+    clinicTab.classList.replace("text-gray-700", "text-white");
+    userTab.classList.replace("bg-blue-600", "bg-gray-200");
+    userTab.classList.replace("text-white", "text-gray-700");
+    
+    // Switch to Services sub-tab
+    serviceContent.classList.remove("hidden");
+    dentistContent.classList.add("hidden");
+    branchContent.classList.add("hidden");
+    serviceTab.classList.replace("bg-gray-200", "bg-green-600");
+    serviceTab.classList.replace("text-gray-700", "text-white");
+    dentistTab.classList.replace("bg-green-600", "bg-gray-200");
+    dentistTab.classList.replace("text-white", "text-gray-700");
+    branchTab.classList.replace("bg-green-600", "bg-gray-200");
+    branchTab.classList.replace("text-white", "text-gray-700");
+  }
+  
+  // If dentists_page parameter exists, show clinic section and dentists tab
+  if (urlParams.has('dentists_page')) {
+    // Switch to Clinic tab
+    clinicSection.classList.remove("hidden");
+    userSection.classList.add("hidden");
+    clinicTab.classList.replace("bg-gray-200", "bg-blue-600");
+    clinicTab.classList.replace("text-gray-700", "text-white");
+    userTab.classList.replace("bg-blue-600", "bg-gray-200");
+    userTab.classList.replace("text-white", "text-gray-700");
+    
+    // Switch to Dentist sub-tab
+    dentistContent.classList.remove("hidden");
+    serviceContent.classList.add("hidden");
+    branchContent.classList.add("hidden");
+    dentistTab.classList.replace("bg-gray-200", "bg-green-600");
+    dentistTab.classList.replace("text-gray-700", "text-white");
+    serviceTab.classList.replace("bg-green-600", "bg-gray-200");
+    serviceTab.classList.replace("text-white", "text-gray-700");
+    branchTab.classList.replace("bg-green-600", "bg-gray-200");
+    branchTab.classList.replace("text-white", "text-gray-700");
+  }
+});
+</script>
+
 {% endblock %}
