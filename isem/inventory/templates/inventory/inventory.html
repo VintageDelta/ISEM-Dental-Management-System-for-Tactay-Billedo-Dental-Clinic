@@ -237,7 +237,6 @@
         >
           <option value="consumable">Consumable</option>
           <option value="equipment">Equipment</option>
-          <option value="medicine">Medicine</option>
           <option value="other">Other</option>
         </select>
 
@@ -249,34 +248,46 @@
           class="w-full border border-gray-300 rounded-md p-2 text-sm"
         ></textarea>
 
-        <input
-          type="number"
-          name="stock"
-          id="stock"
-          placeholder="Stock"
-          class="w-full border border-gray-300 rounded-md p-2 text-sm"
-          required
-        />
+        <!-- Stock and Threshold Side-by-Side -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <input
+              type="number"
+              name="stock"
+              id="stock"
+              placeholder="Stock Quantity"
+              class="w-full border border-gray-300 rounded-md p-2 text-sm"
+              min="0"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="number"
+              name="low_stock_threshold"
+              id="low-stock-threshold"
+              placeholder="Low Stock Alert"
+              class="w-full border border-gray-300 rounded-md p-2 text-sm"
+              min="1"
+              value="10"
+              required
+            />
+          </div>
+        </div>
+        <p class="text-xs text-gray-500 -mt-2">Alert when stock ≤ threshold</p>
 
         <input
           type="date"
           name="expiry_date"
           id="expiry-date"
           class="w-full border border-gray-300 rounded-md p-2 text-sm"
-          required
         />
 
-        <select
-          name="status"
-          id="status"
-          class="w-full border border-gray-300 rounded-md p-2 text-sm"
-          required
-        >
-          <option value="available">Available</option>
-          <option value="low_stock">Low Stock</option>
-          <option value="out_of_stock">Out of Stock</option>
-          <option value="expired">Expired</option>
-        </select>
+        <!-- Remove the status field - it's auto-calculated -->
+        <div id="status-display" class="hidden">
+          <label class="text-sm text-gray-600">Current Status:</label>
+          <p id="current-status" class="text-sm font-medium"></p>
+        </div>
 
         <div class="flex justify-end gap-2 pt-3">
           <button
@@ -350,7 +361,6 @@
   </div>
 </div>
 <!-- View Modal -->
-
 <div id="inventory-view-modal"
      class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
   <div class="w-full h-full flex items-center justify-center">
@@ -363,6 +373,7 @@
         <p><strong>Category:</strong> <span id="view-category"></span></p>
         <p><strong>Description:</strong> <span id="view-description"></span></p>
         <p><strong>Stock:</strong> <span id="view-stock"></span></p>
+        <p><strong>Low Stock Alert:</strong> <span id="view-threshold"></span></p>
         <p><strong>Expiry Date:</strong> <span id="view-expiry-date"></span></p>
         <p><strong>Status:</strong> <span id="view-status"></span></p>
       </div>
@@ -412,56 +423,77 @@
   const statusField = document.getElementById("status");
 
   // Open Add Modal
-  document.getElementById("add-modal-btn").addEventListener("click", () => {
-    modalTitle.textContent = "Add Item";
-    form.action = "{% url 'inventory:add' %}";
-    itemIdField.value = "";
-    itemNameField.value = "";
-    categoryField.value = "consumable";
-    descriptionField.value = "";
-    stockField.value = "";
-    expiryDateField.value = "";
-    statusField.value = "available";
+document.getElementById("add-modal-btn").addEventListener("click", () => {
+  modalTitle.textContent = "Add Item";
+  form.action = "{% url 'inventory:add' %}";
+  itemIdField.value = "";
+  itemNameField.value = "";
+  categoryField.value = "consumable";
+  descriptionField.value = "";
+  stockField.value = "";
+  document.getElementById("low-stock-threshold").value = "10";
+  expiryDateField.value = "";
+  
+  // Hide status display (safe check)
+  const statusDisplay = document.getElementById('status-display');
+  if (statusDisplay) {
+    statusDisplay.classList.add('hidden');
+  }
 
-    modal.classList.remove("hidden");
-    modal.style.display = "flex";
-    setTimeout(() => {
-      modalContent.classList.remove("opacity-0", "scale-95");
-      modalContent.classList.add("opacity-100", "scale-100");
-    }, 10);
-  });
+  modal.classList.remove("hidden");
+  modal.style.display = "flex";
+  setTimeout(() => {
+    modalContent.classList.remove("opacity-0", "scale-95");
+    modalContent.classList.add("opacity-100", "scale-100");
+  }, 10);
+});
+
 
   // Open Edit Modal
-  document.querySelectorAll(".edit-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      const itemId = btn.dataset.id;
+document.querySelectorAll(".edit-btn").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const itemId = btn.dataset.id;
 
-      fetch(`/dashboard/inventory/${itemId}/edit/`, {
-        headers: { "X-Requested-With": "XMLHttpRequest" },
+    fetch(`/dashboard/inventory/${itemId}/edit/`, {
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        modalTitle.textContent = "Edit Item";
+        form.action = `/dashboard/inventory/${itemId}/edit/`;
+
+        itemIdField.value = data.id;
+        itemNameField.value = data.item_name;
+        categoryField.value = data.category;
+        descriptionField.value = data.description;
+        stockField.value = data.stock;
+        document.getElementById("low-stock-threshold").value = data.low_stock_threshold;
+        expiryDateField.value = data.expiry_date;
+        
+        // Show current status (safe check)
+        const statusDisplay = document.getElementById('status-display');
+        const currentStatus = document.getElementById('current-status');
+        if (statusDisplay && currentStatus) {
+          statusDisplay.classList.remove('hidden');
+          currentStatus.textContent = formatStatus(data.status);
+          currentStatus.className = getStatusClass(data.status);
+        }
+
+        modal.classList.remove("hidden");
+        modal.style.display = "flex";
+        setTimeout(() => {
+          modalContent.classList.remove("opacity-0", "scale-95");
+          modalContent.classList.add("opacity-100", "scale-100");
+        }, 10);
       })
-        .then((res) => res.json())
-        .then((data) => {
-          modalTitle.textContent = "Edit Item";
-          form.action = `/dashboard/inventory/${itemId}/edit/`;
-
-          itemIdField.value = data.id;
-          itemNameField.value = data.item_name;
-          categoryField.value = data.category;
-          descriptionField.value = data.description;
-          stockField.value = data.stock;
-          expiryDateField.value = data.expiry_date;
-          statusField.value = data.status;
-
-          modal.classList.remove("hidden");
-          modal.style.display = "flex";
-          setTimeout(() => {
-            modalContent.classList.remove("opacity-0", "scale-95");
-            modalContent.classList.add("opacity-100", "scale-100");
-          }, 10);
-        });
-    });
+      .catch((error) => {
+        console.error('Error fetching item:', error);
+        alert('Failed to load item details. Please try again.');
+      });
   });
+});
+
 
   // Close modal
   closeModalBtn.addEventListener("click", () => {
@@ -564,7 +596,6 @@ document.querySelectorAll(".view-btn").forEach((btn) => {
         e.preventDefault();
         const itemId = btn.dataset.id;
         
-        // Fetch item data from your Django view
         fetch(`{% url 'inventory:view' 0 %}`.replace('0', itemId), {
             headers: { "X-Requested-With": "XMLHttpRequest" },
         })
@@ -580,6 +611,7 @@ document.querySelectorAll(".view-btn").forEach((btn) => {
             viewCategory.textContent = data.category;
             viewDescription.textContent = data.description || 'No description';
             viewStock.textContent = data.stock;
+            document.getElementById('view-threshold').textContent = data.low_stock_threshold; // ← Add this line
             viewExpiryDate.textContent = data.expiry_date || 'No expiry date';
             
             // Format status with proper styling
@@ -599,6 +631,7 @@ document.querySelectorAll(".view-btn").forEach((btn) => {
         });
     });
 });
+
 
 // Close view modal
 closeViewBtn.addEventListener("click", () => {
@@ -726,7 +759,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<script>
+  // Helper function to format status text
+function formatStatus(status) {
+  const statusMap = {
+    'available': 'Available',
+    'low_stock': 'Low Stock',
+    'out_of_stock': 'Out of Stock',
+    'expired': 'Expired'
+  };
+  return statusMap[status] || status;
+}
 
+// Helper function for status styling
+function getStatusClass(status) {
+  const classes = {
+    'available': 'text-sm font-medium text-green-600',
+    'low_stock': 'text-sm font-medium text-yellow-600',
+    'out_of_stock': 'text-sm font-medium text-red-600',
+    'expired': 'text-sm font-medium text-gray-600'
+  };
+  return classes[status] || 'text-sm font-medium text-gray-600';
+}
+</script>
 
   {% endblock %}
 </div>

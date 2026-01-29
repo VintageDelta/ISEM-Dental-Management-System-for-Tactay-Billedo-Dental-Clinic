@@ -66,47 +66,47 @@ def inventory_add(request):
 
 # EDIT
 def inventory_edit(request, pk):
-
     item = get_object_or_404(InventoryItem, pk=pk)
 
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
-        
         return JsonResponse({
             "id": item.id,
             "item_name": item.item_name,
             "category": item.category,
             "description": item.description,
             "stock": item.stock,
+            "low_stock_threshold": getattr(item, 'low_stock_threshold', 10),  # Safe access
             "expiry_date": item.expiry_date.strftime("%Y-%m-%d") if item.expiry_date else "",
             "status": item.status,
         })
 
     if request.method == "POST":
-        # (update the item)
         item.item_name = request.POST.get("item_name")
         item.category = request.POST.get("category")
         item.description = request.POST.get("description")
-        item.stock = request.POST.get("stock")
-
-        #convert stock to int
+        
         stock = request.POST.get("stock")
         if stock:
             item.stock = int(stock)
-
+        
+        threshold = request.POST.get("low_stock_threshold")
+        if threshold:
+            item.low_stock_threshold = int(threshold)
+        else:
+            item.low_stock_threshold = 10
         
         expiry = request.POST.get("expiry_date")
         if expiry:
-            item.expiry_date=datetime.datetime.strptime(expiry, "%Y-%m-%d").date()
+            item.expiry_date = datetime.datetime.strptime(expiry, "%Y-%m-%d").date()
         else:
-            item.expiry_date=None
-        # item.expiry_date = request.POST.get("expiry_date")
-        # item.status = request.POST.get("status")
+            item.expiry_date = None
+        
         item.save()
         messages.success(request, "Item updated successfully.")
-        return redirect("inventory:list")  
+        return redirect("inventory:list")
 
-    # fallback
     return render(request, "inventory/edit.html", {"item": item})
+
 # DELETE
 def inventory_delete(request, pk):
     """Delete an inventory item"""
@@ -119,7 +119,6 @@ def inventory_delete(request, pk):
 
 
 def inventory_view(request, pk):
-    
     item = get_object_or_404(InventoryItem, pk=pk)
     return JsonResponse({
         "id": item.id,
@@ -127,9 +126,11 @@ def inventory_view(request, pk):
         "category": item.category,
         "description": item.description,
         "stock": item.stock,
+        "low_stock_threshold": item.low_stock_threshold,  # Add this line
         "expiry_date": item.expiry_date.strftime("%Y-%m-%d") if item.expiry_date else "",
         "status": item.status,
     })
+
 
 def search_inventory(request):
     """AJAX endpoint for live inventory search"""
