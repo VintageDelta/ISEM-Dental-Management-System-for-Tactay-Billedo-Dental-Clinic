@@ -7,7 +7,6 @@ let doneOdontogramHandlerAttached = false;
 
 let reschedHandlerAttached = false;
 
-
 // ===== Appointment Modals & Utility =====
 document.addEventListener("DOMContentLoaded", () => {
   const createBtn = document.getElementById("create-appointment-btn");
@@ -16,10 +15,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeAppointmentBtn = document.getElementById("close-appointment-btn");
 
   // Open / Close
-  createBtn?.addEventListener("click", () => openModal("appointment-modal"));
-  closeAppointmentBtn?.addEventListener("click", () => closeModal("appointment-modal"));
+  createBtn?.addEventListener("click", () => openAppointmentModal("appointment-modal"));
+  closeAppointmentBtn?.addEventListener("click", () => closeAppointmentModal("appointment-modal"));
   appointmentModal?.addEventListener("click", e => {
-    if (e.target === appointmentModal) closeModal("appointment-modal");
+    if (e.target === appointmentModal) closeAppointmentModal("appointment-modal");
   });
 
   // Cancel confirmation wiring
@@ -30,16 +29,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let pendingCancelEventId = null;
 
+  // updates the total price live (Step 1 only; Step 2 is handled in initDoneStepsModal)
+  const doneServicesContainer = document.getElementById("done-services-checkboxes");
+  if (doneServicesContainer) {
+    doneServicesContainer.addEventListener("change", () => {
+      computeDoneMedicalTotal();
+    });
+  }
+
+
+  // === Original appointment modal instance ===
+  initServiceSearchAndTags({
+    searchInput: document.getElementById("service-search"),
+    servicesContainer: document.getElementById("services-checkboxes"),
+    checkboxSelector: "input.service-checkbox",
+    selectedTagsContainer: document.getElementById("selected-services-tags"),
+    selectedEmptyText: document.getElementById("selected-services-empty"),
+  });
+
+  // === Done Steps modal instance (Step 1) ===
+  window.refreshDoneStep1Tags = initServiceSearchAndTags({
+    searchInput: document.getElementById("done-service-search"),
+    servicesContainer: document.getElementById("done-services-checkboxes"),
+    checkboxSelector: "input.done-service-checkbox",
+    selectedTagsContainer: document.getElementById("done-selected-services-tags"),
+    selectedEmptyText: document.getElementById("done-selected-services-empty"),
+  });
+
+  // === Done-odontogram Step 3 instance ===
+  window.refreshDoneStep3Tags = initServiceSearchAndTags({
+    searchInput: document.getElementById("done-odontogram-service-search-0"),
+    servicesContainer: document.getElementById("done-odontogram-services-checkboxes-0"),
+    checkboxSelector: "input.done-odontogram-service-checkbox",
+    selectedTagsContainer: document.getElementById("done-odontogram-selected-services-tags-0"),
+    selectedEmptyText: document.getElementById("done-odontogram-selected-services-empty-0"),
+  });
+
+
   statusCancelBtn?.addEventListener("click", () => {
     console.log("Cancel button clicked");    // TEMP DEBUG
     if (!window.currentEventId) return;     // calendar.js sets currentEventId
     pendingCancelEventId = window.currentEventId;
-    openModal("cancel-confirm-modal");
+    openAppointmentModal("cancel-confirm-modal");
   });
 
   confirmNo?.addEventListener("click", () => {
     pendingCancelEventId = null;
-    closeModal("cancel-confirm-modal");
+    closeAppointmentModal("cancel-confirm-modal");
   });
 
 confirmYes?.addEventListener("click", () => {
@@ -78,8 +114,8 @@ confirmYes?.addEventListener("click", () => {
         }
       }, 300);
 
-      closeModal("cancel-confirm-modal");
-      closeModal("status-modal");
+      closeAppointmentModal("cancel-confirm-modal");
+      closeAppointmentModal("status-modal");
     });
 
   pendingCancelEventId = null;
@@ -87,9 +123,89 @@ confirmYes?.addEventListener("click", () => {
 
 
   // Status / Followup / Reschedule
-  document.getElementById("close-status-btn")?.addEventListener("click", () => closeModal("status-modal"));
-  document.getElementById("close-followup-btn")?.addEventListener("click", () => closeModal("followup-modal"));
-  document.getElementById("close-reschedule-btn")?.addEventListener("click", () => closeModal("reschedule-modal"));
+  document.getElementById("close-status-btn")?.addEventListener("click", () => closeAppointmentModal("status-modal"));
+  document.getElementById("close-followup-btn")?.addEventListener("click", () => closeAppointmentModal("followup-modal"));
+  document.getElementById("close-reschedule-btn")?.addEventListener("click", () => closeAppointmentModal("reschedule-modal"));
+
+  // ===== Service search + selected tags =====
+  function initServiceSearchAndTags({
+    searchInput,
+    servicesContainer,
+    checkboxSelector,
+    selectedTagsContainer,
+    selectedEmptyText,
+  }) {
+    if (!servicesContainer || !selectedTagsContainer || !selectedEmptyText) return;
+
+    const serviceCheckboxes = servicesContainer.querySelectorAll(checkboxSelector);
+
+    function refreshSelectedServiceTags() {
+      selectedTagsContainer.innerHTML = "";
+
+      const checked = Array.from(serviceCheckboxes).filter(cb => cb.checked);
+
+      if (checked.length === 0) {
+        selectedEmptyText.classList.remove("hidden");
+        return;
+      }
+
+      selectedEmptyText.classList.add("hidden");
+
+      checked.forEach(cb => {
+        const label = cb.closest("label");
+        const nameEl = label ? label.querySelector("span") : null;
+        const name = nameEl ? nameEl.textContent.trim() : `Service ${cb.value}`;
+
+        const pill = document.createElement("button");
+        pill.type = "button";
+        pill.className =
+          "flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 " +
+          "rounded-full text-xs hover:bg-blue-200";
+
+        const text = document.createElement("span");
+        text.textContent = name;
+
+        const close = document.createElement("span");
+        close.textContent = "✕";
+        close.className = "text-[10px]";
+
+        pill.appendChild(text);
+        pill.appendChild(close);
+
+        pill.addEventListener("click", () => {
+          cb.checked = false;
+          refreshSelectedServiceTags();
+        });
+
+        selectedTagsContainer.appendChild(pill);
+      });
+    }
+
+    // Hook checkboxes to refresh tags
+    Array.from(serviceCheckboxes).forEach(cb => {
+      cb.addEventListener("change", refreshSelectedServiceTags);
+    });
+
+    // Live search filter on services
+    if (searchInput && servicesContainer) {
+      searchInput.addEventListener("input", () => {
+        const q = searchInput.value.toLowerCase();
+
+        servicesContainer.querySelectorAll("label").forEach(label => {
+          const nameEl = label.querySelector("span");
+          const name = nameEl ? nameEl.textContent.toLowerCase() : "";
+          label.style.display = name.includes(q) ? "" : "none";
+        });
+      });
+    }
+
+    // Initial state
+    refreshSelectedServiceTags();
+
+    // NEW: return refresher so callers can re-run after programmatic changes
+    return refreshSelectedServiceTags;
+  }
+
 
 
   // Odontogram "Check All" functionality
@@ -178,7 +294,7 @@ confirmYes?.addEventListener("click", () => {
   const doneStepsModal = document.getElementById("done-steps-modal");
   doneStepsModal?.addEventListener("click", (e) => {
     if (e.target === doneStepsModal) {
-      closeModal("done-steps-modal");
+      closeAppointmentModal("done-steps-modal");
     }
   });
 
@@ -192,32 +308,32 @@ confirmYes?.addEventListener("click", () => {
   const closeNotifyEmailModalBtn = document.getElementById("close-notify-email-modal");
 
   closeNotifyEmailModalBtn?.addEventListener("click", () => {
-  closeModal("notify-email-modal");
+  closeAppointmentModal("notify-email-modal");
   });
   notifyEmailModal?.addEventListener("click", e => {
-    if (e.target === notifyEmailModal) closeModal("notify-email-modal");
+    if (e.target === notifyEmailModal) closeAppointmentModal("notify-email-modal");
   });
 
   notifyPatientBtn?.addEventListener("click", () => {
     if (!window.currentEventId) return; // set by calendar.js when opening status modal
-    openModal("notify-modal");
+    openAppointmentModal("notify-modal");
   });
 
   closeNotifyBtn?.addEventListener("click", () => {
-    closeModal("notify-modal");
+    closeAppointmentModal("notify-modal");
   });
 
   // Optional: clicking on the backdrop closes the notify modal as well
   const notifyModal = document.getElementById("notify-modal");
   notifyModal?.addEventListener("click", (e) => {
-    if (e.target === notifyModal) closeModal("notify-modal");
+    if (e.target === notifyModal) closeAppointmentModal("notify-modal");
   });
 
   // For now, just close after click; you can replace with real API calls later
   notifySmsBtn?.addEventListener("click", () => {
     console.log("Send SMS to patient for event", window.currentEventId);
     // TODO: call your SMS endpoint here
-    closeModal("notify-modal");
+    closeAppointmentModal("notify-modal");
   });
 
   // Email notif block
@@ -245,29 +361,29 @@ confirmYes?.addEventListener("click", () => {
           console.error("Notify email failed:", data.error);
           notifyEmailMessage.textContent =
             data.error || "Failed to send email notification.";
-          closeModal("notify-modal");
-          openModal("notify-email-modal");
+          closeAppointmentModal("notify-modal");
+          openAppointmentModal("notify-email-modal");
           return;
         }
 
         // Success UX: show notify-email modal
         notifyEmailMessage.textContent = "Email notification sent to the patient.";
-        closeModal("notify-modal");
-        openModal("notify-email-modal");
+        closeAppointmentModal("notify-modal");
+        openAppointmentModal("notify-email-modal");
       })
       .catch(err => {
         notifyEmailBtn.disabled = false;
         notifyEmailBtn.classList.remove("opacity-50", "cursor-not-allowed");
         console.error("Notify email error:", err);
         notifyEmailMessage.textContent = "Network error while sending email.";
-        closeModal("notify-modal");
-        openModal("notify-email-modal");
+        closeAppointmentModal("notify-modal");
+        openAppointmentModal("notify-email-modal");
       });
   });
 
 
 
-    // --- Two-step create appointment flow (loading + confirm) ---
+  // --- Two-step create appointment flow (loading + confirm) ---
   addForm = document.querySelector("#appointment-modal form");
   addSaveBtn = addForm ? addForm.querySelector('button[type="submit"]') : null;
 
@@ -388,43 +504,62 @@ confirmYes?.addEventListener("click", () => {
   initFollowupForm();
 });
 
-// ===== Modal Helpers =====
-function openModal(id) {
+//helper mdecial
+function computeDoneMedicalTotal() {
+  const container = document.getElementById("done-services-checkboxes");
+  const amountInput = document.getElementById("done-medical-amount");
+  if (!container || !amountInput) return;
+
+  let total = 0;
+  container.querySelectorAll("input.done-service-checkbox").forEach(cb => {
+    if (cb.checked) {
+      const price = parseFloat(cb.dataset.price || "0");
+      if (!isNaN(price)) total += price;
+    }
+  });
+
+  amountInput.value = total.toFixed(2);
+}
+
+// ===== Modal Helpers (simple, robust) =====
+function openAppointmentModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
-
-  // find the first direct child div (the white box)
-  const content = modal.querySelector(":scope > div");
-  if (!content) return;
 
   modal.classList.remove("hidden");
   modal.classList.add("flex");
 
-  // start from transparent & slightly scaled down
-  content.classList.remove("opacity-100", "scale-100");
-  content.classList.add("opacity-0", "scale-95");
+  const content =
+    modal.querySelector(".modal-content") ||
+    modal.querySelector(".bg-white.rounded-2xl") ||
+    modal.querySelector(".bg-white.rounded-lg");
 
-  // animate to visible on next frame
-  requestAnimationFrame(() => {
+  if (content) {
     content.classList.remove("opacity-0", "scale-95");
     content.classList.add("opacity-100", "scale-100");
-  });
+  }
 }
 
-function closeModal(id) {
+function closeAppointmentModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
 
-  const content = modal.querySelector(":scope > div");
-  if (!content) return;
+  const content =
+    modal.querySelector(".modal-content") ||
+    modal.querySelector(".bg-white.rounded-2xl") ||
+    modal.querySelector(".bg-white.rounded-lg");
 
-  content.classList.remove("opacity-100", "scale-100");
-  content.classList.add("opacity-0", "scale-95");
-
-  // duration-200 = 200ms
-  setTimeout(() => {
+  if (content) {
+    content.classList.remove("opacity-100", "scale-100");
+    content.classList.add("opacity-0", "scale-95");
+    setTimeout(() => {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }, 200);
+  } else {
     modal.classList.add("hidden");
-  }, 200);
+    modal.classList.remove("flex");
+  }
 }
 
 
@@ -622,7 +757,7 @@ async function toggleTimeInputs() {
 
   toggleTimeInputs(); // initial
 
-    // ===== Service search + selected tags =====
+  // ===== Service search + selected tags =====
   const serviceSearchInput = document.getElementById("service-search");
   const servicesContainer = document.getElementById("services-checkboxes");
   const serviceCheckboxes = servicesContainer
@@ -748,11 +883,11 @@ const statusUpdatedMessage = document.getElementById("status-updated-message");
 const closeStatusUpdatedBtn = document.getElementById("close-status-updated-modal");
 
 closeStatusUpdatedBtn?.addEventListener("click", () => {
-  closeModal("status-updated-modal");
+  closeAppointmentModal("status-updated-modal");
 });
 
 statusUpdatedModal?.addEventListener("click", e => {
-  if (e.target === statusUpdatedModal) closeModal("status-updated-modal");
+  if (e.target === statusUpdatedModal) closeAppointmentModal("status-updated-modal");
 });
 
 // ===== Success Modal =====
@@ -760,11 +895,11 @@ const successModal = document.getElementById("success-modal");
 const closeSuccessBtn = document.getElementById("close-success-btn");
 
 function showSuccessModal() {
-  openModal("success-modal");
+  openAppointmentModal("success-modal");
 }
 
 function closeSuccessModal() {
-  closeModal("success-modal");
+  closeAppointmentModal("success-modal");
 }
 
 closeSuccessBtn?.addEventListener("click", closeSuccessModal);
@@ -789,11 +924,11 @@ const failedMessageText = document.getElementById("failed-message-text");
 function showFailedModal(message) {
   if (!failedModal || !failedMessageText) return;
   failedMessageText.textContent = message || "Something went wrong.";
-  openModal("failed-modal");
+  openAppointmentModal("failed-modal");
 }
 
 function closeFailedModal() {
-  closeModal("failed-modal");
+  closeAppointmentModal("failed-modal");
 }
 
 closeFailedBtn?.addEventListener("click", closeFailedModal);
@@ -894,76 +1029,6 @@ function initRescheduleForm() {
     });
   });
 
-  // ===== Service search + selected tags for reschedule =====
-  const serviceSearchInput = document.getElementById("resched-service-search");
-  const servicesContainer = document.getElementById("resched-services-checkboxes");
-  const serviceCheckboxes = servicesContainer
-    ? servicesContainer.querySelectorAll('input.resched-service-checkbox')
-    : [];
-  const selectedTagsContainer = document.getElementById("resched-selected-services-tags");
-  const selectedEmptyText = document.getElementById("resched-selected-services-empty");
-
-  window.refreshReschedSelectedServiceTags = function() {
-    if (!selectedTagsContainer || !selectedEmptyText) return;
-
-    selectedTagsContainer.innerHTML = "";
-
-    const checked = Array.from(serviceCheckboxes).filter(cb => cb.checked);
-
-    if (checked.length === 0) {
-      selectedEmptyText.classList.remove("hidden");
-      return;
-    }
-
-    selectedEmptyText.classList.add("hidden");
-
-    checked.forEach(cb => {
-      const label = cb.closest("label");
-      const nameEl = label ? label.querySelector("span") : null;
-      const name = nameEl ? nameEl.textContent.trim() : `Service ${cb.value}`;
-
-      const pill = document.createElement("button");
-      pill.type = "button";
-      pill.className =
-        "flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 " +
-        "rounded-full text-xs hover:bg-blue-200";
-
-      const text = document.createElement("span");
-      text.textContent = name;
-
-      const close = document.createElement("span");
-      close.textContent = "✕";
-      close.className = "text-[10px]";
-
-      pill.appendChild(text);
-      pill.appendChild(close);
-
-      pill.addEventListener("click", () => {
-        cb.checked = false;
-        refreshReschedSelectedServiceTags();
-      });
-
-      selectedTagsContainer.appendChild(pill);
-    });
-  };
-
-  Array.from(serviceCheckboxes).forEach(cb => {
-    cb.addEventListener("change", refreshReschedSelectedServiceTags);
-  });
-
-  if (serviceSearchInput && servicesContainer) {
-    serviceSearchInput.addEventListener("input", () => {
-      const q = serviceSearchInput.value.toLowerCase();
-      servicesContainer.querySelectorAll("label").forEach(label => {
-        const nameEl = label.querySelector("span");
-        const name = nameEl ? nameEl.textContent.toLowerCase() : "";
-        label.style.display = name.includes(q) ? "" : "none";
-      });
-    });
-  }
-
-  refreshReschedSelectedServiceTags();
-
   // --- Reschedule form validation: enable Save Changes only when complete ---
   const reschedForm = document.getElementById("reschedule-form");
   const reschedSaveBtn = reschedForm ? reschedForm.querySelector('button[type="submit"]') : null;
@@ -1005,7 +1070,7 @@ function initRescheduleForm() {
               return;
             }
 
-            closeModal("reschedule-modal");
+            closeAppointmentModal("reschedule-modal");
 
             if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
             if (window.mainCalendar) window.mainCalendar.refetchEvents();
@@ -1147,7 +1212,7 @@ window.initDoneStepsModal = function(appointmentId) {
   console.log("Set doneStepsCurrentStep to:", window.doneStepsCurrentStep);
 
   // Open modal first
-  openModal("done-steps-modal");
+  openAppointmentModal("done-steps-modal");
 
   // Show step 1 immediately
   showDoneStep(1);
@@ -1160,7 +1225,7 @@ window.initDoneStepsModal = function(appointmentId) {
       
       if (!data.success) {
         alert("Failed to load appointment details");
-        closeModal("done-steps-modal");
+        closeAppointmentModal("done-steps-modal");
         return;
       }
 
@@ -1189,40 +1254,95 @@ window.initDoneStepsModal = function(appointmentId) {
       }
 
       // Prefill forms
-      if (document.getElementById("done-medical-patient-name")) 
-        document.getElementById("done-medical-patient-name").value = patientData.name || "";
       if (document.getElementById("done-medical-date")) 
         document.getElementById("done-medical-date").value = apptData.date || "";
       if (document.getElementById("done-medical-dentist")) 
         document.getElementById("done-medical-dentist").value = apptData.dentist || "";
-      if (document.getElementById("done-medical-service")) 
-        document.getElementById("done-medical-service").value = apptData.services || "";
+      // Prefill Step‑1 services as checkboxes in Done Steps modal
+      if (Array.isArray(apptData.service_ids)) {
+        const doneServicesContainer = document.getElementById("done-services-checkboxes");
+        if (doneServicesContainer) {
+          const idSet = new Set(apptData.service_ids.map(String));  // normalize to strings
+          doneServicesContainer
+            .querySelectorAll("input.done-service-checkbox")
+            .forEach(cb => {
+              if (idSet.has(cb.value)) {
+                cb.checked = true;
+              }
+            });
+        }
+
+        // Refresh selected-services tags box after programmatically checking
+        if (typeof window.refreshDoneStep1Tags === "function") {
+          window.refreshDoneStep1Tags();
+        }
+      }
+
+
+      // Prefill Step‑3 odontogram services to match appointment services
+      if (Array.isArray(apptData.service_ids)) {
+        const odontoServicesContainer = document.getElementById("done-odontogram-services-checkboxes-0");
+        if (odontoServicesContainer) {
+          const idSet = new Set(apptData.service_ids.map(String));
+          odontoServicesContainer
+            .querySelectorAll("input.done-odontogram-service-checkbox")
+            .forEach(cb => {
+              if (idSet.has(cb.value)) {
+                cb.checked = true;
+              }
+            });
+        }
+
+        // Refresh Step 3 selected-services tags after programmatic checking
+        if (typeof window.refreshDoneStep3Tags === "function") {
+          window.refreshDoneStep3Tags();
+        }
+      }
+
+    
       if (document.getElementById("done-financial-date")) 
         document.getElementById("done-financial-date").value = apptData.date || "";
-      if (document.getElementById("done-financial-time")) 
-        document.getElementById("done-financial-time").value = apptData.time || "";
+      // If you want a default bill_type and payment_mode:
+      const billTypeSelect = document.getElementById("done-financial-bill-type");
+      if (billTypeSelect) billTypeSelect.value = "Services";
+      const paymentModeSelect = document.getElementById("done-financial-payment-mode");
+      if (paymentModeSelect) paymentModeSelect.value = "Cash";
       if (document.getElementById("done-odontogram-date-0")) 
         document.getElementById("done-odontogram-date-0").value = apptData.date || "";
-      
+
       const odontoDentistSelect = document.getElementById("done-odontogram-dentist-0");
       if (odontoDentistSelect && apptData.dentist_id) {
         odontoDentistSelect.value = apptData.dentist_id;
       }
       
+
+      // 1) compute total price into done-medical-amount (initial)
+      computeDoneMedicalTotal();
+      const doneAmountInput = document.getElementById("done-medical-amount");
+
       // === Financial step: Total Due, Amount, Balance ===
       const totalDueInput = document.getElementById("done-financial-total-due");
       const amountInput   = document.getElementById("done-financial-amount");
       const balanceInput  = document.getElementById("done-financial-balance");
 
-      // Use total_price from backend (sum of service prices)
-      let totalDue = 0;
-      if (apptData.total_price !== undefined && apptData.total_price !== null) {
-        totalDue = parseFloat(apptData.total_price) || 0;
+      // Use Step 1 total for Step 2 Total Due (initial)
+      if (totalDueInput && doneAmountInput) {
+        totalDueInput.value = doneAmountInput.value || "0.00";
       }
 
-      if (totalDueInput) {
-        totalDueInput.value = totalDue.toFixed(2);
+      // Keep Step 2 Total Due in sync when Step 1 services change during this modal session
+      const doneServicesContainerModal = document.getElementById("done-services-checkboxes");
+      if (doneServicesContainerModal && totalDueInput && doneAmountInput) {
+        doneServicesContainerModal.addEventListener("change", () => {
+          computeDoneMedicalTotal();
+          totalDueInput.value = doneAmountInput.value || "0.00";
+          // optional: recompute balance if user already typed Amount
+          if (typeof recomputeBalance === "function") {
+            recomputeBalance();
+          }
+        });
       }
+
 
       // Helper to recompute balance
       function recomputeBalance() {
@@ -1251,7 +1371,7 @@ window.initDoneStepsModal = function(appointmentId) {
     .catch(err => {
       console.error("Error:", err);
       alert("Failed to load appointment details");
-      closeModal("done-steps-modal");
+      closeAppointmentModal("done-steps-modal");
     });
 };
 
@@ -1313,59 +1433,104 @@ document.addEventListener("DOMContentLoaded", function() {
   // Next button
   const nextBtn = document.getElementById("done-steps-next-btn");
   if (nextBtn) {
-    nextBtn.addEventListener("click", function() {
-      console.log("=== NEXT BUTTON CLICKED ===");
-      console.log("Current step:", window.doneStepsCurrentStep);
+    nextBtn.addEventListener("click", function () {
+      const currentStep = window.doneStepsCurrentStep || 1;
 
-      const currentStep = window.doneStepsCurrentStep;
+      // Optional: basic validation before moving on
       const form = document.querySelector(`.step-form[data-step="${currentStep}"]`);
-      
-      if (!form) {
-        console.error("Form not found for step:", currentStep);
-        alert("Form not found");
+      if (form && !form.checkValidity()) {
+        form.reportValidity();
         return;
       }
 
-      const action = form.action;
-      console.log("Form action:", action);
+      const nextStep = Math.min(3, currentStep + 1);
+      showDoneStep(nextStep);
+    });
+  }
 
-      if (!action || action.includes("/patient/0/") || action.includes("/patient//")) {
-        console.error("Invalid action URL:", action);
-        alert("Form action not set correctly");
-        return;
-      }
+  // NEW: Submit button - save all 3 steps at once
+  const submitBtn = document.getElementById("done-steps-submit-btn");
+  if (submitBtn) {
+    submitBtn.addEventListener("click", function () {
+      window.doneStepsCurrentStep = 3;
+      const forms = [
+        document.getElementById("done-medical-form"),
+        document.getElementById("done-financial-form"),
+        document.getElementById("done-odontogram-form"),
+      ].filter(Boolean);
 
-      const formData = new FormData(form);
-      console.log("Submitting form data to:", action);
-
-      fetch(action, {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": getCookie("csrftoken"),
-          "X-Requested-With": "XMLHttpRequest",
-        },
-        body: formData,
-      })
-      .then(res => {
-        console.log("Response status:", res.status);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        console.log("Response data:", data);
-        if (data.success) {
-          console.log(`Step ${currentStep} saved!`);
-          if (currentStep < 3) {
-            showDoneStep(currentStep + 1);
-          }
-        } else {
-          alert(data.error || "Failed to save");
+      // Basic HTML5 validation first
+      for (const f of forms) {
+        if (!f.checkValidity()) {
+          f.reportValidity();
+          return;
         }
-      })
-      .catch(err => {
-        console.error("Error:", err);
-        alert("Network error: " + err.message);
-      });
+      }
+
+      // Helper to POST one form and return a promise
+      const postForm = (form) => {
+        const action = form.action;
+        if (!action || action.includes("patient/0")) {
+          alert("Form action not set correctly.");
+          return Promise.reject("bad action");
+        }
+        const formData = new FormData(form);
+        return fetch(action, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          body: formData,
+        }).then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        });
+      };
+
+      // Post all three forms in sequence
+      postForm(forms[0])
+        .then(data1 => {
+          if (!data1.success) throw new Error(data1.error || "Failed to save step 1");
+          return postForm(forms[1]);
+        })
+        .then(data2 => {
+          if (!data2.success) throw new Error(data2.error || "Failed to save step 2");
+          return postForm(forms[2]);
+        })
+        .then(data3 => {
+          if (!data3.success) throw new Error(data3.error || "Failed to save step 3");
+
+          // After all succeed, mark appointment as done and redirect
+          if (window.currentEventId) {
+            return fetch(`/dashboard/appointment/update-status/${window.currentEventId}/`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+              },
+              body: JSON.stringify({ status: "done" }),
+            }).then(res => res.json());
+          }
+        })
+        .then(statusData => {
+          if (statusData && !statusData.success) {
+            alert("Failed to update appointment status.");
+            return;
+          }
+          // Refresh calendars and redirect to patient page
+          if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
+          if (window.mainCalendar) window.mainCalendar.refetchEvents();
+          if (window.currentPatientId) {
+            window.location.href = `/dashboard/patient/${window.currentPatientId}/`;
+          } else {
+            closeAppointmentModal("done-steps-modal");
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert(err.message || "Network error while saving done steps.");
+        });
     });
   }
 
@@ -1373,27 +1538,38 @@ document.addEventListener("DOMContentLoaded", function() {
   const closeBtn = document.getElementById("done-steps-close-btn");
   if (closeBtn) {
     closeBtn.addEventListener("click", function() {
-      closeModal("done-steps-modal");
-      closeModal("status-modal");
+      closeAppointmentModal("done-steps-modal");
+      closeAppointmentModal("status-modal");
     });
   }
 });
 
-// ===== Done‑odontogram Step 3 service search =====
-const doneServiceSearchInput = document.getElementById("done-odontogram-service-search-0");
-const doneServicesContainer = document.getElementById("done-odontogram-services-checkboxes-0");
+// Sync Step 1 total -> Step 2 total
+const step1ServicesContainer = document.getElementById("done-services-checkboxes");
+const doneAmountInput = document.getElementById("done-medical-amount");
+const financialTotalDueInput = document.getElementById("done-financial-total-due");
 
-if (doneServiceSearchInput && doneServicesContainer) {
-  doneServiceSearchInput.addEventListener("input", () => {
-    const q = doneServiceSearchInput.value.toLowerCase();
+if (step1ServicesContainer && doneAmountInput) {
+  step1ServicesContainer.addEventListener("change", () => {
+    let total = 0;
+    step1ServicesContainer
+      .querySelectorAll("input.done-service-checkbox")
+      .forEach(cb => {
+        if (cb.checked) {
+          const price = parseFloat(cb.dataset.price || "0");
+          total += isNaN(price) ? 0 : price;
+        }
+      });
 
-    doneServicesContainer.querySelectorAll("label").forEach(label => {
-      const nameEl = label.querySelector("span");
-      const name = nameEl ? nameEl.textContent.toLowerCase() : "";
-      label.style.display = name.includes(q) ? "" : "none";
-    });
+    const totalStr = total.toFixed(2);
+    doneAmountInput.value = totalStr;
+
+    if (financialTotalDueInput) {
+      financialTotalDueInput.value = totalStr;
+    }
   });
 }
+
 
 // Odontogram final step submit (attach only once)
 const doneOdontoForm = document.getElementById("done-odontogram-form");

@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const popup = document.getElementById("modal-popup");
+  if (!popup) return;
   const popupContent = document.getElementById("popup-content");
   const addBtn = document.getElementById("add-modal-btn");
   const closeBtn = document.querySelectorAll(".close-popup-btn");

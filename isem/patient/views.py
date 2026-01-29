@@ -235,9 +235,14 @@ def add_medical_history(request, patient_id):
             prescriptions=prescriptions or "",
         )
         
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse(
+                {"success": True, "message": "Treatment history added successfully"}
+            )
+
         messages.success(request, "Treatment history added successfully")
         return redirect("patient:medical_history", pk=patient_id)
-    
+
     return redirect("patient:medical_history", pk=patient_id)
 
 # def financial_history(request, patient_id):

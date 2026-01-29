@@ -46,61 +46,172 @@
 
       <!-- Right Side: Forms -->
       <div class="flex-1 overflow-y-auto p-4 md:p-6">
-        <!-- Step 1: Medical History Form -->
-        <form id="done-medical-form" method="post" action="" class="space-y-3 step-form" data-step="1">
-          {% csrf_token %}
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Patient Name</label>
-            <input type="text" name="patient_name" id="done-medical-patient-name" placeholder="Patient Name" class="w-full border rounded-md p-2 text-sm bg-gray-100" readonly>
+      <!-- Step 1: Medical History Form -->
+      <form id="done-medical-form" method="post" action="" class="space-y-3 step-form" data-step="1">
+        {% csrf_token %}
+        <input type="date" name="date" id="done-medical-date" placeholder="Date" required class="w-full border rounded-md p-2 text-sm" />
+        <input type="text" name="dentist" id="done-medical-dentist" placeholder="Dentist" class="w-full border rounded-md p-2 text-sm" />
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Services</label>
+
+          <!-- Search bar (Done Steps) -->
+          <input
+            type="text"
+            id="done-service-search"
+            placeholder="Search services..."
+            autocomplete="off"
+            class="w-full border rounded-md p-2 text-sm mb-2"
+          />
+
+          <!-- Checkboxes list (same grouping as appointment modal, but for Done Steps) -->
+          <div
+            id="done-services-checkboxes"
+            class="max-h-60 overflow-y-auto border rounded-md p-2 text-xs"
+          >
+            {% regroup services by category as category_list %}
+            {% for group in category_list %}
+              <div class="mb-2">
+                <p class="text-[11px] font-semibold text-gray-600 uppercase mb-1">
+                  {{ group.grouper|title }}
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {% for service in group.list %}
+                    <label class="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        name="services"
+                        value="{{ service.id }}"
+                        data-price="{{ service.price }}"
+                        class="mt-0.5 h-4 w-4 accent-blue-600 done-service-checkbox"
+                      >
+                      <span class="flex-1">
+                        <span class="block font-medium text-gray-800">
+                          {{ service.service_name }}
+                        </span>
+                        <span class="block text-[11px] text-gray-500">
+                          ⏱︎ {{ service.duration }} min
+                        </span>
+                      </span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
           </div>
-          <input type="date" name="date" id="done-medical-date" placeholder="Date" required class="w-full border rounded-md p-2 text-sm">
-          <input type="text" name="dentist" id="done-medical-dentist" placeholder="Dentist" class="w-full border rounded-md p-2 text-sm">
-          <input type="text" name="reason" id="done-medical-reason" placeholder="Reason" required class="w-full border rounded-md p-2 text-sm">
-          <input type="text" name="diagnosis" id="done-medical-diagnosis" placeholder="Diagnosis" required class="w-full border rounded-md p-2 text-sm">
-          <input type="text" name="service" id="done-medical-service" placeholder="Service" required class="w-full border rounded-md p-2 text-sm">
-          <input type="text" name="treatment" id="done-medical-treatment" placeholder="Treatment" class="w-full border rounded-md p-2 text-sm">
-          <input type="text" name="prescriptions" id="done-medical-prescriptions" placeholder="Prescriptions" class="w-full border rounded-md p-2 text-sm">
-        </form>
+
+          <!-- Selected services box (Done Steps) -->
+          <div class="mt-2 border rounded-md p-2 text-xs">
+            <p id="done-selected-services-empty" class="text-gray-500">
+              No services selected.
+            </p>
+            <div
+              id="done-selected-services-tags"
+              class="mt-1 flex flex-wrap gap-1"
+            ></div>
+          </div>
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Total Amount</label>
+          <input
+            type="number"
+            id="done-medical-amount"
+            name="amount"
+            placeholder="Amount will be calculated automatically"
+            step="0.01"
+            readonly
+            class="w-full border rounded-md p-2 text-sm bg-gray-50"
+          />
+        </div>
+
+        <input
+          type="text"
+          name="findings"
+          id="done-medical-findings"
+          placeholder="Findings"
+          class="w-full border rounded-md p-2 text-sm"
+        />
+        <input
+          type="text"
+          name="prescriptions"
+          id="done-medical-prescriptions"
+          placeholder="Prescriptions"
+          class="w-full border rounded-md p-2 text-sm"
+        />
+      </form>
+
 
         <!-- Step 2: Financial History Form -->
         <form id="done-financial-form" method="post" action="" class="space-y-3 step-form hidden" data-step="2">
           {% csrf_token %}
 
-          <!-- Total Due (computed from services) -->
-          <div class="flex items-center justify-center gap-3">
-            <span class="text-sm font-medium text-gray-800">Total Due</span>
-            <div class="flex items-center gap-1">
-              <span class="text-2xl font-semibold text-gray-800">₱</span>
+          <input
+            type="date"
+            name="date" 
+            id="done-financial-date"
+            required
+            placeholder="Date"
+            class="w-full border rounded-md p-2 text-sm"
+          />
 
-              {% if request.user.is_staff or request.user.is_superuser %}
-                <input
-                  type="number"
-                  step="0.01"
-                  name="total_due"
-                  id="done-financial-total-due"
-                  class="w-40 border rounded-md p-3 text-2xl font-semibold text-center text-gray-800"
-                >
-              {% else %}
-                <input
-                  type="number"
-                  step="0.01"
-                  name="total_due"
-                  id="done-financial-total-due"
-                  class="w-40 border rounded-md p-3 text-2xl font-semibold text-center text-gray-800 bg-gray-100"
-                  readonly
-                >
-              {% endif %}
-            </div>
-          </div>
+          <select
+            name="bill_type" 
+            id="done-financial-bill-type"
+            required
+            class="w-full border rounded-md p-2 text-sm"
+          >
+            <option value="">Select Bill Type</option>
+            <option value="Services">Services</option>
+            <option value="Product">Product</option>
+            <option value="Consultation">Consultation</option>
+          </select>
+
+          <select
+            name="payment_mode"
+            id="done-financial-payment-mode"
+            required
+            class="w-full border rounded-md p-2 text-sm"
+          >
+            <option value="">Select Payment Mode</option>
+            <option value="Cash">Cash</option>
+            <option value="Bank">Bank</option>
+            <option value="GCash">GCash</option>
+            <option value="Paymaya">Paymaya</option>
+          </select>
+
+          <input
+            type="number"
+            name="amount"
+            id="done-financial-amount"
+            placeholder="Amount"
+            step="0.01"
+            class="w-full border rounded-md p-2 text-sm"
+          />
+
+          <input
+            type="number"
+            name="total_bill"
+            id="done-financial-total-due"
+            placeholder="Total Due"
+            required
+            step="0.01"
+            class="w-full border rounded-md p-2 text-sm"
+          />
 
 
-          <input type="date" name="date" id="done-financial-date" required placeholder="Date" class="w-full border rounded-md p-2 text-sm">
-          <input type="text" name="description" id="done-financial-description" placeholder="Description" required class="w-full border rounded-md p-2 text-sm">
-          <input type="time" name="time" id="done-financial-time" placeholder="Time" required class="w-full border rounded-md p-2 text-sm">
-          <input type="text" name="type" id="done-financial-type" placeholder="Type" required class="w-full border rounded-md p-2 text-sm">
-          <input type="number" step="0.01" name="amount" id="done-financial-amount" placeholder="Amount paid" class="w-full border rounded-md p-2 text-sm">
-          <input type="number" step="0.01" name="balance" id="done-financial-balance" placeholder="Balance" class="w-full border rounded-md p-2 text-sm">
+
+          <input
+            type="number"
+            name="balance"
+            id="done-financial-balance"
+            placeholder="Balance"
+            step="0.01"
+            class="w-full border rounded-md p-2 text-sm"
+          />
         </form>
+
 
         <!-- Step 3: Odontogram Form -->
         <form id="done-odontogram-form" method="post" action="" class="flex flex-col gap-3 step-form hidden" data-step="3">
@@ -152,7 +263,6 @@
                           <input
                             type="checkbox"
                             name="services_0"  
-                        
                             value="{{ service.id }}"
                             class="mt-0.5 h-4 w-4 accent-blue-600 done-odontogram-service-checkbox"
                           >
@@ -170,6 +280,18 @@
                   </div>
                 {% endfor %}
               </div>
+
+              <!-- Selected services box (Odontogram Step 3) -->
+              <div class="mt-2 border rounded-md p-2 text-xs">
+                <p id="done-odontogram-selected-services-empty-0" class="text-gray-500">
+                  No services selected.
+                </p>
+                <div
+                  id="done-odontogram-selected-services-tags-0"
+                  class="mt-1 flex flex-wrap gap-1"
+                ></div>
+              </div>
+
 
               <!-- Dentist Name -->
               <select name="dentist_0" id="done-odontogram-dentist-0" required class="w-full border rounded-md p-2 text-sm">

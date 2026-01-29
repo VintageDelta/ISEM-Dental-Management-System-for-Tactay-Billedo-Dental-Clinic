@@ -115,19 +115,6 @@
 
 {% block extra_js %}
 
-{% if messages %}
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    {% for message in messages %}
-      {% if "appointment_created" in message.tags %}
-        showSuccessModal();
-      {% elif message.tags == "error" %}
-        showFailedModal("{{ message|escapejs }}");
-      {% endif %}
-    {% endfor %}
-  });
-</script>
-{% endif %}
 
 
 <script>

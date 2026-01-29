@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const chosen = statusMap[btn.textContent.trim()];
       if (!chosen) {
-        closeModal("status-modal");
+        closeAppointmentModal("status-modal");
         return;
       }
 
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (typeof window.initDoneStepsModal === "function") {
           window.initDoneStepsModal(currentEventId);
         }
-        openModal("done-steps-modal");
+        openAppointmentModal("done-steps-modal");
         return;
       }
 
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
               const label = btn.textContent.trim();
               msgEl.textContent = `Status has been changed to "${label}".`;
             }
-            openModal("status-updated-modal");
+            openAppointmentModal("status-updated-modal");
 
           }
         });
@@ -463,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (followDate && propsInner.preferred_date) {
               followDate.value = propsInner.preferred_date;
             }
-            openModal("followup-modal");
+            openAppointmentModal("followup-modal");
           });
 
           rescheduleBtn.addEventListener("click", (e) => {
@@ -472,16 +472,21 @@ document.addEventListener('DOMContentLoaded', function () {
             window.reschedAppointmentId = info.event.id;
             const propsInner = info.event.extendedProps || {};
 
-            document.getElementById("resched-dentist").value = propsInner.dentist_id || "";
-            document.getElementById("resched-location").value = propsInner.location || "";
-            document.getElementById("resched-date").value = propsInner.preferred_date || propsInner.date || "";
-            document.getElementById("resched-email").value = propsInner.email || "";
+            const rDentist  = document.getElementById("resched-dentist");
+            const rLocation = document.getElementById("resched-location");
+            const rDate     = document.getElementById("resched-date");
+            const rEmail    = document.getElementById("resched-email");
 
-            const rawTime = propsInner.preferred_time || propsInner.time || "";
-            const reschedAmpm = document.getElementById("resched-ampm");
-            const reschedHour = document.getElementById("resched-hour");
-            const reschedMin = document.getElementById("resched-minute");
-            const reschedHidden = document.getElementById("resched-time-hidden");
+            if (rDentist)  rDentist.value  = propsInner.dentist_id || "";
+            if (rLocation) rLocation.value = propsInner.location || "";
+            if (rDate)     rDate.value     = propsInner.preferred_date || propsInner.date || "";
+            if (rEmail)    rEmail.value    = propsInner.email || "";
+
+            const rawTime      = propsInner.preferred_time || propsInner.time || "";
+            const reschedAmpm  = document.getElementById("resched-ampm");
+            const reschedHour  = document.getElementById("resched-hour");
+            const reschedMin   = document.getElementById("resched-minute");
+            const reschedHidden= document.getElementById("resched-time-hidden");
 
             if (rawTime && reschedAmpm && reschedHour && reschedMin) {
               const [timePart, ampmPart] = rawTime.split(" ");
@@ -489,11 +494,9 @@ document.addEventListener('DOMContentLoaded', function () {
               reschedAmpm.value = ampmPart;
               reschedAmpm.dispatchEvent(new Event("change"));
               reschedHour.value = String(parseInt(hStr, 10));
-              reschedMin.value = mStr;
-              if (typeof to24Hour === "function") {
+              reschedMin.value  = mStr;
+              if (typeof to24Hour === "function" && reschedHidden) {
                 reschedHidden.value = `${String(to24Hour(reschedHour.value, ampmPart)).padStart(2, "0")}:${mStr}`;
-              } else {
-                reschedHidden.value = "";
               }
             }
 
@@ -513,8 +516,9 @@ document.addEventListener('DOMContentLoaded', function () {
               const timeLabel2 = propsInner.preferred_time || propsInner.time || "";
               currentScheduleEl.textContent = dateLabel && timeLabel2 ? `${dateLabel} at ${timeLabel2}` : "";
             }
-            openModal("reschedule-modal");
+            openAppointmentModal("reschedule-modal");
           });
+
         } else {
           followBtn.disabled = true;
           rescheduleBtn.disabled = true;
@@ -536,22 +540,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (!isCancelled || canManage) {
         wrapper.addEventListener("click", () => {
+          console.log("timeline card clicked", info.event.id);
+          console.log("opening status modal"); 
+
           currentEventId = info.event.id;
           window.reschedAppointmentId = info.event.id;
           window.currentEventId = currentEventId;
           const props2 = info.event.extendedProps || {};
 
-          document.getElementById("detail-dentist").textContent = props2.dentist || "N/A";
-          document.getElementById("detail-location").textContent = props2.location || "N/A";
-          document.getElementById("detail-date").textContent = props2.preferred_date || props2.date || "N/A";
-          document.getElementById("detail-time").textContent = props2.time || props2.preferred_time || "N/A";
-          document.getElementById("detail-service").textContent = props2.service || "N/A";
+          const dDentist  = document.getElementById("detail-dentist");
+          const dLocation = document.getElementById("detail-location");
+          const dDate     = document.getElementById("detail-date");
+          const dTime     = document.getElementById("detail-time");
+          const dService  = document.getElementById("detail-service");
 
-          // NEW: toggle Cancel button based on status + can_manage
+          if (dDentist)  dDentist.textContent  = props2.dentist || "N/A";
+          if (dLocation) dLocation.textContent = props2.location || "N/A";
+          if (dDate)     dDate.textContent     = props2.preferred_date || props2.date || "N/A";
+          if (dTime)     dTime.textContent     = props2.time || props2.preferred_time || "N/A";
+          if (dService)  dService.textContent  = props2.service || "N/A";
+
           const cancelBtn = document.getElementById("status-cancel-btn");
           if (cancelBtn) {
-            const status = props2.status;          // "not_arrived", "arrived", "ongoing", "done", "cancelled"
-            const canManage = !!props2.can_manage; // True for staff/admin
+            const status    = props2.status;
+            const canManage = !!props2.can_manage;
 
             if (status === "done" && !canManage) {
               cancelBtn.disabled = true;
@@ -562,8 +574,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           }
 
-          openModal("status-modal");
+          openAppointmentModal("status-modal");
         });
+
       }
       return { domNodes: [wrapper] };
     }
@@ -591,25 +604,26 @@ document.addEventListener('DOMContentLoaded', function () {
       return btn;
     }
 
-    
-    timelineControlsEl.appendChild(makeBtn("Week", () => timelineCalendar.changeView("timeGridWeek")));
-    timelineControlsEl.appendChild(makeBtn("Day", () => timelineCalendar.changeView("timeGridDay")));
-    timelineControlsEl.appendChild(
-    makeBtn("Today", () => {
-      const today = new Date();
+    if (timelineControlsEl) {
+      timelineControlsEl.appendChild(
+        makeBtn("Week", () => timelineCalendar.changeView("timeGridWeek"))
+      );
+      timelineControlsEl.appendChild(
+        makeBtn("Day", () => timelineCalendar.changeView("timeGridDay"))
+      );
+      timelineControlsEl.appendChild(
+        makeBtn("Today", () => {
+          const today = new Date();
 
-      // 1) Move the timeline to today (existing behavior)
-      timelineCalendar.today();
+          timelineCalendar.today();
+          if (window.mainCalendar) {
+            mainCalendar.gotoDate(today);
+          }
+          setMainSelectedDate(today);
+        })
+      );
+    }
 
-      // 2) Move the main month view so today is in view
-      if (window.mainCalendar) {
-        mainCalendar.gotoDate(today); // ensure month is correct
-      }
-
-      // 3) Ensure only today is selected in main calendar
-      setMainSelectedDate(today);
-    })
-  );
 
 
     // --- Render today's appointments in the side list ---
@@ -656,17 +670,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     currentEventId = ev.id;
                     window.currentEventId = currentEventId;
 
-                    document.getElementById("detail-dentist").textContent =
-                      ev.extendedProps.dentist || "N/A";
-                    document.getElementById("detail-location").textContent =
-                      ev.extendedProps.location || "N/A";
-                    document.getElementById("detail-date").textContent =
-                      ev.extendedProps.preferred_date || ev.extendedProps.date || "N/A";
-                    document.getElementById("detail-time").textContent =
-                      ev.extendedProps.time || ev.extendedProps.preferred_time || "N/A";
-                    document.getElementById("detail-service").textContent =
-                      ev.extendedProps.service || "N/A";
+                    const dDentist  = document.getElementById("detail-dentist");
+                    const dLocation = document.getElementById("detail-location");
+                    const dDate     = document.getElementById("detail-date");
+                    const dTime     = document.getElementById("detail-time");
+                    const dService  = document.getElementById("detail-service");
 
+                    if (dDentist)  dDentist.textContent  = ev.extendedProps.dentist || "N/A";
+                    if (dLocation) dLocation.textContent = ev.extendedProps.location || "N/A";
+                    if (dDate)     dDate.textContent     = ev.extendedProps.preferred_date || ev.extendedProps.date || "N/A";
+                    if (dTime)     dTime.textContent     = ev.extendedProps.time || ev.extendedProps.preferred_time || "N/A";
+                    if (dService)  dService.textContent  = ev.extendedProps.service || "N/A";
+
+                    // existing cancelBtn logic...
                     // NEW: toggle Cancel button based on status + can_manage
                     const cancelBtn = document.getElementById("status-cancel-btn");
                     if (cancelBtn) {
@@ -682,7 +698,7 @@ document.addEventListener('DOMContentLoaded', function () {
                       }
                     }
 
-                    openModal("status-modal");
+                    openAppointmentModal("status-modal");
                   });
                 } else {
                   li.style.cursor = "default";
