@@ -21,22 +21,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const wrapper = document.getElementById("timeline-scroll");
     if (!wrapper || !mainCalendarEl) return;
 
-    const isMobile = window.innerWidth < 768;
+    const isMobile = window.innerWidth < 768; // same as Tailwind md breakpoint
 
     if (isMobile) {
-      // On mobile: cap height and allow scroll
-      wrapper.style.maxHeight = "400px";   // similar to your old 400px
-      wrapper.style.height = "auto";
+      // On mobile/stacked: make timeline tall enough and scrollable
+      wrapper.style.height = "500px";       // increase from 400px so cards + buttons fit
+      wrapper.style.maxHeight = "500px";
+      wrapper.style.overflowY = "auto";
     } else {
-      // On desktop: match main calendar height
+      // On desktop/side-by-side: match main calendar height
       const calHeight = mainCalendarEl.offsetHeight;
       if (calHeight > 0) {
         wrapper.style.height = calHeight + "px";
         wrapper.style.maxHeight = calHeight + "px";
+        wrapper.style.overflowY = "auto";
       }
     }
   }
-
+  
   branchFilterEl.addEventListener("change", function () {
     if (mainCalendar) mainCalendar.refetchEvents();
     if (timelineCalendar) timelineCalendar.refetchEvents();
@@ -181,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
     mainCalendar = new FullCalendar.Calendar(mainCalendarEl, {
       initialView: 'dayGridMonth',
       height: "auto",
-      aspectRatio: window.innerWidth < 768 ? 1.0 : 1.4, // Smaller aspect ratio on mobile
+      aspectRatio: window.innerWidth < 768 ? 0.8 : 1.4, // Smaller aspect ratio on mobile
       expandRows: true,
       handleWindowResize: true,
       customButtons: {
@@ -323,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function () {
     mainCalendar.render();
     
 
-
+    
     // Timeline calendar
     timelineCalendar = new FullCalendar.Calendar(timelineCalendarEl, {
       initialView: 'timeGridDay',
@@ -395,13 +397,13 @@ document.addEventListener('DOMContentLoaded', function () {
       const content = document.createElement("div");
       content.style.flex = "1";
       content.style.paddingRight = "8px";
+      const isMobile = window.innerWidth < 768;
 
       // DAY vs WEEK text
-      if (info.view && info.view.type === "timeGridDay") {
-        // Day view: show full title, no time text
+      if (info.view && info.view.type === "timeGridDay" ) {
         const titleDiv = document.createElement("div");
         titleDiv.textContent = info.event.title || "";
-        titleDiv.style.fontSize = "0.875rem";
+        titleDiv.style.fontSize = isMobile ? "0.7rem" : "0.875rem";
         titleDiv.style.fontWeight = "600";
         titleDiv.style.color = "#1f2937";
         titleDiv.style.overflow = "hidden";
@@ -430,12 +432,13 @@ document.addEventListener('DOMContentLoaded', function () {
       btnRow.style.display = "flex";
       btnRow.style.gap = "4px";
       btnRow.style.flexShrink = "0";
+      
 
       if (info.view && info.view.type === "timeGridDay") {
         const followBtn = document.createElement("button");
         followBtn.textContent = "Follow up";
-        followBtn.style.padding = "4px 8px";
-        followBtn.style.fontSize = "0.7rem";
+        followBtn.style.padding = isMobile ? "2px 4px" : "4px 8px";
+        followBtn.style.fontSize = isMobile ? "0.6rem" : "0.7rem";
         followBtn.style.borderRadius = "6px";
         followBtn.style.background = "#16a34a";
         followBtn.style.color = "#fff";
@@ -444,8 +447,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const rescheduleBtn = document.createElement("button");
         rescheduleBtn.textContent = "Reschedule";
-        rescheduleBtn.style.padding = "4px 8px";
-        rescheduleBtn.style.fontSize = "0.7rem";
+        rescheduleBtn.style.padding = isMobile ? "2px 4px" : "4px 8px";
+        rescheduleBtn.style.fontSize = isMobile ? "0.6rem" : "0.7rem";
         rescheduleBtn.style.borderRadius = "6px";
         rescheduleBtn.style.background = "#2563eb";
         rescheduleBtn.style.color = "#fff";
@@ -597,12 +600,14 @@ document.addEventListener('DOMContentLoaded', function () {
       const btn = document.createElement("button");
       btn.textContent = label;
       btn.className =
-        "px-3 py-1.5 text-sm font-medium border border-gray-300 rounded-md " +
+        "px-1.5 py-0.5 text-[0.65rem] md:px-3 md:py-1.5 md:text-sm font-medium " +
+        "border border-gray-300 rounded-md " +
         "bg-white/80 text-gray-600 hover:bg-gray-100 transition " +
         "focus:outline-none focus:ring-2 focus:ring-blue-500";
       btn.onclick = onClick;
       return btn;
     }
+
 
     if (timelineControlsEl) {
       timelineControlsEl.appendChild(
@@ -632,34 +637,36 @@ document.addEventListener('DOMContentLoaded', function () {
       const today = new Date().toISOString().split("T")[0];
       const todaysEvents = timelineCalendar.getEvents().filter(ev => ev.startStr.startsWith(today));
 
+      // If none, show nothing (just leave the list empty)
       if (todaysEvents.length === 0) {
-        listEl.innerHTML = `<li class="text-gray-500 text-sm">No appointments today.</li>`;
-      } else {
-        todaysEvents.forEach(ev => {
-          const base = colorMap[ev.extendedProps.status] || "#9CA3AF";
-          const tinted = base + "33";
+        return;
+      }
 
-          const li = document.createElement("li");
-          li.className = "relative rounded-lg p-3 shadow-sm mb-2 flex items-start";
-          li.style.backgroundColor = tinted;
+      todaysEvents.forEach(ev => {
+        const base = colorMap[ev.extendedProps.status] || "#9CA3AF";
+        const tinted = base + "33";
 
-          const stripe = document.createElement("div");
-          stripe.className = "rounded-l-lg";
-          stripe.style.width = "6px";
-          stripe.style.height = "100%";
-          stripe.style.background = base;
-          stripe.style.flex = "0 0 6px";
-          stripe.style.marginRight = "8px";
+        const li = document.createElement("li");
+        li.className = "relative rounded-lg p-3 shadow-sm mb-2 flex items-start";
+        li.style.backgroundColor = tinted;
 
-          const content = document.createElement("div");
-          content.className = "pl-3";
-          content.innerHTML = `
-            <p class="text-sm text-gray-600">${ev.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-            <p class="font-medium text-gray-900">${ev.title}</p>
-          `;
+        const stripe = document.createElement("div");
+        stripe.className = "rounded-l-lg";
+        stripe.style.width = "6px";
+        stripe.style.height = "100%";
+        stripe.style.background = base;
+        stripe.style.flex = "0 0 6px";
+        stripe.style.marginRight = "8px";
 
-          li.appendChild(stripe);
-          li.appendChild(content);
+        const content = document.createElement("div");
+        content.className = "pl-3";
+        content.innerHTML = `
+          <p class="text-sm text-gray-600">${ev.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+          <p class="font-medium text-gray-900">${ev.title}</p>
+        `;
+
+        li.appendChild(stripe);
+        li.appendChild(content);
 
                 // cancelled / permission logic for side list item
                 const isCancelled = ev.extendedProps.status === "cancelled";
@@ -707,9 +714,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
           listEl.appendChild(li);
-        });
-      }
+      });
     }
+    
 
     window.renderTodaysAppointments();
     timelineCalendar.on("eventAdd", window.renderTodaysAppointments);
