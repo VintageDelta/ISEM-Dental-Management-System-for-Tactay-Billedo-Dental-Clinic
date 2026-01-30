@@ -181,7 +181,8 @@
 
 <!-- CONTACT US SECTION -->
 <section id="contact" class="pt-32 pb-20 bg-[#1f1f1f] text-gray-300 px-6 md:px-20">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-12 items-start">
+
 
         <!-- ABOUT COLUMN -->
         <div>
@@ -195,9 +196,6 @@
             </p>
         </div>
 
-        <!-- SPACER TO BALANCE GRID -->
-        <div></div>
-
         <!-- RECENT SERVICES COLUMN -->
         <div>
             <h3 class="text-sm font-semibold tracking-widest mb-6">RECENT SERVICES</h3>
@@ -208,31 +206,86 @@
                 <li class="hover:text-white cursor-pointer transition">Orthodontic Braces</li>
                 <li class="hover:text-white cursor-pointer transition">Show More</li>
             </ul>
+            <!-- CONTACT INFO BLOCK -->
+<div class="mt-6">
+    <h3 class="text-sm font-semibold tracking-widest mb-4">CONTACT</h3>
+
+    <p class="flex items-center gap-3 text-gray-400">
+        📱 <span>+63 912 345 6789</span>
+    </p>
+</div>
+
         </div>
 
         <!-- CONTACT COLUMN -->
-        <div>
-            <h3 class="text-sm font-semibold tracking-widest mb-6">CONTACT US</h3>
+        <div class="md:col-span-1">
+    <h3 class="text-sm font-semibold tracking-widest mb-6">LOCATIONS</h3>
 
-            <div class="space-y-4">
+    <div class="space-y-4">
+        <p class="text-xs text-gray-400 mb-3">
+            Select a clinic location to view on the map
+        </p>
 
-                <p class="flex items-center gap-3">
-                    📱 <span>+63 912 345 6789</span>
-                </p>
+        <button onclick="changeMap('sto_domingo', this)"
+        class="location-btn flex items-start gap-3 text-left px-4 py-2 rounded-lg
+               border border-gray-600 hover:border-white hover:bg-white/10
+               transition">
+    📍 <span>Tactay-Billedo Dental Clinic, Sto. Domingo</span>
+</button>
 
-                <p class="flex items-center gap-3">
-                    ✉️ <span>clinic@example.com</span>
-                </p>
+<button onclick="changeMap('vigan', this)"
+        class="location-btn flex items-start gap-3 text-left px-4 py-2 rounded-lg
+               border border-gray-600 hover:border-white hover:bg-white/10
+               transition">
+    📍 <span>The Dentalist Company Dental Clinic, Vigan City</span>
+</button>
 
-                <p class="flex items-center gap-3">
-                    📍 <span>Tactay-Billedo Dental Clinic, Sto.Domingo, Ilocos Sur</span>
-                </p>
-
-            </div>
-        </div>
 
     </div>
+</div>
+
+<!-- MAP COLUMN -->
+<div class="lg:col-span-2 w-full h-[300px] md:h-[350px] rounded-lg overflow-hidden shadow-lg">
+
+    <iframe
+        id="mapFrame"
+        class="w-full h-full border-0"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2098.9973454083433!2d120.4092331018807!3d17.639590454635346!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x338e638b0f580b61%3A0x7c5a53b7ebe2e503!2sTactay-Billedo%20Dental%20Clinic!5e0!3m2!1sen!2sph!4v1769500580593!5m2!1sen!2sph">
+    </iframe>
+</div>
+    </div>
 </section>
+
+<script>
+function changeMap(location) {
+    const mapFrame = document.getElementById("mapFrame");
+
+    const locations = {
+        sto_domingo: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2098.9973454083433!2d120.4092331018807!3d17.639590454635346!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x338e638b0f580b61%3A0x7c5a53b7ebe2e503!2sTactay-Billedo%20Dental%20Clinic!5e0!3m2!1sen!2sph!4v1769500580593!5m2!1sen!2sph" ,
+        vigan: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3803.6154161676036!2d120.3883255!3d17.573487699999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x338e65770cf041cb%3A0x90e9532b2c65ff63!2sThe%20Dentalist%20Company%20Dental%20Clinic!5e0!3m2!1sen!2sph!4v1769500249682!5m2!1sen!2sph"
+    };
+
+    mapFrame.src = locations[location];
+
+    // active state
+    document.querySelectorAll('.location-btn').forEach(b => {
+        b.classList.remove('bg-white/10', 'border-white');
+    });
+
+    if (btn) {
+        btn.classList.add('bg-white/10', 'border-white');
+    }
+}
+
+// default on load
+window.addEventListener("DOMContentLoaded", () => {
+    const firstBtn = document.querySelector('.location-btn');
+    changeMap('sto_domingo', firstBtn);
+});
+</script>
+
 
 </body>
 </html>

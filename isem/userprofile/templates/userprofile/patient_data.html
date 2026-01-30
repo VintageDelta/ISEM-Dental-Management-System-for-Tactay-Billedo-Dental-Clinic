@@ -3,14 +3,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Patient Information - Tactay-Billedo Dental Clinic</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-100">
 
-<div class="flex items-center justify-center min-h-screen px-4">
-  <div class="bg-white shadow-lg rounded-md w-full max-w-lg p-6 sm:p-8">
-    <h2 class="text-xl sm:text-2xl font-semibold mb-4 text-center">
+<div class="flex flex-col items-center justify-center min-h-screen bg-green-100 relative overflow-hidden px-4">
+
+  <!-- Green Semi-Circle Background -->
+  <div class="absolute -top-[400px] sm:-top-[600px] md:-top-[800px] lg:-top-[1000px]
+       left-1/2 transform -translate-x-1/2
+       w-[900px] sm:w-[900px] md:w-[1300px] lg:w-[1700px]
+       h-[900px] sm:h-[900px] md:h-[1300px] lg:h-[1700px]
+       bg-green-500 rounded-full">
+  </div>
+
+  <!-- LOGO SECTION -->
+  <div class="relative text-center mt-8 mb-6">
+    <img
+      src="{% static 'landingpage/logo_W.png' %}"
+      alt="Tactay-Billedo Dental Clinic Logo"
+      class="mx-auto w-28 sm:w-36 md:w-40 lg:w-44 object-contain"
+    />
+  </div>
+
+  <!-- Patient Information Card -->
+  <div class="relative bg-white shadow-lg rounded-md w-full max-w-lg p-6 sm:p-8 mb-8">
+
+    <h2 class="text-xl sm:text-2xl font-semibold mb-2 text-center">
       Patient Information (optional)
     </h2>
     <p class="text-sm text-gray-600 mb-4 text-center">
@@ -25,37 +47,37 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
         <div>
           <label class="block text-gray-700">Age</label>
-          <input type="number" name="age"  value="{{ patient.age }}"
-                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
+          <input type="number" name="age" value="{{ patient.age }}"
+                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
         </div>
 
         <div>
-            <label class="block text-gray-700">Gender</label>
-            <select name="gender"
-                    class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-                <option value=""> Select gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-            </select>
+          <label class="block text-gray-700">Gender</label>
+          <select name="gender"
+                  class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
 
         <div>
           <label class="block text-gray-700">Occupation</label>
-          <input type="text" name="occupation" value="{{ patient.occupation }}" 
-                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
+          <input type="text" name="occupation" value="{{ patient.occupation }}"
+                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
         </div>
 
         <div>
           <label class="block text-gray-700">Telephone</label>
           <input type="text" name="telephone" value="{{ patient.telephone }}"
-                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
+                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
         </div>
 
         <div class="sm:col-span-2">
           <label class="block text-gray-700">Address</label>
           <input type="text" name="address" value="{{ patient.address }}"
-                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
+                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
         </div>
       </div>
 
@@ -64,28 +86,34 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
         <div>
           <label class="block text-gray-700">Particular Condition</label>
-          <input type="text" name="particular_condition" value="{{ patient.particular_condition }}" placeholder="e.g., Diabetes, Hypertension, None"
-                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
+          <input type="text" name="particular_condition" value="{{ patient.particular_condition }}"
+                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
         </div>
+
         <div>
           <label class="block text-gray-700">Allergy</label>
-          <input type="text" name="allergy" value="{{ patient.allergy }}" placeholder="e.g., Penicillin, None"
-                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
+          <input type="text" name="allergy" value="{{ patient.allergy }}"
+                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
         </div>
+
         <div>
           <label class="block text-gray-700">Pregnancy Status</label>
-          <input type="text" name="pregnancy_status" value="{{ patient.pregnancy_status }}" placeholder="e.g., Pregnant, Not Pregnant, N/A"
-                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
+          <input type="text" name="pregnancy_status" value="{{ patient.pregnancy_status }}"
+                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
         </div>
+
         <div>
           <label class="block text-gray-700">Medications</label>
-          <input type="text" name="medications" value="{{ patient.medications }}" placeholder="e.g., Aspirin, None"
-                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
+          <input type="text" name="medications" value="{{ patient.medications }}"
+                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
         </div>
+
         <div class="sm:col-span-2">
-          <label class="block text-gray-700">Abnormal Bleeding History</label> 
-          <textarea name="abnormal_bleeding_history" rows="3" placeholder="Provide details if any"
-                    class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">{{ patient.abnormal_bleeding_history }}</textarea>
+          <label class="block text-gray-700">Abnormal Bleeding History</label>
+          <textarea name="abnormal_bleeding_history" rows="3"
+                    class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+            {{ patient.abnormal_bleeding_history }}
+          </textarea>
         </div>
       </div>
 
@@ -99,6 +127,7 @@
           Continue to Homepage
         </button>
       </div>
+
     </form>
   </div>
 </div>
