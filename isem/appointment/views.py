@@ -1,3 +1,5 @@
+# views.py
+
 import json
 from datetime import datetime, timedelta
 
@@ -409,6 +411,7 @@ def events(request):
                 "dentist": a.dentist.name if a.dentist else a.dentist_name,
                 "dentist_id": a.dentist.id if a.dentist else None,
                 "location": a.branch.name if a.branch else a.location,
+                "branch_id": a.branch.id if a.branch else None,
                 "date": str(a.date),
                 "time": a.time.strftime("%I:%M %p"),
                 "preferred_date": str(a.preferred_date) if a.preferred_date else None,

@@ -22,8 +22,9 @@
       <div>
         <select id="resched-location" name="location" required class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select location</option>
-          <option value="Vigan">Vigan</option>
-          <option value="Santo Domingo">Santo Domingo</option>
+          {% for branch in branches %}
+            <option value="{{ branch.id }}">{{ branch.name }}</option>
+          {% endfor %}
         </select>
       </div>
 
@@ -71,8 +72,7 @@
 
 
       <input type="hidden" name="time" id="resched-time-hidden">
-
-      <!-- Service (same search + tags UI, but with resched- IDs) -->
+            <!-- Service (same search + tags UI, but with resched- IDs) -->
       <div>
         <p class="font-semibold mb-1">Select Service:</p>
 
@@ -87,18 +87,36 @@
         <!-- Checkboxes list -->
         <div
           id="resched-services-checkboxes"
-          class="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2"
+          class="max-h-60 overflow-y-auto border rounded-md p-2 text-xs"
         >
-          {% for service in services %}
-            <label class="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="services"
-                value="{{ service.id }}"
-                class="h-4 w-4 accent-blue-600 resched-service-checkbox"
-              >
-              <span>{{ service.service_name }}</span>
-            </label>
+          {% regroup services by category as category_list %}
+
+          {% for group in category_list %}
+            <div class="mb-2">
+              <p class="text-[11px] font-semibold text-gray-600 uppercase mb-1">
+                {{ group.grouper|title }}
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {% for service in group.list %}
+                  <label class="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      name="services"
+                      value="{{ service.id }}"
+                      class="mt-0.5 h-4 w-4 accent-blue-600 resched-service-checkbox"
+                    >
+                    <span class="flex-1">
+                      <span class="block font-medium text-gray-800">
+                        {{ service.service_name }}
+                      </span>
+                      <span class="block text-[11px] text-gray-500">
+                        ⏱︎ {{ service.duration }} min
+                      </span>
+                    </span>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
           {% endfor %}
         </div>
 
@@ -113,6 +131,7 @@
           ></div>
         </div>
       </div>
+
 
       <!-- Email (prefilled from appointment) -->
       <div>

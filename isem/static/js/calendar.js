@@ -481,9 +481,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const rEmail    = document.getElementById("resched-email");
 
             if (rDentist)  rDentist.value  = propsInner.dentist_id || "";
-            if (rLocation) rLocation.value = propsInner.location || "";
+            if (rLocation) rLocation.value = (propsInner.branch_id || "").toString();
             if (rDate)     rDate.value     = propsInner.preferred_date || propsInner.date || "";
             if (rEmail)    rEmail.value    = propsInner.email || "";
+
 
             const rawTime      = propsInner.preferred_time || propsInner.time || "";
             const reschedAmpm  = document.getElementById("resched-ampm");

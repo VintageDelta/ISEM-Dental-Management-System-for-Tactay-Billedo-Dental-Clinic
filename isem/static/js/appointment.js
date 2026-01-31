@@ -1,3 +1,5 @@
+// appointment.js
+
 let currentPatientId = null;
 // Global refs for main create-appointment form/button
 let addForm = null;
@@ -64,6 +66,16 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedTagsContainer: document.getElementById("done-odontogram-selected-services-tags-0"),
     selectedEmptyText: document.getElementById("done-odontogram-selected-services-empty-0"),
   });
+
+  // === Reschedule modal instance ===
+  window.refreshReschedSelectedServiceTags = initServiceSearchAndTags({
+    searchInput: document.getElementById("resched-service-search"),
+    servicesContainer: document.getElementById("resched-services-checkboxes"),
+    checkboxSelector: "input.resched-service-checkbox",
+    selectedTagsContainer: document.getElementById("resched-selected-services-tags"),
+    selectedEmptyText: document.getElementById("resched-selected-services-empty"),
+  });
+
 
 
   statusCancelBtn?.addEventListener("click", () => {
@@ -650,6 +662,10 @@ async function toggleTimeInputs() {
     const ampm = ampmSelect.value;
     if (!ampm) {
       opt.disabled = false;
+      // reset styles when AM/PM not chosen yet
+      opt.style.fontWeight = "";
+      opt.style.color = "";
+      opt.style.backgroundColor = "";
       return;
     }
 
@@ -666,8 +682,24 @@ async function toggleTimeInputs() {
         break;
       }
     }
-    opt.disabled = !hasFree;
+
+    const isDisabled = !hasFree;
+    opt.disabled = isDisabled;
+
+    if (isDisabled) {
+      // blocked: lighter and normal weight
+      opt.style.fontWeight = "400";      // normal
+      opt.style.color = "#9ca3af";       // Tailwind gray-400
+      opt.style.backgroundColor = "";
+    } else {
+      // available: bold and dark
+      opt.style.fontWeight = "700";      // bold
+      opt.style.color = "#111827";       // Tailwind gray-900
+      opt.style.backgroundColor = "";
+    }
   });
+
+
 
   // 2) Minute-level disabling: whenever hour or ampm changes, disable only blocked minutes
   function updateMinuteOptions() {
@@ -689,13 +721,27 @@ async function toggleTimeInputs() {
 
     const blockedMinutes = blockedMap[h24] || new Set();
 
-    Array.from(minuteSelect.options).forEach(opt => {
-      if (!opt.value) return;
-      const mm = parseInt(opt.value, 10);
-      if (blockedMinutes.has(mm)) {
-        opt.disabled = true;
-      }
-    });
+  Array.from(minuteSelect.options).forEach(opt => {
+    if (!opt.value) return;
+    const mm = parseInt(opt.value, 10);
+
+    const isDisabled = blockedMinutes.has(mm);
+    opt.disabled = isDisabled;
+
+    if (isDisabled) {
+      // blocked: lighter and normal weight
+      opt.style.fontWeight = "400";
+      opt.style.color = "#9ca3af";     // gray-400
+      opt.style.backgroundColor = "";
+    } else {
+      // available: bold and dark
+      opt.style.fontWeight = "700";    // bold
+      opt.style.color = "#111827";     // gray-900
+      opt.style.backgroundColor = "";
+    }
+  });
+
+
   }
 
   // hook the minute update; ensure you don't add multiple listeners
@@ -1000,7 +1046,7 @@ function initRescheduleForm() {
     hourSelect.innerHTML = '<option value="" selected disabled >hour</option>';
 
     if (ampm === "AM") {
-      ["7", "8", "9", "10", "11"].forEach(h => {
+      ["8", "9", "10", "11"].forEach(h => {
         const opt = document.createElement("option");
         opt.value = h;
         opt.textContent = h;
@@ -1149,7 +1195,7 @@ function initFollowupForm() {
     hourSelect.innerHTML = '<option value="" selected disabled>Hour</option>';
 
     if (ampm === "AM") {
-      ["7", "8", "9", "10", "11"].forEach((h) => {
+      ["8", "9", "10", "11"].forEach((h) => {
         const opt = document.createElement("option");
         opt.value = h;
         opt.textContent = h;
@@ -1377,27 +1423,47 @@ window.initDoneStepsModal = function(appointmentId) {
 
 function showDoneStep(step) {
   console.log("showDoneStep called with step:", step);
-  
+
   // Hide all forms
   document.querySelectorAll(".step-form").forEach(f => f.classList.add("hidden"));
-  
+
   // Reset all step containers
   document.querySelectorAll(".step-container").forEach(s => {
     s.classList.add("opacity-50");
     s.classList.remove("border-blue-500");
   });
 
+  // NEW: clear all completed visuals
+  document.querySelectorAll(".step-circle").forEach(c => {
+    c.classList.remove("bg-green-500", "text-white");
+    c.classList.add("bg-gray-200", "text-gray-700"); // or whatever your default is
+    c.innerText = c.dataset.stepLabel || c.innerText; // restore original number label
+  });
+
   // Show current form and highlight step
   const form = document.querySelector(`.step-form[data-step="${step}"]`);
   const container = document.getElementById(`step-${step}`);
-  
+
   console.log("Form for step", step, ":", form);
   console.log("Container for step", step, ":", container);
-  
+
   if (form) form.classList.remove("hidden");
   if (container) {
     container.classList.remove("opacity-50");
     container.classList.add("border-blue-500");
+  }
+
+  // NEW: mark previous steps as completed (add check)
+  for (let i = 1; i < step; i++) {
+    const c = document.querySelector(`#step-${i} .step-circle`);
+    if (c) {
+      if (!c.dataset.stepLabel) {
+        c.dataset.stepLabel = c.innerText;  // remember original number
+      }
+      c.classList.remove("bg-gray-200", "text-gray-700");
+      c.classList.add("bg-green-500", "text-white");
+      c.innerText = "✓";
+    }
   }
 
   // Update buttons
@@ -1415,6 +1481,7 @@ function showDoneStep(step) {
   window.doneStepsCurrentStep = step;
   console.log("doneStepsCurrentStep set to:", window.doneStepsCurrentStep);
 }
+
 
 
 // Attach handlers when DOM loads - ONCE
