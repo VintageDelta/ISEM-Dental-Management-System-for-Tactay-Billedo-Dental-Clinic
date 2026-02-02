@@ -1,5 +1,6 @@
-{% extends "core/base.html" %} {% load static %} {% block content %}
-
+{% extends "core/base.html" %} 
+{% load static %} 
+{% block content %}
 
 <!-- Main Tab -->
 <div class="flex items-center space-x-4 mb-6">
@@ -16,7 +17,6 @@
     Clinic
   </button>
 </div>
-
 
 <!--USERRRR-->
 <div id="userSection">
@@ -39,108 +39,129 @@
     </button>
   </div>
 
-<!-- All Users Table -->
-<div id="userAllContent">
-<!-- Search bar with dropdown -->
-<div class="relative flex items-center bg-gray-300 rounded px-3 py-2 w-full md:w-96 mb-4">
-  <input
-    id="search-bar"
-    type="search"
-    name="search"
-    value="{{ search_query }}"
-    placeholder="Search users..."
-    autocomplete="off"
-    class="bg-transparent outline-none text-sm w-full"
-  />
-  <!-- Dropdown results -->
-  <div id="search-results" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto z-50">
-    <!-- Results -->
-  </div>
-</div>
-
-
-  <div class="overflow-x-auto bg-white shadow rounded-lg">
-    <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Name
-          </th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Email
-          </th>
-          <th class="px-4 py-2 text-left font-semibold text-gray-700">
-            Role
-          </th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        {% for user in all_users %}
-        <tr class="hover:bg-gray-100">
-          <td class="px-4 py-2">{{ user.first_name }} {{user.last_name}}</td>
-          <td class="px-4 py-2">{{ user.email }}</td>
-          <td class="px-4 py-2">
-            {% if user.is_superuser %}Admin 
-            {% elif user.is_staff %}Staff
-            {% else %}Patient
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="3" class="px-4 py-6 text-center text-gray-500">
-            No users found.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
- 
-  {% if page_obj.paginator.num_pages > 1 %}
-  <div class="flex justify-between items-center mt-4 pt-4 border-t">
-    <!-- Page Navigation -->
-    <div class="flex space-x-2 text-sm">
-      {# Previous #}
-      {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}"
-           class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
-      {% else %}
-        <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
-      {% endif %}
-
-      {# Page numbers #}
-      {% for num in page_obj.paginator.page_range %}
-        {% if num == page_obj.number %}
-          <span class="px-3 py-1 border rounded bg-blue-500 text-white">
-            {{ num }}
-          </span>
-        {% else %}
-          <a href="?page={{ num }}"
-             class="px-3 py-1 border rounded hover:bg-gray-100">
-            {{ num }}
-          </a>
-        {% endif %}
-      {% endfor %}
-
-      {# Next #}
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}"
-           class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
-      {% else %}
-        <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
-      {% endif %}
+  <!-- All Users Table -->
+  <div id="userAllContent">
+    <!-- Search bar with dropdown -->
+    <div class="relative flex items-center bg-gray-300 rounded px-3 py-2 w-full md:w-96 mb-4">
+      <input
+        id="search-bar"
+        type="search"
+        name="search"
+        value="{{ search_query }}"
+        placeholder="Search users..."
+        autocomplete="off"
+        class="bg-transparent outline-none text-sm w-full"
+      />
+      <!-- Dropdown results -->
+      <div id="search-results" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto z-50">
+        <!-- Results -->
+      </div>
     </div>
 
-    <!-- Page Counter -->
-    <span class="text-sm text-gray-600">
-      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-    </span>
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Name</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Email</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Role</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for user_item in all_users %}
+          <tr class="hover:bg-gray-100">
+            <td class="px-4 py-2">{{ user_item.first_name }} {{ user_item.last_name }}</td>
+            <td class="px-4 py-2">{{ user_item.email }}</td>
+            <td class="px-4 py-2">
+              {% if user_item.is_superuser %}Admin 
+              {% elif user_item.is_staff %}Staff
+              {% else %}Patient
+              {% endif %}
+            </td>
+            <td class="px-4 py-2">
+              <div class="flex justify-start gap-2">
+                <a href="#" 
+                   class="text-gray-500 hover:text-gray-700 edit-user-btn" 
+                   data-id="{{ user_item.id }}"
+                   data-firstname="{{ user_item.first_name }}"
+                   data-lastname="{{ user_item.last_name }}"
+                   data-email="{{ user_item.email }}"
+                   title="Edit">
+                  <i class="uil uil-edit text-xl"></i>
+                </a>
+                {% if user_item.is_superuser %}
+                <!-- Don't allow deleting admin -->
+                <span class="text-gray-300" title="Cannot delete admin">
+                  <i class="uil uil-trash-alt text-xl"></i>
+                </span>
+                {% else %}
+                <a href="#" 
+                   class="text-gray-500 hover:text-red-600 delete-user-btn" 
+                   data-id="{{ user_item.id }}"
+                   data-name="{{ user_item.first_name }} {{ user_item.last_name }}"
+                   title="Delete">
+                  <i class="uil uil-trash-alt text-xl"></i>
+                </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="px-4 py-6 text-center text-gray-500">
+              No users found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="flex justify-between items-center mt-4 pt-4 border-t">
+      <!-- Page Navigation -->
+      <div class="flex space-x-2 text-sm">
+        {# Previous #}
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}"
+             class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
+        {% else %}
+          <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
+        {% endif %}
+
+        {# Page numbers #}
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <span class="px-3 py-1 border rounded bg-blue-500 text-white">
+              {{ num }}
+            </span>
+          {% else %}
+            <a href="?page={{ num }}"
+               class="px-3 py-1 border rounded hover:bg-gray-100">
+              {{ num }}
+            </a>
+          {% endif %}
+        {% endfor %}
+
+        {# Next #}
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}"
+             class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
+        {% else %}
+          <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
+        {% endif %}
+      </div>
+
+      <!-- Page Counter -->
+      <span class="text-sm text-gray-600">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+    </div>
+    {% endif %}
   </div>
-  {% endif %}
 </div>
-</div>
+
 <!-- CLINIC CLINIC CLINIC-->
 <div id="clinicSection" class="hidden">
   <div class="flex items-center space-x-4 mb-4">
@@ -177,12 +198,8 @@
       <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
         <thead class="bg-gray-50">
           <tr>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Name
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Specialty
-            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Name</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Specialty</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -205,34 +222,44 @@
 
   <!-- Service -->
   <div id="serviceContent" class="hidden">
-    <div class="mb-3">
+    <div class="relative flex items-center bg-gray-300 rounded px-3 py-2 w-full md:w-96 mb-4">
       <input
-        type="text"
-        placeholder="Search services…"
-        class="w-full max-w-sm border rounded-md p-2 text-sm"
+        id="service-search-bar"
+        type="search"
+        name="search"
+        placeholder="Search services..."
+        autocomplete="off"
+        class="bg-transparent outline-none text-sm w-full"
       />
+      <!-- Dropdown results -->
+      <div id="service-search-results" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto z-50">
+        <!-- Results will be populated here -->
+      </div>
     </div>
+    
     <div class="overflow-x-auto bg-white shadow rounded-lg">
       <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
         <thead class="bg-gray-50">
           <tr>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Service
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Price
-            </th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Service</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Price</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Duration</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Category</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
           {% for s in services_page_obj %}
-          <tr class="hover:bg-gray-100">
+          <tr class="hover:bg-gray-100 service-row" 
+              data-service-name="{{ s.service_name|lower }}" 
+              data-category="{{ s.category|lower }}">
             <td class="px-4 py-2">{{ s.service_name }}</td>
             <td class="px-4 py-2">₱{{ s.price }}</td>
+            <td class="px-4 py-2">{{ s.duration }} min</td>
+            <td class="px-4 py-2">{{ s.category }}</td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="2" class="px-4 py-6 text-center text-gray-500">
+            <td colspan="4" class="px-4 py-6 text-center text-gray-500">
               No services found.
             </td>
           </tr>
@@ -240,127 +267,80 @@
         </tbody>
       </table>
     </div>
-      <!-- Services Pagination -->
-  {% if services_page_obj.paginator.num_pages > 1 %}
-  <div class="flex justify-between items-center mt-4 pt-4 border-t">
-    <div class="flex space-x-2 text-sm">
-      {# Previous #}
-      {% if services_page_obj.has_previous %}
-        <a href="?services_page={{ services_page_obj.previous_page_number }}"
-           class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
-      {% else %}
-        <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
-      {% endif %}
 
-      {# Page numbers #}
-      {% for num in services_page_obj.paginator.page_range %}
-        {% if num == services_page_obj.number %}
-          <span class="px-3 py-1 border rounded bg-green-500 text-white">
-            {{ num }}
-          </span>
+    <!-- Services Pagination -->
+    {% if services_page_obj.paginator.num_pages > 1 %}
+    <div class="flex justify-between items-center mt-4 pt-4 border-t">
+      <div class="flex space-x-2 text-sm">
+        {# Previous #}
+        {% if services_page_obj.has_previous %}
+          <a href="?services_page={{ services_page_obj.previous_page_number }}"
+             class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
         {% else %}
-          <a href="?services_page={{ num }}"
-             class="px-3 py-1 border rounded hover:bg-gray-100">
-            {{ num }}
-          </a>
+          <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
         {% endif %}
-      {% endfor %}
 
-      {# Next #}
-      {% if services_page_obj.has_next %}
-        <a href="?services_page={{ services_page_obj.next_page_number }}"
-           class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
-      {% else %}
-        <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
-      {% endif %}
-    </div>
+        {# Page numbers #}
+        {% for num in services_page_obj.paginator.page_range %}
+          {% if num == services_page_obj.number %}
+            <span class="px-3 py-1 border rounded bg-green-500 text-white">
+              {{ num }}
+            </span>
+          {% else %}
+            <a href="?services_page={{ num }}"
+               class="px-3 py-1 border rounded hover:bg-gray-100">
+              {{ num }}
+            </a>
+          {% endif %}
+        {% endfor %}
 
-    <span class="text-sm text-gray-600">
-      Page {{ services_page_obj.number }} of {{ services_page_obj.paginator.num_pages }}
-    </span>
-  </div>
-  {% endif %}
-  </div>
+        {# Next #}
+        {% if services_page_obj.has_next %}
+          <a href="?services_page={{ services_page_obj.next_page_number }}"
+             class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
+        {% else %}
+          <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
+        {% endif %}
+      </div>
 
-  <!-- Branch -->
-  <div id="branchContent" class="hidden">
-    <div class="mb-3">
-      <input
-        type="text"
-        placeholder="Search branches…"
-        class="w-full max-w-sm border rounded-md p-2 text-sm"
-      />
+      <span class="text-sm text-gray-600">
+        Page {{ services_page_obj.number }} of {{ services_page_obj.paginator.num_pages }}
+      </span>
     </div>
-    <div class="overflow-x-auto bg-white shadow rounded-lg">
-      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Branch Name
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Location
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {% for b in branches %}
-          <tr class="hover:bg-gray-100">
-            <td class="px-4 py-2">{{ b.name }}</td>
-            <td class="px-4 py-2">{{ b.location }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="2" class="px-4 py-6 text-center text-gray-500">
-              No branches found.
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    {% endif %}
   </div>
-</div>
 
   <!-- Branch -->
   <div id="branchContent" class="hidden">
     <div class="mb-3">
-      <input
-        type="text"
-        placeholder="Search branches…"
-        class="w-full max-w-sm border rounded-md p-2 text-sm"
-      />
-    </div>
-    <div class="overflow-x-auto bg-white shadow rounded-lg">
-      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Branch Name
-            </th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">
-              Location
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {% for b in branches %}
-          <tr class="hover:bg-gray-100">
-            <td class="px-4 py-2">{{ b.name }}</td>
-            <td class="px-4 py-2">{{ b.location }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="2" class="px-4 py-6 text-center text-gray-500">
-              No branches found.
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="overflow-x-auto bg-white shadow rounded-lg">
+        <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 text-left font-semibold text-gray-700">Branch Name</th>
+              <th class="px-4 py-2 text-left font-semibold text-gray-700">Location</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for branch in branches %}
+            <tr class="hover:bg-gray-100">
+              <td class="px-4 py-2">{{ branch.name }}</td>
+              <td class="px-4 py-2">{{ branch.address }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="2" class="px-4 py-6 text-center text-gray-500">
+                No branches found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
+
 <!-- Add Staff Modal -->
 <div id="add-staff-modal"
      class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
@@ -444,15 +424,62 @@
     </form>
   </div>
 </div>
+<!-- Edit User Modal -->
+<div id="edit-user-modal"
+     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div id="edit-user-content"
+       class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
+    <h2 class="text-lg font-semibold mb-4 text-center">Edit User</h2>
+    
+    <form method="post" id="edit-user-form" class="space-y-3">
+      {% csrf_token %}
+      <input type="hidden" name="user_id" id="edit-user-id" />
+      
+      <input type="text" name="first_name" id="edit-first-name" placeholder="First Name" required
+             class="w-full border rounded-md p-2 text-sm" />
+      
+      <input type="text" name="last_name" id="edit-last-name" placeholder="Last Name" required
+             class="w-full border rounded-md p-2 text-sm" />
+      
+      <input type="email" name="email" id="edit-email" placeholder="Email" required
+             class="w-full border rounded-md p-2 text-sm" />
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+        <select name="role" id="edit-role" required
+                class="w-full border rounded-md p-2 text-sm">
+          <option value="">Select role...</option>
+          {% if user.is_superuser %}
+          <option value="admin">Admin</option>
+          {% endif %}
+          <option value="staff">Staff</option>
+          <option value="patient">Patient</option>
+        </select>
+      </div>
 
-{% endblock %} {% block extra_js %}
+      <div class="flex justify-end gap-2 pt-3">
+        <button type="button" id="close-edit-modal"
+                class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600">
+          Cancel
+        </button>
+        <button type="submit"
+                class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+          Update User
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %} 
+
+{% block extra_js %}
 <script>
   //Main tab
   const userTab = document.getElementById("userTab");
   const clinicTab = document.getElementById("clinicTab");
   const userSection = document.getElementById("userSection");
   const clinicSection = document.getElementById("clinicSection");
-
 
   userTab.addEventListener("click", () => {
     userSection.classList.remove("hidden");
@@ -472,7 +499,6 @@
     userTab.classList.replace("text-white", "text-gray-700");
   });
 
-
   //clinic tabs
   const dentistTab = document.getElementById("dentistTab");
   const serviceTab = document.getElementById("serviceTab");
@@ -480,7 +506,6 @@
   const dentistContent = document.getElementById("dentistContent");
   const serviceContent = document.getElementById("serviceContent");
   const branchContent = document.getElementById("branchContent");
-
 
   dentistTab.addEventListener("click", () => {
     dentistContent.classList.remove("hidden");
@@ -518,6 +543,7 @@
     serviceTab.classList.replace("text-white", "text-gray-700");
   });
 </script>
+
 <script>
 const addStaffBtn = document.getElementById("add-staff-btn");
 const addStaffModal = document.getElementById("add-staff-modal");
@@ -569,9 +595,78 @@ closeUserModal.addEventListener("click", () => {
     addUserModal.style.display = "none";
   }, 200);
 });
+
+// Edit User Modal - UPDATED with Role
+document.querySelectorAll('.edit-user-btn').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    const modal = document.getElementById('edit-user-modal');
+    const content = document.getElementById('edit-user-content');
+    
+    // Fill form
+    document.getElementById('edit-user-id').value = this.dataset.id;
+    document.getElementById('edit-first-name').value = this.dataset.firstname;
+    document.getElementById('edit-last-name').value = this.dataset.lastname;
+    document.getElementById('edit-email').value = this.dataset.email;
+    
+    // 🔥 Set role dropdown
+    const role = this.dataset.role; // Get role from data attribute
+    document.getElementById('edit-role').value = role;
+    
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    setTimeout(() => {
+      content.classList.remove('opacity-0', 'scale-95');
+      content.classList.add('opacity-100', 'scale-100');
+    }, 10);
+  });
+});
+
+// Close edit modal
+document.getElementById('close-edit-modal').addEventListener('click', function() {
+  const content = document.getElementById('edit-user-content');
+  content.classList.remove('opacity-100', 'scale-100');
+  content.classList.add('opacity-0', 'scale-95');
+  setTimeout(() => {
+    document.getElementById('edit-user-modal').classList.add('hidden');
+    document.getElementById('edit-user-modal').style.display = 'none';
+  }, 200);
+});
+
+// Edit form submit
+document.getElementById('edit-user-form').addEventListener('submit', function(e) {
+  const userId = document.getElementById('edit-user-id').value;
+  this.action = `/user/admin/edit-user/${userId}/`;
+});
+
+// Delete User
+document.querySelectorAll('.delete-user-btn').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    const userName = this.dataset.name;
+    const userId = this.dataset.id;
+    
+    if (confirm(`Are you sure you want to delete ${userName}?`)) {
+      // Create form and submit
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/user/admin/delete-user/${userId}/`;
+      
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = '{{ csrf_token }}';
+      form.appendChild(csrfInput);
+      
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+});
 </script>
-      <!--live search-->
-      <script>
+
+<!--live search-->
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-bar');
     const searchResults = document.getElementById('search-results');
@@ -583,7 +678,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const searchValue = searchInput.value.trim();
 
             if (searchValue === '') {
-                // Hide dropdown and reload to show all patients
                 searchResults.classList.add('hidden');
                 searchResults.innerHTML = '';
                 
@@ -594,9 +688,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Wait 300ms before searching
             searchTimeout = setTimeout(() => {
-                // Fetch search results via AJAX
                 fetch(`{% url 'patient:list' %}?search=${encodeURIComponent(searchValue)}`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -605,7 +697,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.patients && data.patients.length > 0) {
-                        // Show dropdown with results
                         let html = '';
                         data.patients.forEach(patient => {
                             html += `
@@ -630,7 +721,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         });
 
-        // Hide dropdown when clicking outside
         document.addEventListener('click', function(e) {
             if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                 searchResults.classList.add('hidden');
@@ -639,14 +729,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
 <script>
 // Check URL parameters on page load to show correct tab
 document.addEventListener('DOMContentLoaded', function() {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // If services_page parameter exists, show clinic section and services tab
   if (urlParams.has('services_page')) {
-    // Switch to Clinic tab
     clinicSection.classList.remove("hidden");
     userSection.classList.add("hidden");
     clinicTab.classList.replace("bg-gray-200", "bg-blue-600");
@@ -654,7 +743,6 @@ document.addEventListener('DOMContentLoaded', function() {
     userTab.classList.replace("bg-blue-600", "bg-gray-200");
     userTab.classList.replace("text-white", "text-gray-700");
     
-    // Switch to Services sub-tab
     serviceContent.classList.remove("hidden");
     dentistContent.classList.add("hidden");
     branchContent.classList.add("hidden");
@@ -666,9 +754,7 @@ document.addEventListener('DOMContentLoaded', function() {
     branchTab.classList.replace("text-white", "text-gray-700");
   }
   
-  // If dentists_page parameter exists, show clinic section and dentists tab
   if (urlParams.has('dentists_page')) {
-    // Switch to Clinic tab
     clinicSection.classList.remove("hidden");
     userSection.classList.add("hidden");
     clinicTab.classList.replace("bg-gray-200", "bg-blue-600");
@@ -676,7 +762,6 @@ document.addEventListener('DOMContentLoaded', function() {
     userTab.classList.replace("bg-blue-600", "bg-gray-200");
     userTab.classList.replace("text-white", "text-gray-700");
     
-    // Switch to Dentist sub-tab
     dentistContent.classList.remove("hidden");
     serviceContent.classList.add("hidden");
     branchContent.classList.add("hidden");
@@ -687,6 +772,91 @@ document.addEventListener('DOMContentLoaded', function() {
     branchTab.classList.replace("bg-green-600", "bg-gray-200");
     branchTab.classList.replace("text-white", "text-gray-700");
   }
+});
+</script>
+
+<script>
+// Service search with dropdown
+document.addEventListener('DOMContentLoaded', function() {
+    const serviceSearchInput = document.getElementById('service-search-bar');
+    const serviceSearchResults = document.getElementById('service-search-results');
+    const serviceRows = document.querySelectorAll('.service-row');
+    let searchTimeout;
+
+    if (serviceSearchInput && serviceSearchResults) {
+        serviceSearchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const searchValue = serviceSearchInput.value.trim().toLowerCase();
+
+            if (searchValue === '') {
+                serviceSearchResults.classList.add('hidden');
+                serviceSearchResults.innerHTML = '';
+                serviceRows.forEach(row => {
+                    row.style.display = '';
+                });
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                let matchedServices = [];
+                
+                serviceRows.forEach(row => {
+                    const serviceName = row.getAttribute('data-service-name');
+                    const category = row.getAttribute('data-category');
+                    
+                    if (serviceName.includes(searchValue) || category.includes(searchValue)) {
+                        const serviceNameText = row.cells[0].textContent;
+                        const price = row.cells[1].textContent;
+                        const duration = row.cells[2].textContent;
+                        const categoryText = row.cells[3].textContent;
+                        
+                        matchedServices.push({
+                            name: serviceNameText,
+                            price: price,
+                            duration: duration,
+                            category: categoryText
+                        });
+                        
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                if (matchedServices.length > 0) {
+                    let html = '';
+                    matchedServices.forEach(service => {
+                        html += `
+                            <div class="px-4 py-2 hover:bg-gray-100 border-b last:border-b-0 cursor-pointer service-dropdown-item">
+                                <div class="font-medium">${service.name}</div>
+                                <div class="text-xs text-gray-500">${service.price} | ${service.duration} | ${service.category}</div>
+                            </div>
+                        `;
+                    });
+                    serviceSearchResults.innerHTML = html;
+                    serviceSearchResults.classList.remove('hidden');
+                } else {
+                    serviceSearchResults.innerHTML = '<div class="px-4 py-2 text-gray-500 text-sm">No services found</div>';
+                    serviceSearchResults.classList.remove('hidden');
+                }
+            }, 300);
+        });
+
+        serviceSearchResults.addEventListener('click', function(e) {
+            const item = e.target.closest('.service-dropdown-item');
+            if (item) {
+                const serviceName = item.querySelector('.font-medium').textContent;
+                serviceSearchInput.value = serviceName;
+                serviceSearchResults.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!serviceSearchInput.contains(e.target) && !serviceSearchResults.contains(e.target)) {
+                serviceSearchResults.classList.add('hidden');
+            }
+        });
+    }
 });
 </script>
 

@@ -161,29 +161,29 @@ def signup(request):
 
     return render(request, 'userprofile/sign-up.html')
 
-@user_passes_test(lambda u: u.is_superuser)
-def admin_dashboard(request):
-    pending_staff = User.objects.filter(is_staff=False, is_active=False)
-    decline_staff = User.objects.filter(is_staff=False, is_active=False)
-    return render(request, 'userprofile/admin/admin-dashboard.html',
-                   {'pending_staff': pending_staff,
-                    'all_users': User.objects.all(),})
+# @user_passes_test(lambda u: u.is_superuser)
+# def admin_dashboard(request):
+#     pending_staff = User.objects.filter(is_staff=False, is_active=False)
+#     decline_staff = User.objects.filter(is_staff=False, is_active=False)
+#     return render(request, 'userprofile/admin/admin-dashboard.html',
+#                    {'pending_staff': pending_staff,
+#                     'all_users': User.objects.all(),})
 
-def approve_staff(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
-    user.is_active = True
-    user.is_staff = True
-    user.save()
-    messages.success(request, f"{user.username} has been approved as staff.")
-    return redirect('userprofile:admin_dashboard')  
+# def approve_staff(request, user_id):
+#     user = get_object_or_404(User, pk=user_id)
+#     user.is_active = True
+#     user.is_staff = True
+#     user.save()
+#     messages.success(request, f"{user.username} has been approved as staff.")
+#     return redirect('userprofile:admin_dashboard')  
 
-def decline_staff(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
-    user.is_active = False
-    user.is_staff = False
-    user.save()
-    messages.success(request, f"{user.username} has been declined as staff.")
-    return redirect('userprofile:admin_dashboard')
+# def decline_staff(request, user_id):
+#     user = get_object_or_404(User, pk=user_id)
+#     user.is_active = False
+#     user.is_staff = False
+#     user.save()
+#     messages.success(request, f"{user.username} has been declined as staff.")
+#     return redirect('userprofile:admin_dashboard')
 
 
 
@@ -299,7 +299,7 @@ def admin_dashboard(request):
     page_obj = paginator.get_page(page_number)
     
     # Import models
-    from appointment.models import Service, Dentist
+    from appointment.models import Service, Dentist, Branch
     
     # Services Pagination
     services_qs = Service.objects.all().order_by('service_name')
@@ -307,6 +307,7 @@ def admin_dashboard(request):
     services_page_number = request.GET.get('services_page')
     services_page_obj = services_paginator.get_page(services_page_number)
 
+    branches = Branch.objects.all()
     return render(request, 'userprofile/admin/admin-dashboard.html', {
         'pending_staff': pending_staff,
         'all_users': page_obj.object_list,  # Paginated users
@@ -314,7 +315,7 @@ def admin_dashboard(request):
         'services_page_obj': services_page_obj,  # Paginated services
         # 'services': Service.objects.all(),
         'dentists': Dentist.objects.all(),
-        'branches': [],
+        'branches': branches,
     })
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
@@ -418,6 +419,111 @@ def add_user(request):
     
     return redirect("userprofile:admin_dashboard")
 
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+@login_required
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def edit_user(request, user_id):
+    """Edit user information with role management"""
+    user_to_edit = get_object_or_404(User, id=user_id)
+    
+    if request.method == "POST":
+        # Update basic info
+        user_to_edit.first_name = request.POST.get("first_name")
+        user_to_edit.last_name = request.POST.get("last_name")
+        email = request.POST.get("email")
+        
+        # Check if email already exists for another user
+        if User.objects.filter(email=email).exclude(id=user_id).exists():
+            messages.error(request, "Email already exists.")
+            return redirect("userprofile:admin_dashboard")
+        
+        user_to_edit.email = email
+        
+        #  Handle Role Change
+        new_role = request.POST.get("role")
+        
+        # Prevent non-superuser from creating admins
+        if new_role == "admin" and not request.user.is_superuser:
+            messages.error(request, "Only admins can assign admin role.")
+            return redirect("userprofile:admin_dashboard")
+        
+        # Prevent editing superuser's role (except by themselves)
+        if user_to_edit.is_superuser and request.user.id != user_to_edit.id:
+            messages.error(request, "Cannot change admin role.")
+            return redirect("userprofile:admin_dashboard")
+        
+        # Apply role changes
+        if new_role == "admin":
+            user_to_edit.is_superuser = True
+            user_to_edit.is_staff = True
+        elif new_role == "staff":
+            user_to_edit.is_superuser = False
+            user_to_edit.is_staff = True
+            # Add to Staff group
+            staff_group, _ = Group.objects.get_or_create(name='Staff')
+            user_to_edit.groups.clear()
+            user_to_edit.groups.add(staff_group)
+        elif new_role == "patient":
+            user_to_edit.is_superuser = False
+            user_to_edit.is_staff = False
+            # Add to Patient group
+            patient_group, _ = Group.objects.get_or_create(name='Patient')
+            user_to_edit.groups.clear()
+            user_to_edit.groups.add(patient_group)
+        
+        user_to_edit.save()
+        
+        messages.success(request, f"User {user_to_edit.username} updated successfully!")
+        return redirect("userprofile:admin_dashboard")
+    
+    return redirect("userprofile:admin_dashboard")
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def delete_user(request, user_id):
+    """Delete user"""
+    user_to_delete = get_object_or_404(User, id=user_id)
+    
+    if request.method == "POST":
+        # Prevent deleting superuser
+        if user_to_delete.is_superuser:
+            messages.error(request, "Cannot delete admin users.")
+            return redirect("userprofile:admin_dashboard")
+        
+        username = user_to_delete.username
+        user_to_delete.delete()
+        messages.success(request, f"User {username} deleted successfully!")
+        return redirect("userprofile:admin_dashboard")
+    
+from django.http import JsonResponse
+from appointment.models import Service
+
+def search_services(request):
+    """AJAX endpoint for service search"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        search_query = request.GET.get('search', '').strip()
+        
+        if search_query:
+            services = Service.objects.filter(
+                models.Q(service_name__icontains=search_query) |
+                models.Q(category__icontains=search_query)
+            ).filter(is_active=True)[:10]  # Limit to 10 results
+            
+            services_data = [{
+                'id': s.id,
+                'service_name': s.service_name,
+                'price': float(s.price) if s.price else 0,
+                'duration': s.duration,
+                'category': s.category,
+            } for s in services]
+            
+            return JsonResponse({'services': services_data})
+        else:
+            return JsonResponse({'services': []})
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 
 @login_required
 def homepage(request):

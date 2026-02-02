@@ -278,14 +278,14 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            {% for record in medical_history %}
+            {% for record in treatment_history %}
             <tr class="hover:bg-gray-50">
               <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ record.date|date:"M d, Y" }}</td>
-              <td class="px-3 sm:px-4 py-2">{{ record.dentist }}</td>
+              <td class="px-3 sm:px-4 py-2">{{ record.dentist|default:"—" }}</td>
               <td class="px-3 sm:px-4 py-2">{{ record.services }}</td>
               <td class="px-3 sm:px-4 py-2 whitespace-nowrap">₱{{ record.amount|floatformat:2 }}</td>
-              <td class="px-3 sm:px-4 py-2">{{ record.findings }}</td>
-              <td class="px-3 sm:px-4 py-2">{{ record.prescriptions }}</td>
+              <td class="px-3 sm:px-4 py-2">{{ record.findings|default:"—" }}</td>
+              <td class="px-3 sm:px-4 py-2">{{ record.prescriptions|default:"—" }}</td>
             </tr>
             {% empty %}
             <tr>
@@ -316,7 +316,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            {% for record in financial_history %}
+            {% for record in billing_history %}
             <tr class="hover:bg-gray-50">
               <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ record.date|date:"M d, Y" }}</td>
               <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ record.bill_type }}</td>
@@ -475,87 +475,176 @@
           </div>
         </form>
 
-        <!-- Financial Form -->
-        <form
-          id="financialForm"
-          method="post"
-          action="{% url 'patient:add_financial_history' patient.id %}"
-          class="space-y-3 hidden"
-        >
-          {% csrf_token %}
-          
-          <input
-            type="date"
-            name="date" 
-            required
-            placeholder="Date"
-            class="w-full border rounded-md p-2 text-sm"
-          />
-          
-          <select
-            name="bill_type" 
-            required
-            class="w-full border rounded-md p-2 text-sm"
-          >
-            <option value="">Select Bill Type</option>
-            <option value="Services">Services</option>
-            <option value="Product">Product</option>
-            <option value="Consultation">Consultation</option>
-          </select>
-          
-          <select
-            name="payment"
-            required
-            class="w-full border rounded-md p-2 text-sm"
-          >
-            <option value="">Select Payment Mode</option>
-            <option value="Cash">Cash</option>
-            <option value="Bank">Bank</option>
-            <option value="GCash">GCash</option>
-            <option value="Paymaya">Paymaya</option>
-          </select>
-          
-          <input
-            type="number"
-            name="amount"
-            placeholder="Amount"
-            step="0.01"
-            class="w-full border rounded-md p-2 text-sm"
-          />
-          
-          <input
-            type="number"
-            name="total_bill"
-            placeholder="Total Bill"
-            required
-            step="0.01"
-            class="w-full border rounded-md p-2 text-sm"
-          />
-          
-          <input
-            type="number"
-            name="balance"
-            placeholder="Balance"
-            step="0.01"
-            class="w-full border rounded-md p-2 text-sm"
-          />
-          
-          <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3">
-            <button
-              type="button"
-              class="close-popup-btn w-full sm:w-auto px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              class="w-full sm:w-auto px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Save
-            </button>
-          </div>
-        </form>
+<!-- Financial Form -->
+<form
+  id="financialForm"
+  method="post"
+  action="{% url 'patient:add_financial_history' patient.id %}"
+  class="space-y-4 hidden"
+>
+  {% csrf_token %}
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Date -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Date <span class="text-red-500">*</span>
+      </label>
+      <input
+        type="date"
+        name="date" 
+        required
+        max="{{ today|date:'Y-m-d' }}"
+        class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
+    
+    <!-- Bill Type -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Bill Type <span class="text-red-500">*</span>
+      </label>
+      <select
+        name="bill_type" 
+        required
+        class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      >
+        <option value="" disabled selected>Select bill type...</option>
+        <option value="Services">Services</option>
+        <option value="Product">Product</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Payment Mode -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Payment Mode <span class="text-red-500">*</span>
+      </label>
+      <select
+        name="payment_mode"
+        required
+        class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      >
+        <option value="" disabled selected>Select payment mode...</option>
+        <option value="Cash">Cash</option>
+        <option value="Bank">Bank Transfer</option>
+        <option value="GCash">GCash</option>
+        <option value="Paymaya">Paymaya</option>
+        <option value="Credit Card">Credit Card</option>
+      </select>
+    </div>
+    
+    <!-- Total Bill -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Total Bill <span class="text-red-500">*</span>
+      </label>
+      <input
+        type="number"
+        id="total_bill_input"
+        name="total_bill"
+        placeholder="0.00"
+        required
+        min="0"
+        step="0.01"
+        class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Amount Paid -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Amount Paid <span class="text-red-500">*</span>
+      </label>
+      <input
+        type="number"
+        id="amount_paid_input"
+        name="amount"
+        placeholder="0.00"
+        required
+        min="0"
+        step="0.01"
+        class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
+    
+    <!-- Balance (Auto-calculated) -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Balance
+      </label>
+      <input
+        type="number"
+        id="balance_input"
+        name="balance"
+        placeholder="0.00"
+        readonly
+        step="0.01"
+        class="w-full border border-gray-300 rounded-md p-2 text-sm bg-gray-100 cursor-not-allowed"
+      />
+      <p class="text-xs text-gray-500 mt-1">Auto-calculated: Total Bill - Amount Paid</p>
+    </div>
+  </div>
+  
+  
+  <!-- Action Buttons -->
+  <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3 border-t">
+    <button
+      type="button"
+      class="close-popup-btn w-full sm:w-auto px-5 py-2.5 text-sm font-medium bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      class="w-full sm:w-auto px-5 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+    >
+      Save Billing Record
+    </button>
+  </div>
+</form>
 
+<script>
+// Auto-calculate balance
+document.addEventListener('DOMContentLoaded', function() {
+  const totalBillInput = document.getElementById('total_bill_input');
+  const amountPaidInput = document.getElementById('amount_paid_input');
+  const balanceInput = document.getElementById('balance_input');
+  
+  function calculateBalance() {
+    const totalBill = parseFloat(totalBillInput.value) || 0;
+    const amountPaid = parseFloat(amountPaidInput.value) || 0;
+    const balance = Math.max(0, totalBill - amountPaid); // Don't allow negative balance
+    
+    balanceInput.value = balance.toFixed(2);
+    
+    // Visual feedback if overpaid
+    if (amountPaid > totalBill && totalBill > 0) {
+      amountPaidInput.classList.add('border-yellow-500', 'bg-yellow-50');
+      balanceInput.classList.add('border-yellow-500', 'bg-yellow-50');
+    } else {
+      amountPaidInput.classList.remove('border-yellow-500', 'bg-yellow-50');
+      balanceInput.classList.remove('border-yellow-500', 'bg-yellow-50');
+    }
+  }
+  
+  if (totalBillInput && amountPaidInput && balanceInput) {
+    totalBillInput.addEventListener('input', calculateBalance);
+    amountPaidInput.addEventListener('input', calculateBalance);
+  }
+  
+  // Set today's date as default
+  const dateInput = document.querySelector('input[name="date"]');
+  if (dateInput && !dateInput.value) {
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.value = today;
+  }
+});
+</script>
         <!-- Odontogram Form -->
         <form
           id="odontogramForm"

@@ -28,6 +28,7 @@ urlpatterns = [
     path('delete-avatar/', views.delete_avatar, name='delete_avatar'),
     path('add-staff/', views.add_staff, name='add_staff'),
     path('add-user/', views.add_user, name='add_user'),
-
+    path('admin/edit-user/<int:user_id>/', views.edit_user, name='edit_user'),
+    path('admin/delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
 
 ]

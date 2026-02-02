@@ -164,24 +164,96 @@ def medical_history(request, pk):
     medical_history_qs = patient.medical_history.all()
     financial_history_qs = patient.financial_history.all()
 
-    # ADD THIS: Fetch billing records from BillingRecord model
+    from appointment.models import Appointment
+    appointments = Appointment.objects.filter(
+        email=patient.email,
+        status__in=['done', 'completed']
+    ).order_by('-date')
+    
+    # Combine treatment history
+    treatment_history = []
+    
+    for record in medical_history_qs:
+        treatment_history.append({
+            'source': 'manual',
+            'id': record.id,
+            'date': record.date,
+            'dentist': record.dentist,
+            'services': record.services,
+            'amount': record.amount,
+            'findings': record.findings,
+            'prescriptions': record.prescriptions,
+        })
+    
+    for appt in appointments:
+        services_text = ", ".join([s.service_name for s in appt.services.all()])
+        total_amount = sum((s.price or 0) for s in appt.services.all())
+        
+        # Convert datetime to date if needed
+        appt_date = appt.date.date() if hasattr(appt.date, 'date') else appt.date
+        
+        treatment_history.append({
+            'source': 'appointment',
+            'id': appt.id,
+            'date': appt_date,  # ← Ensure it's a date object
+            'dentist': appt.dentist.name if appt.dentist else appt.dentist_name,
+            'services': services_text,
+            'amount': total_amount,
+            'findings': '',
+            'prescriptions': '',
+        })
+    
+    treatment_history.sort(key=lambda x: x['date'], reverse=True)
+        # ===== FETCH BILLING HISTORY =====
+    financial_history_qs = patient.financial_history.all()
+    
     from billing.models import BillingRecord
     billing_records = BillingRecord.objects.filter(patient=patient).order_by('-date_issued')
     
-    print("=" * 50)
-    print(f"Patient: {patient.name}")
-    print(f"Old Financial History count: {financial_history_qs.count()}")
-    print(f"New Billing Records count: {billing_records.count()}")
+    # Combine billing history
+    billing_history = []
+    
+    # Add manual financial history
+    for record in financial_history_qs:
+        billing_history.append({
+            'source': 'manual',
+            'id': record.id,
+            'date': record.date,  # This is already a date object
+            'bill_type': record.bill_type,
+            'payment_mode': record.payment_mode,
+            'amount': record.amount,
+            'total_bill': record.total_bill,
+            'balance': record.balance,
+        })
+    
+    # Add billing records from appointments
     for bill in billing_records:
-        print(f"  - ID {bill.pk}: {bill.type}, ₱{bill.amount}, {bill.date_issued}")
-    print("=" * 50)
-
+        # Convert datetime to date for consistent sorting
+        bill_date = bill.date_issued.date() if hasattr(bill.date_issued, 'date') else bill.date_issued
+        
+        billing_history.append({
+            'source': 'appointment',
+            'id': bill.id,
+            'date': bill_date,  
+            'bill_type': 'Services',
+            'payment_mode': 'N/A',
+            'amount': bill.amount,
+            'total_bill': bill.amount,
+            'balance': 0,
+        })
+    
+    billing_history.sort(key=lambda x: x['date'], reverse=True)
 
     tooth_num = range(1, 33)
 
-
-    return render(request, "patient/medical_history.html", {"patient": patient, "medical_history": medical_history_qs, "financial_history": financial_history_qs, "billing_records": billing_records, "tooth_num": tooth_num, "services": Service.objects.all(), "dentists": Dentist.objects.all()})
-
+    return render(request, "patient/medical_history.html", {
+        "patient": patient,
+        "treatment_history": treatment_history,
+        "billing_history": billing_history,
+        "tooth_num": tooth_num,
+        "services": Service.objects.all(),
+        "dentists": Dentist.objects.all()
+    })
 def add_medical_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     
@@ -194,7 +266,7 @@ def add_medical_history(request, patient_id):
         findings = request.POST.get("findings")
         prescriptions = request.POST.get("prescriptions")
         
-        # DEBUG prints
+        # DEBUG prints (keep these!)
         print("=" * 50)
         print("POST DATA:", request.POST)
         print("Service IDs:", service_ids)
@@ -225,7 +297,7 @@ def add_medical_history(request, patient_id):
         amount = amount if amount and amount.strip() else "0"
 
         # Create medical history record
-        MedicalHistory.objects.create(
+        med_record = MedicalHistory.objects.create(
             patient=patient,
             date=date,
             dentist=dentist,
@@ -235,12 +307,24 @@ def add_medical_history(request, patient_id):
             prescriptions=prescriptions or "",
         )
         
+        # QUICK FIX: Auto-create billing record (assumes paid in full)
+        FinancialHistory.objects.create(
+            patient=patient,
+            date=date,
+            bill_type="Services",
+            payment_mode="Cash",  # Default
+            amount=amount,         # Paid amount = treatment total
+            total_bill=amount,     # Total bill = treatment amount
+            balance=0              # Fully paid
+        )
+        print(" AUTO-CREATED BILLING FROM TREATMENT")
+        
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse(
-                {"success": True, "message": "Treatment history added successfully"}
+                {"success": True, "message": "Treatment + Billing added successfully"}
             )
 
-        messages.success(request, "Treatment history added successfully")
+        messages.success(request, "Treatment and billing added successfully")
         return redirect("patient:medical_history", pk=patient_id)
 
     return redirect("patient:medical_history", pk=patient_id)
@@ -253,7 +337,7 @@ def add_medical_history(request, patient_id):
 #     return render(request, "patient/medical_history.html", {"patient": patient, "history": history, "tooth_num": tooth_num})
 
 def add_financial_history(request, patient_id):
-    # Debugging logs
+    # Debugging logs (keep these!)
     print("=" * 50)
     print("ADD_FINANCIAL_HISTORY VIEW CALLED")
     print(f"Patient ID: {patient_id}")
@@ -280,7 +364,8 @@ def add_financial_history(request, patient_id):
 
         print(f"Creating FinancialHistory with: date={date}, bill_type={bill_type}, payment_mode={payment_mode}, amount={amount}, total_bill={total_bill}, balance={balance}")
 
-        FinancialHistory.objects.create(
+        # Create billing record
+        bill_record = FinancialHistory.objects.create(
             patient=patient,
             date=date,
             bill_type=bill_type,
@@ -290,14 +375,27 @@ def add_financial_history(request, patient_id):
             balance=balance,
         )
         
+        # 🔥 QUICK FIX: Auto-create treatment record (for Services billing)
+        if bill_type == "Services":
+            MedicalHistory.objects.create(
+                patient=patient,
+                date=date,
+                dentist="",  # Default (add dentist field to form later)
+                services=bill_type,       # "Services"
+                amount=total_bill,        # Use total_bill as treatment amount
+                findings="",
+                prescriptions=""
+            )
+            print(" AUTO-CREATED TREATMENT FROM BILLING")
+        
         print("FinancialHistory created successfully")
         
         # Return JSON response for AJAX requests
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             print("RETURNING JSON SUCCESS")
-            return JsonResponse({"success": True, "message": "Billing history saved successfully"})
+            return JsonResponse({"success": True, "message": "Billing + Treatment added successfully"})
         
-        messages.success(request, "Billing history added successfully")
+        messages.success(request, "Billing and treatment added successfully")
         return redirect("patient:medical_history", pk=patient_id)
     
     return redirect("patient:medical_history", pk=patient_id)
