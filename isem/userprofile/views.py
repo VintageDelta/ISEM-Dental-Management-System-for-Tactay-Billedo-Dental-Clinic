@@ -18,14 +18,81 @@ from django.shortcuts import render
 
 class RoleBasedLoginView(Loginview):
     template_name = 'userprofile/sign-in.html'
+    
+    def form_valid(self, form):
+        """Override to add custom logic after successful authentication"""
+        # Login the user
+        login(self.request, form.get_user())
+        user = form.get_user()
+        
+        # 🔥 Check if first-time login AND check if profile is incomplete
+        if not user.is_staff and not user.is_superuser:
+            patient = getattr(user, 'patient_patient', None)
+            
+            # Check if patient exists and has incomplete profile (age=0 or no gender)
+            if patient and (patient.age == 0 or not patient.gender):
+                messages.info(self.request, "Welcome! Please complete your profile.")
+                return redirect("userprofile:patient_data")
+        
+        # 🔥 Auto-link patient records if email matches
+        if not user.is_staff and not user.is_superuser:
+            try:
+                existing_patient = Patient.objects.filter(
+                    email=user.email, 
+                    user__isnull=True
+                ).first()
+                
+                if existing_patient:
+                    existing_patient.user = user
+                    existing_patient.save()
+                    messages.success(self.request, "Your patient record has been linked!")
+            except Exception as e:
+                print(f"Patient linking error: {e}")
+        
+        messages.success(self.request, "Login successful.")
+        return super().form_valid(form)
+    
     def get_success_url(self):
+        """Role-based redirect"""
         user = self.request.user
+        
+        # Check if patient needs to complete profile (age=0 or no gender)
+        if not user.is_staff and not user.is_superuser:
+            patient = getattr(user, 'patient_patient', None)
+            if patient and (patient.age == 0 or not patient.gender):
+                return '/user/patient_data/'
+        
+        # Normal role-based redirect
         if user.is_superuser:
             return '/user/admin/dashboard/'
         elif user.is_staff:
             return '/dashboard/'
         else:
-            return '/user/homepage/' 
+            return '/user/homepage/'
+    
+    def get_form_class(self):
+        """Use custom form that accepts email OR username"""
+        from django.contrib.auth.forms import AuthenticationForm
+        
+        class EmailOrUsernameAuthForm(AuthenticationForm):
+            def clean(self):
+                username = self.cleaned_data.get('username')
+                password = self.cleaned_data.get('password')
+                
+                if username and password:
+                    # 🔥 Try email login if @ is present
+                    if '@' in username:
+                        try:
+                            user_obj = User.objects.get(email=username)
+                            username = user_obj.username
+                            self.cleaned_data['username'] = username
+                        except User.DoesNotExist:
+                            pass  # Will fail in parent clean()
+                
+                return super().clean()
+        
+        return EmailOrUsernameAuthForm
+
 
 @login_required
 def patient_dashboard(request):
@@ -68,20 +135,20 @@ def patient_dashboard(request):
 
     return render(request, "userprofile/homepage.html", context)
 
-def signin(request):
-    if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        print("DEBUG - Username:", username)
-        print("DEBUG - Password:", password)
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            messages.success(request, "Login successful.")
-            return redirect("dashboard:index")
-        else:
-            messages.error(request, "Invalid username or password.")
-    return render(request, 'userprofile/sign-in.html')
+# def signin(request):
+#     if request.method == "POST":
+#         username = request.POST.get("username")
+#         password = request.POST.get("password")
+#         print("DEBUG - Username:", username)
+#         print("DEBUG - Password:", password)
+#         user = authenticate(request, username=username, password=password)
+#         if user is not None:
+#             login(request, user)
+#             messages.success(request, "Login successful.")
+#             return redirect("dashboard:index")
+#         else:
+#             messages.error(request, "Invalid username or password.")
+#     return render(request, 'userprofile/sign-in.html')
 
 def signup(request):
     if request.method == "POST":
@@ -281,6 +348,7 @@ def patient_data(request):
         patient.medications = request.POST.get("medications") or getattr(patient, "medications", "")
         patient.abnormal_bleeding_history = request.POST.get("abnormal_bleeding_history") or getattr(patient, "abnormal_bleeding_history", "")
 
+        patient.profile_completed = True
         patient.save()
         return redirect("userprofile:homepage")
 
