@@ -14,6 +14,85 @@
     <link href="https://unicons.iconscout.com/release/v4.0.8/css/line.css" rel="stylesheet" />
 
     {% block extra_css %}{% endblock %}
+
+    <style>
+/* Sidebar links */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem;
+  border-radius: 0.5rem;
+  color: #374151;
+  transition: background 0.2s ease, justify-content 0.2s ease;
+  justify-content: flex-start; /* align left in expanded state */
+}
+
+.sidebar-link:hover {
+  background-color: #f3f4f6;
+}
+
+/* Icons */
+.sidebar-icon {
+  font-size: 1.25rem;
+  transition: font-size 0.2s ease;
+}
+
+/* Text */
+.sidebar-text {
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+/* =========================
+   COLLAPSED STATE (ALL SCREENS)
+   ========================= */
+#sidebar.collapsed {
+  width: 4rem; /* desktop collapsed width */
+}
+
+#sidebar.collapsed .sidebar-text {
+  display: none; /* hide text */
+}
+
+#sidebar.collapsed .sidebar-link {
+  justify-content: center; /* center icons */
+}
+#sidebar:not(.collapsed) #sidebarToggle.sidebar-link {
+    padding-left: 1.5rem;
+}
+/* MOBILE ADJUSTMENTS */
+@media (max-width: 767px) {
+  #sidebar {
+    width: 12rem; /* expanded mobile width */
+  }
+
+  #sidebar.collapsed {
+    width: 3.25rem; /* collapsed mobile width */
+  }
+
+  .sidebar-icon {
+    font-size: 1.05rem; /* smaller icons */
+  }
+
+  .sidebar-link {
+    padding: 0.45rem;
+  }
+   #sidebarToggle.sidebar-link {
+    padding-left: 1rem; 
+    margin-left: 0.76rem;
+  }
+
+  #sidebar.collapsed #sidebarToggle.sidebar-link {
+    justify-content: flex-start; 
+    padding-left: 0.3rem;       
+  }
+  
+}
+</style>
+
+
+
   </head>
   <body class="bg-gray-100">
        <!-- Modal Notifications (Centered) -->
@@ -78,7 +157,12 @@
     <div class="flex min-h-screen">
 
       <!-- Sidebar -->
-      <aside id="sidebar" class="bg-white shadow-md border-r flex flex-col transition-all duration-300 w-64 md:w-64">
+      <aside
+  id="sidebar"
+  class="bg-white shadow-md border-r flex flex-col
+         transition-all duration-300
+         w-64">
+
 
         <!-- Sidebar Header (Logo) -->
           <div class="flex items-center p-4 border-b space-x-2">
@@ -93,85 +177,91 @@
           </div>
 
 
-        <!-- Hamburger Button -->
-        <div class="px-4 py-2">
-          <button id="sidebarToggle" class="focus:outline-none text-gray-500 hover:bg-gray-100 rounded p-2">
-            <span class="material-icons">menu</span>
-          </button>
-        </div>
+      <!-- Hamburger Button -->
+<li>
+  <button id="sidebarToggle" class="sidebar-link focus:outline-none text-gray-500 hover:bg-gray-100 rounded">
+    <span class="material-icons sidebar-icon">menu</span>
+  </button>
+</li>
+
 
         <!-- Navigation -->
-        <nav class="p-4 flex-1">
-          <ul class="space-y-4">
-                  <li>
-                    <a href="{% url 'userprofile:homepage' %}"
-                     class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded transition w-full">
-                    <span class="material-icons">home</span>
-                    <span class="sidebar-text">Home</span>
+        <nav class="p-2 sm:p-3 md:p-4 flex-1">
+  <ul class="space-y-2 sm:space-y-3 md:space-y-4">
 
-                  </a>
-                </li>
+    <!-- Home -->
+    <li>
+      <a href="{% url 'userprofile:homepage' %}"
+         class="sidebar-link">
+        <span class="material-icons sidebar-icon">home</span>
+        <span class="sidebar-text">Home</span>
+      </a>
+    </li>
+
+    {% if user.is_staff or user.is_superuser %}
+    <!-- Dashboard -->
+    <li>
+      <a href="{% url 'dashboard:index' %}"
+         class="sidebar-link">
+        <span class="material-icons sidebar-icon">dashboard</span>
+        <span class="sidebar-text">Dashboard</span>
+      </a>
+    </li>
+    {% endif %}
+
+    <!-- Patient Records -->
+    <li>
+      <a href="{% url 'patient:list' %}"
+         class="sidebar-link">
+        <span class="material-icons sidebar-icon">folder_shared</span>
+        <span class="sidebar-text">Patient Records</span>
+      </a>
+    </li>
+
+    <!-- Appointments -->
+    <li>
+      <a href="{% url 'appointment:list' %}"
+         class="sidebar-link">
+        <span class="material-icons sidebar-icon">event</span>
+        <span class="sidebar-text">Appointments</span>
+      </a>
+    </li>
+
+    {% if user.is_staff %}
+    <!-- Inventory -->
+    <li>
+      <a href="{% url 'inventory:list' %}"
+         class="sidebar-link">
+        <span class="material-icons sidebar-icon">inventory_2</span>
+        <span class="sidebar-text">Inventory</span>
+      </a>
+    </li>
+
+    <!-- Billing -->
+    <li>
+      <a href="{% url 'billing:list' %}"
+         class="sidebar-link">
+        <span class="material-icons sidebar-icon">receipt_long</span>
+        <span class="sidebar-text">Billing Records</span>
+      </a>
+    </li>
+    {% endif %}
+
+    {% if user.is_superuser %}
+    <!-- Management -->
+    <li>
+      <a href="{% url 'userprofile:admin_dashboard' %}"
+         class="sidebar-link">
+        <span class="material-icons sidebar-icon">admin_panel_settings</span>
+        <span class="sidebar-text">Management</span>
+      </a>
+    </li>
+    {% endif %}
+
+  </ul>
+</nav>
 
 
-            {% if user.is_staff or user.is_superuser %}
-            <li>
-            <a href="{% url 'dashboard:index' %}"
-              class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
-              <span class="material-icons">dashboard</span>
-              <span class="sidebar-text">Dashboard</span>
-            </a>
-          </li>
-            {% endif %}
-
-            <li>
-            <a href="{% url 'patient:list' %}"
-              class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
-              <span class="material-icons">folder_shared</span>
-              <span class="sidebar-text">Patient Records</span>
-            </a>
-          </li>
-
-            <li>
-            <a href="{% url 'appointment:list' %}"
-              class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
-              <span class="material-icons">event</span>
-              <span class="sidebar-text">Appointments</span>
-            </a>
-          </li>
-
-
-            {% if user.is_staff %}
-            <li>
-              <a href="{% url 'inventory:list' %}"
-                class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
-                <span class="material-icons">inventory_2</span>
-                <span class="sidebar-text">Inventory</span>
-              </a>
-            </li>
-
-            <li>
-              <a href="{% url 'billing:list' %}"
-                class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
-                <span class="material-icons">receipt_long</span>
-                <span class="sidebar-text">Billing Records</span>
-              </a>
-            </li>
-
-            {% endif %}
-
-            {% if user.is_superuser %}
-            <li>
-            <a href="{% url 'userprofile:admin_dashboard' %}"
-              class="flex items-center space-x-3 text-gray-700 hover:bg-gray-100 p-2 rounded w-full">
-              <span class="material-icons">admin_panel_settings</span>
-              <span class="sidebar-text">Management</span>
-            </a>
-          </li>
-
-            {% endif %}
-
-          </ul>
-        </nav>
       </aside>
 
       <!-- Main Content -->
@@ -259,33 +349,25 @@
 
     {% block extra_js %}{% endblock %}
 
-    <!-- JS for Sidebar Hamburger Toggle and User Dropdown -->  
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const sidebar = document.getElementById('sidebar');
-      const toggleBtn = document.getElementById('sidebarToggle');
-      const sidebarText = document.querySelectorAll('.sidebar-text');
+document.addEventListener('DOMContentLoaded', function () {
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('sidebarToggle');
 
-      // Toggle sidebar collapse
-      toggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('w-16'); // collapse width
-        sidebar.classList.toggle('md:w-64'); // expand width
-        sidebarText.forEach(el => el.classList.toggle('hidden'));
-      });
+  toggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+  });
 
-      // Responsive behavior
-      function handleResize() {
-        if (window.innerWidth < 768) {
-          sidebar.classList.add('w-16');
-          sidebarText.forEach(el => el.classList.add('hidden'));
-        } else {
-          sidebar.classList.remove('w-16');
-          sidebar.classList.add('md:w-64');
-          sidebarText.forEach(el => el.classList.remove('hidden'));
-        }
-      }
-      window.addEventListener('resize', handleResize);
-      handleResize();
+  function handleResize() {
+    if (window.innerWidth < 768) {
+      sidebar.classList.add('collapsed');
+    } else {
+      sidebar.classList.remove('collapsed');
+    }
+  }
+
+  window.addEventListener('resize', handleResize);
+  handleResize();
 
       // User dropdown toggle
       const btn = document.getElementById('userMenuButton');
@@ -390,6 +472,7 @@
       animation: fade-out 0.2s ease-out;
     }
   </style>
+
 
   <script>
     // close after 3 seconds
