@@ -1,5 +1,3 @@
-
-
 let currentEventId = null;
 window.currentEventId = null;
 let mainCalendar = null;
@@ -38,6 +36,42 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
+
+    function applyMainCalendarMobileStyles() {
+    const isMobile = window.innerWidth < 768;
+    const calendarEl = document.getElementById("calendar");
+    if (!calendarEl) return;
+
+    // Day cells
+    const dayCells = calendarEl.querySelectorAll(".fc-daygrid-day");
+    dayCells.forEach(cell => {
+      const frame = cell.querySelector(".fc-daygrid-day-frame");
+      const number = cell.querySelector(".fc-daygrid-day-number");
+
+      if (frame) {
+        frame.style.padding = isMobile ? "2px" : "";
+      }
+      if (number) {
+        number.style.fontSize = isMobile ? "0.7rem" : "";
+        number.style.margin = isMobile ? "0 auto 2px auto" : "";
+        number.style.display = isMobile ? "block" : "";
+        number.style.textAlign = isMobile ? "center" : "";
+      }
+    });
+
+    // Your status pills in eventContent: make them smaller on mobile
+    const pillContainers = calendarEl.querySelectorAll(".fc-daygrid-day .fc-daygrid-event-harness div");
+    pillContainers.forEach(cont => {
+      if (isMobile) {
+        cont.style.fontSize = "0.6rem";
+        cont.style.gap = "2px";
+      } else {
+        cont.style.fontSize = "";
+        cont.style.gap = "";
+      }
+    });
+  }
+
   
   branchFilterEl.addEventListener("change", function () {
     if (mainCalendar) mainCalendar.refetchEvents();
@@ -64,11 +98,37 @@ document.addEventListener('DOMContentLoaded', function () {
     fetch(url)
       .then(res => res.json())
       .then(events => {
-        console.log("RECEIVED EVENTS:", events);
-        successCallback(events)
+        console.log("RECEIVED EVENTS (RAW):", events);
+
+        // Normalize: force allDay=false and drop any date-only events
+        const normalized = events
+          .map(ev => {
+            const out = { ...ev };
+
+            // If backend sends date-only start (no 'T'), treat as 08:00 timed event
+            if (out.start && typeof out.start === "string" && !out.start.includes("T")) {
+              out.start = out.start + "T08:00:00";
+            }
+
+            // Same for end, if present
+            if (out.end && typeof out.end === "string" && !out.end.includes("T")) {
+              out.end = out.end + "T08:30:00";
+            }
+
+            // Force non-all‑day
+            out.allDay = false;
+            return out;
+          })
+          // Optional: if anything still has allDay true, drop it
+          .filter(ev => ev.allDay !== true);
+
+        console.log("NORMALIZED EVENTS:", normalized);
+
+        successCallback(normalized);
       })
       .catch(err => failureCallback(err));
   }
+
 
   // Colormaps for Status
   const colorMap = {
@@ -127,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
               }
             }, 250);
 
-            closeModal("status-modal");
+            closeAppointmentModal("status-modal");
 
             // NEW: show status-updated modal with the label
             const msgEl = document.getElementById("status-updated-message");
@@ -183,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function () {
     mainCalendar = new FullCalendar.Calendar(mainCalendarEl, {
       initialView: 'dayGridMonth',
       height: "auto",
-      aspectRatio: window.innerWidth < 768 ? 0.8 : 1.4, // Smaller aspect ratio on mobile
+      aspectRatio: window.innerWidth < 768 ? 0.6 : 1.4, // tighter grid on mobile
       expandRows: true,
       handleWindowResize: true,
       customButtons: {
@@ -206,10 +266,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     },
     headerToolbar: { left: "prev myToday", center: "title", right: "next" },
-
-
-
-      events: fetchEvents,
 
       events: fetchEvents,
 
@@ -324,121 +380,138 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     mainCalendar.render();
     
+    applyMainCalendarMobileStyles();
+    window.addEventListener("resize", applyMainCalendarMobileStyles);
 
-    
+  
     // Timeline calendar
     timelineCalendar = new FullCalendar.Calendar(timelineCalendarEl, {
-      initialView: 'timeGridDay',
-      height: "100%",
-      expandRows: true,
-      headerToolbar: {
-        left: "prev,next today",
-        center: "title",
-        right: "timeGridDay,timeGridWeek"
-      },
-      buttonText: { today: 'Today', day: 'Day', week: 'Week' },
-      slotMinTime: "08:00:00",
-      slotMaxTime: "18:00:00",
-      slotDuration: "00:15:00",
-      slotLabelInterval: "01:00:00",
-      slotEventOverlap: false,
-      allDaySlot: false,
-      events: fetchEvents,
-      titleFormat: { year: 'numeric', month: 'short', day: 'numeric' },
+    initialView: 'timeGridDay',
+    height: "100%",
+    expandRows: true,
+    headerToolbar: {
+      left: "prev,next today",
+      center: "title",
+      right: "timeGridDay,timeGridWeek"
+    },
+    buttonText: { today: 'Today', day: 'Day', week: 'Week' },
+    slotMinTime: "08:00:00",
+    slotMaxTime: "18:00:00",
+    slotDuration: "00:15:00",
+    slotLabelInterval: "01:00:00",
+    slotEventOverlap: false,
+
+    allDaySlot: false,          // keep this
+    dayMaxEvents: false,        // disable +n more row
+    eventDisplay: "block",      // standard block events only
+
+    events: fetchEvents,
+    titleFormat: { year: 'numeric', month: 'short', day: 'numeric' },
 
       //added
       eventMinHeight: 40,
 
       eventDidMount: function(info) {
+        // 1) Basic neutral styles
         info.el.style.backgroundColor = "transparent";
         info.el.style.border = "none";
         info.el.style.boxShadow = "none";
         info.el.style.padding = "0";
+        info.el.style.margin = "0";
+        info.el.style.height = "100%";
+        info.el.style.overflow = "hidden";
+
+        // 2) HIDE any event that is NOT inside the main timegrid body
+        //    (this catches any extra row that FullCalendar might render
+        //     above/below the timeline grid)
+        const body = document.querySelector("#timeline-calendar .fc-timegrid-body");
+        if (body && !body.contains(info.el)) {
+          info.el.style.display = "none";
+        }
       },
 
       //displaying of cards and buttons
-        eventContent: function(info) {const status = info.event.extendedProps && info.event.extendedProps.status
-    ? info.event.extendedProps.status
-    : "not_arrived";
-      const base = colorMap[status] || "#9CA3AF";
-      const tinted = hexToRgba(base, 0.3);
+      eventContent: function(info) {
+        const status = info.event.extendedProps && info.event.extendedProps.status
+          ? info.event.extendedProps.status
+          : "not_arrived";
+        const base = colorMap[status] || "#9CA3AF";
+        const tinted = hexToRgba(base, 0.3);
 
-      // Outer card
-      const wrapper = document.createElement("div");
-      wrapper.style.display = "flex";
-      wrapper.style.position = "relative";  // ← ADD THIS
-      wrapper.style.width = "100%";
-      wrapper.style.height = "100%";
-      wrapper.style.boxSizing = "border-box";
-      wrapper.style.padding = "8px";
-      wrapper.style.borderRadius = "8px";
-      wrapper.style.backgroundColor = tinted;
-      wrapper.style.minHeight = "40px";
-      wrapper.style.cursor = "pointer";
+        // Outer card
+        const wrapper = document.createElement("div");
+        wrapper.style.display = "flex";
+        wrapper.style.position = "relative";
+        wrapper.style.width = "100%";
+        wrapper.style.height = "auto";      // allow content height, but parent is clamped
+        wrapper.style.boxSizing = "border-box";
+        wrapper.style.padding = "8px";
+        wrapper.style.borderRadius = "8px";
+        wrapper.style.backgroundColor = tinted;
+        wrapper.style.minHeight = "40px";
+        wrapper.style.cursor = "pointer";
+        wrapper.style.overflow = "hidden";
 
-      const props = info.event.extendedProps || {};
-      const isCancelled = props.status === "cancelled";
-      const canManage = !!props.can_manage;
+        const props = info.event.extendedProps || {};
+        const isCancelled = props.status === "cancelled";
+        const canManage = !!props.can_manage;
 
-      if (isCancelled && !canManage) {
-        wrapper.style.cursor = "default";
-        wrapper.style.opacity = "0.6";
-      }
+        if (isCancelled && !canManage) {
+          wrapper.style.cursor = "default";
+          wrapper.style.opacity = "0.6";
+        }
 
-      // Stripe
-      const stripe = document.createElement("div");
-      stripe.style.width = "4px";
-      stripe.style.alignSelf = "stretch";
-      stripe.style.borderRadius = "4px";
-      stripe.style.marginRight = "8px";
-      stripe.style.backgroundColor = base;
+        // Stripe
+        const stripe = document.createElement("div");
+        stripe.style.width = "4px";
+        stripe.style.alignSelf = "stretch";
+        stripe.style.borderRadius = "4px";
+        stripe.style.marginRight = "8px";
+        stripe.style.backgroundColor = base;
 
-      // Content container (for text + buttons)
-      const content = document.createElement("div");
-      content.style.flex = "1";
-      content.style.paddingRight = "8px";
-      const isMobile = window.innerWidth < 768;
+        // Content container (for text + buttons)
+        const content = document.createElement("div");
+        content.style.flex = "1";
+        content.style.paddingRight = "8px";
+        const isMobile = window.innerWidth < 768;
 
-      // DAY vs WEEK text
-      if (info.view && info.view.type === "timeGridDay" ) {
-        const titleDiv = document.createElement("div");
-        titleDiv.textContent = info.event.title || "";
-        titleDiv.style.fontSize = isMobile ? "0.7rem" : "0.875rem";
-        titleDiv.style.fontWeight = "600";
-        titleDiv.style.color = "#1f2937";
-        titleDiv.style.overflow = "hidden";
-        titleDiv.style.textOverflow = "ellipsis";
-        titleDiv.style.whiteSpace = "nowrap";
-        content.appendChild(titleDiv);
-      } else if (info.view && info.view.type === "timeGridWeek") {
-        // Week view: show only time text
-        const timeDiv = document.createElement("div");
-        const start = info.event.start;
-        const timeLabel = start
-          ? start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-          : "";
-        timeDiv.textContent = timeLabel;
-        timeDiv.style.fontSize = "0.75rem";
-        timeDiv.style.fontWeight = "600";
-        timeDiv.style.color = "#1f2937";
-        content.appendChild(timeDiv);
-      }
+        if (info.view && info.view.type === "timeGridDay") {
+          const titleDiv = document.createElement("div");
+          titleDiv.textContent = info.event.title || "";
+          titleDiv.style.fontSize = isMobile ? "0.7rem" : "0.875rem";
+          titleDiv.style.fontWeight = "600";
+          titleDiv.style.color = "#1f2937";
+          titleDiv.style.overflow = "hidden";
+          titleDiv.style.textOverflow = "ellipsis";
+          titleDiv.style.whiteSpace = "nowrap";
+          content.appendChild(titleDiv);
+        } else if (info.view && info.view.type === "timeGridWeek") {
+          const timeDiv = document.createElement("div");
+          const start = info.event.start;
+          const timeLabel = start
+            ? start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            : "";
+          timeDiv.textContent = timeLabel;
+          timeDiv.style.fontSize = "0.75rem";
+          timeDiv.style.fontWeight = "600";
+          timeDiv.style.color = "#1f2937";
+          content.appendChild(timeDiv);
+        }
 
-      // Buttons container - ABSOLUTE POSITION (DAY VIEW ONLY)
-      const btnRow = document.createElement("div");
-      btnRow.style.position = "absolute";
-      btnRow.style.bottom = "8px";
-      btnRow.style.right = "8px";
-      btnRow.style.display = "flex";
-      btnRow.style.gap = "4px";
-      btnRow.style.flexShrink = "0";
-      
+        const btnRow = document.createElement("div");
+        btnRow.style.position = "absolute";
+        btnRow.style.bottom = "4px";
+        btnRow.style.right = "4px";
+        btnRow.style.display = "flex";
+        btnRow.style.gap = "4px";
+        btnRow.style.flexShrink = "0";
+        btnRow.style.pointerEvents = "auto";
 
       if (info.view && info.view.type === "timeGridDay") {
         const followBtn = document.createElement("button");
         followBtn.textContent = "Follow up";
-        followBtn.style.padding = isMobile ? "2px 4px" : "4px 8px";
-        followBtn.style.fontSize = isMobile ? "0.6rem" : "0.7rem";
+        followBtn.style.padding = isMobile ? "2px 3px" : "3px 6px";
+        followBtn.style.fontSize = isMobile ? "0.55rem" : "0.65rem";
         followBtn.style.borderRadius = "6px";
         followBtn.style.background = "#16a34a";
         followBtn.style.color = "#fff";
@@ -447,99 +520,99 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const rescheduleBtn = document.createElement("button");
         rescheduleBtn.textContent = "Reschedule";
-        rescheduleBtn.style.padding = isMobile ? "2px 4px" : "4px 8px";
-        rescheduleBtn.style.fontSize = isMobile ? "0.6rem" : "0.7rem";
+        rescheduleBtn.style.padding = isMobile ? "2px 3px" : "3px 6px";
+        rescheduleBtn.style.fontSize = isMobile ? "0.55rem" : "0.65rem";
         rescheduleBtn.style.borderRadius = "6px";
         rescheduleBtn.style.background = "#2563eb";
         rescheduleBtn.style.color = "#fff";
         rescheduleBtn.style.border = "none";
         rescheduleBtn.style.cursor = "pointer";
 
-        if (!isCancelled || canManage) {
-          followBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            currentEventId = info.event.id;
-            const propsInner = info.event.extendedProps || {};
-            const origInput = document.getElementById("followup-original-id");
-            if (origInput) origInput.value = currentEventId;
-            const followDate = document.getElementById("followup-date");
-            if (followDate && propsInner.preferred_date) {
-              followDate.value = propsInner.preferred_date;
-            }
-            openAppointmentModal("followup-modal");
-          });
-
-          rescheduleBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            currentEventId = info.event.id;
-            window.reschedAppointmentId = info.event.id;
-            const propsInner = info.event.extendedProps || {};
-
-            const rDentist  = document.getElementById("resched-dentist");
-            const rLocation = document.getElementById("resched-location");
-            const rDate     = document.getElementById("resched-date");
-            const rEmail    = document.getElementById("resched-email");
-
-            if (rDentist)  rDentist.value  = propsInner.dentist_id || "";
-            if (rLocation) rLocation.value = (propsInner.branch_id || "").toString();
-            if (rDate)     rDate.value     = propsInner.preferred_date || propsInner.date || "";
-            if (rEmail)    rEmail.value    = propsInner.email || "";
-
-
-            const rawTime      = propsInner.preferred_time || propsInner.time || "";
-            const reschedAmpm  = document.getElementById("resched-ampm");
-            const reschedHour  = document.getElementById("resched-hour");
-            const reschedMin   = document.getElementById("resched-minute");
-            const reschedHidden= document.getElementById("resched-time-hidden");
-
-            if (rawTime && reschedAmpm && reschedHour && reschedMin) {
-              const [timePart, ampmPart] = rawTime.split(" ");
-              const [hStr, mStr] = timePart.split(":");
-              reschedAmpm.value = ampmPart;
-              reschedAmpm.dispatchEvent(new Event("change"));
-              reschedHour.value = String(parseInt(hStr, 10));
-              reschedMin.value  = mStr;
-              if (typeof to24Hour === "function" && reschedHidden) {
-                reschedHidden.value = `${String(to24Hour(reschedHour.value, ampmPart)).padStart(2, "0")}:${mStr}`;
-              }
-            }
-
-            const serviceIds = propsInner.service_ids || [];
-            const allServiceCbs = document.querySelectorAll("#resched-services-checkboxes input.resched-service-checkbox");
-            allServiceCbs.forEach(cb => {
-              cb.checked = serviceIds.includes(parseInt(cb.value, 10));
+          if (!isCancelled || canManage) {
+            followBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                currentEventId = info.event.id;
+                const propsInner = info.event.extendedProps || {};
+                const origInput = document.getElementById("followup-original-id");
+                if (origInput) origInput.value = currentEventId;
+                const followDate = document.getElementById("followup-date");
+                if (followDate && propsInner.preferred_date) {
+                  followDate.value = propsInner.preferred_date;
+                }
+                openAppointmentModal("followup-modal");
             });
 
-            if (typeof window.refreshReschedSelectedServiceTags === "function") {
-              window.refreshReschedSelectedServiceTags();
-            }
+            rescheduleBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+                currentEventId = info.event.id;
+                window.reschedAppointmentId = info.event.id;
+                const propsInner = info.event.extendedProps || {};
 
-            const currentScheduleEl = document.getElementById("resched-current-time");
-            if (currentScheduleEl) {
-              const dateLabel = propsInner.preferred_date || propsInner.date || "";
-              const timeLabel2 = propsInner.preferred_time || propsInner.time || "";
-              currentScheduleEl.textContent = dateLabel && timeLabel2 ? `${dateLabel} at ${timeLabel2}` : "";
-            }
-            openAppointmentModal("reschedule-modal");
-          });
+                const rDentist  = document.getElementById("resched-dentist");
+                const rLocation = document.getElementById("resched-location");
+                const rDate     = document.getElementById("resched-date");
+                const rEmail    = document.getElementById("resched-email");
 
-        } else {
-          followBtn.disabled = true;
-          rescheduleBtn.disabled = true;
-          followBtn.style.opacity = "0.5";
-          rescheduleBtn.style.opacity = "0.5";
-          followBtn.style.cursor = "default";
-          rescheduleBtn.style.cursor = "default";
+                if (rDentist)  rDentist.value  = propsInner.dentist_id || "";
+                if (rLocation) rLocation.value = (propsInner.branch_id || "").toString();
+                if (rDate)     rDate.value     = propsInner.preferred_date || propsInner.date || "";
+                if (rEmail)    rEmail.value    = propsInner.email || "";
+
+
+                const rawTime      = propsInner.preferred_time || propsInner.time || "";
+                const reschedAmpm  = document.getElementById("resched-ampm");
+                const reschedHour  = document.getElementById("resched-hour");
+                const reschedMin   = document.getElementById("resched-minute");
+                const reschedHidden= document.getElementById("resched-time-hidden");
+
+                if (rawTime && reschedAmpm && reschedHour && reschedMin) {
+                  const [timePart, ampmPart] = rawTime.split(" ");
+                  const [hStr, mStr] = timePart.split(":");
+                  reschedAmpm.value = ampmPart;
+                  reschedAmpm.dispatchEvent(new Event("change"));
+                  reschedHour.value = String(parseInt(hStr, 10));
+                  reschedMin.value  = mStr;
+                  if (typeof to24Hour === "function" && reschedHidden) {
+                    reschedHidden.value = `${String(to24Hour(reschedHour.value, ampmPart)).padStart(2, "0")}:${mStr}`;
+                  }
+                }
+
+                const serviceIds = propsInner.service_ids || [];
+                const allServiceCbs = document.querySelectorAll("#resched-services-checkboxes input.resched-service-checkbox");
+                allServiceCbs.forEach(cb => {
+                  cb.checked = serviceIds.includes(parseInt(cb.value, 10));
+                });
+
+                if (typeof window.refreshReschedSelectedServiceTags === "function") {
+                  window.refreshReschedSelectedServiceTags();
+                }
+
+                const currentScheduleEl = document.getElementById("resched-current-time");
+                if (currentScheduleEl) {
+                  const dateLabel = propsInner.preferred_date || propsInner.date || "";
+                  const timeLabel2 = propsInner.preferred_time || propsInner.time || "";
+                  currentScheduleEl.textContent = dateLabel && timeLabel2 ? `${dateLabel} at ${timeLabel2}` : "";
+                }
+                openAppointmentModal("reschedule-modal");
+            });
+          } else {
+            followBtn.disabled = true;
+            rescheduleBtn.disabled = true;
+            followBtn.style.opacity = "0.5";
+            rescheduleBtn.style.opacity = "0.5";
+            followBtn.style.cursor = "default";
+            rescheduleBtn.style.cursor = "default";
+          }
+
+          btnRow.appendChild(followBtn);
+          btnRow.appendChild(rescheduleBtn);
         }
 
-        btnRow.appendChild(followBtn);
-        btnRow.appendChild(rescheduleBtn);
-      }
+        // In week view there are no buttons, but we still append the (empty) btnRow
+        content.appendChild(btnRow);
+        wrapper.appendChild(stripe);
+        wrapper.appendChild(content);
 
-      // In week view there are no buttons, but we still append the (empty) btnRow
-      content.appendChild(btnRow);
-      wrapper.appendChild(stripe);
-      wrapper.appendChild(content);
 
 
       if (!isCancelled || canManage) {
@@ -583,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       }
       return { domNodes: [wrapper] };
-    }
+      }
     });
 
     //renders the calendar

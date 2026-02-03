@@ -3,26 +3,6 @@
 
 {% block title %}Appointments{% endblock %}
 
-{% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
-<style>
-  @media (max-width: 767px) {
-    /* All FullCalendar toolbar buttons, both main and timeline */
-    #calendar .fc-button,
-    #timeline-calendar .fc-button {
-      padding: 2px 4px;
-      font-size: 0.65rem;
-    }
-
-    /* Toolbar titles (month name, date) */
-    #calendar .fc-toolbar-title,
-    #timeline-calendar .fc-toolbar-title {
-      font-size: 0.8rem;
-    }
-  }
-</style>
-{% endblock %}
-
 {% block content %}
 
 <div class="w-full">
@@ -76,18 +56,18 @@
     </div>
   </div>
 
- <!-- Timeline + list section -->
-<div class="w-full md:flex-1">
-    <div class="bg-white p-3 md:p-4 lg:p-6 rounded-xl shadow w-full">
+  <!-- Timeline + list section -->
+  <div class="w-full md:flex-1">
+      <div class="bg-white p-3 md:p-4 lg:p-6 rounded-xl shadow w-full">
 
-<div class="w-full overflow-x-auto mb-4">
-  <!-- Scrollable wrapper controlled by JS -->
-  <div id="timeline-scroll" class="w-full overflow-y-auto h-[500px] md:h-[600px]">
-    <div class="w-full md:min-w-[360px] text-xs md:text-sm px-1 md:px-0 h-full">
-      <div id="timeline-calendar" class="h-full"></div>
+  <div class="w-full overflow-x-auto mb-4">
+    <!-- Scrollable wrapper controlled by JS -->
+    <div id="timeline-scroll" class="w-full overflow-y-auto h-[500px] md:h-[600px]">
+      <div class="w-full md:min-w-[360px] text-xs md:text-sm px-1 md:px-0 h-full">
+        <div id="timeline-calendar" class="h-full"></div>
+      </div>
     </div>
   </div>
-</div>
 
     <!-- Timeline legend (STATUS COLORS) -->
     <div class="flex flex-wrap items-center justify-center gap-4 mb-4 text-sm text-slate-700">
@@ -113,8 +93,8 @@
       </span>
     </div>
 
-    <!-- Timeline list -->
-    <div class="relative pl-3 md:pl-4 border-l border-gray-300 max-h-[400px] md:max-h-[600px] overflow-y-auto">
+    <!-- Timeline list (hidden for now) -->
+    <div class="hidden relative pl-3 md:pl-4 border-l border-gray-300 max-h-[400px] md:max-h-[600px] overflow-y-auto">
       <ul id="todays-appointments-list" class="space-y-6"></ul>
     </div>
 </div>
@@ -145,6 +125,9 @@
 <script src="{% static 'vendor/fullcalendar/index.global.min.js' %}"></script>
 {% comment %} <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script> {% endcomment %}
 <script src="{% static 'js/calendar.js' %}"></script>
+<script src="{% static 'js/calendar_mobile.js' %}"></script>
+<script src="{% static 'js/appointment_mobile.js' %}"></script>
 <script src="{% static 'js/appointment.js' %}"></script>
+
 
 {% endblock %}

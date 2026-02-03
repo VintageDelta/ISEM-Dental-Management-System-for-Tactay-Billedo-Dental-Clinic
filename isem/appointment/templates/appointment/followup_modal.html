@@ -26,13 +26,14 @@
         >
       </div>
 
-      <div class="flex flex-wrap gap-2">
-        <div class="w-full text-sm font-medium">Follow Up Time</div>
+    <div class="flex flex-col gap-2">
+      <div class="w-full text-sm font-medium">Follow Up Time</div>
 
+      <div class="flex items-center gap-2">
         <!-- AM/PM -->
         <select
           id="followup-ampm"
-          class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+          class="flex-1 border rounded-md p-2 text-sm"
           required
         >
           <option value="" disabled selected>AM/PM</option>
@@ -43,7 +44,7 @@
         <!-- Hour -->
         <select
           id="followup-hour"
-          class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
+          class="flex-1 border rounded-md p-2 text-sm"
           required
         >
           <option value="" disabled selected>Hour</option>
@@ -52,16 +53,26 @@
         <!-- Minute -->
         <select
           id="followup-minute"
-          class="w-full sm:flex-1 border rounded-md p-2 text-sm"
+          class="flex-1 border rounded-md p-2 text-sm"
           required
         >
           <option value="" disabled selected>Min</option>
-          <option value="00">00</option>
-          <option value="15">15</option>
-          <option value="30">30</option>
-          <option value="45">45</option>
+            <option value="00">00</option>
+            <option value="05">05</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+            <option value="25">25</option>
+            <option value="30">30</option>
+            <option value="35">35</option>
+            <option value="40">40</option>
+            <option value="45">45</option>
+            <option value="50">50</option>
+            <option value="55">55</option>
         </select>
       </div>
+    </div>
+
 
       <input type="hidden" id="followup-time-hidden" name="time">
       <input type="hidden" id="followup-original-id" name="original_id">

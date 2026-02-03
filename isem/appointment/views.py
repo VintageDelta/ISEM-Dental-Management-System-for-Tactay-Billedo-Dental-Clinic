@@ -609,6 +609,8 @@ def precompute_appointment_slot(request):
         time_str = request.POST.get("time")  # "HH:MM" 24h, from your hidden field
         service_ids = request.POST.getlist("services")
 
+        print("DEBUG precompute POST:", request.POST.dict())
+
         if not (dentist_id and location and date_str and time_str and service_ids):
             return JsonResponse({"success": False, "error": "Missing fields"}, status=400)
 
@@ -618,6 +620,11 @@ def precompute_appointment_slot(request):
         selected_services = Service.objects.filter(id__in=service_ids)
         total_minutes = sum(s.duration for s in selected_services)
 
+        print("DEBUG precompute:",
+        "dentist", dentist,
+        "location", location,
+        "total_minutes", total_minutes)
+        
         with transaction.atomic():
             start_time, end_time = find_next_available_slot(
                 dentist,
@@ -626,6 +633,8 @@ def precompute_appointment_slot(request):
                 preferred_time,
                 location=location,
             )
+
+        print("DEBUG precompute result:", start_time, end_time)
 
         if not start_time or not end_time:
             return JsonResponse({

@@ -533,13 +533,18 @@ function computeDoneMedicalTotal() {
   amountInput.value = total.toFixed(2);
 }
 
-// ===== Modal Helpers (simple, robust) =====
+// ===== Modal Helpers (animated) =====
 function openAppointmentModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
 
+  // show overlay
   modal.classList.remove("hidden");
   modal.classList.add("flex");
+
+  // if you added overlay opacity utilities (optional):
+  // modal.classList.remove("opacity-0");
+  // modal.classList.add("opacity-100");
 
   const content =
     modal.querySelector(".modal-content") ||
@@ -564,6 +569,12 @@ function closeAppointmentModal(id) {
   if (content) {
     content.classList.remove("opacity-100", "scale-100");
     content.classList.add("opacity-0", "scale-95");
+
+    // if overlay has opacity classes (optional):
+    // modal.classList.remove("opacity-100");
+    // modal.classList.add("opacity-0");
+
+    // match your Tailwind duration-200
     setTimeout(() => {
       modal.classList.add("hidden");
       modal.classList.remove("flex");

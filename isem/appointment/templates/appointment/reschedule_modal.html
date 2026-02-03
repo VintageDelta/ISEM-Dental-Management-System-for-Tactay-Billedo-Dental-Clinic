@@ -29,46 +29,51 @@
       </div>
 
       <!-- Date + Time (same style as create) -->
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-col gap-2">
+        <!-- Date on its own row -->
         <input type="date" id="resched-date" name="date"
-              class="w-full sm:flex-1 border rounded-md p-2 text-sm"
+              class="w-full border rounded-md p-2 text-sm"
               required>
 
-        <!-- AM/PM -->
-        <select id="resched-ampm"
-                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
-                required>
-          <option value="" disabled selected >AM/PM</option>
-          <option value="AM">AM</option>
-          <option value="PM">PM</option>
-        </select>
+        <!-- Time row: AM/PM + Hour + Min in one line -->
+        <div class="flex items-center gap-2">
+          <!-- AM/PM -->
+          <select id="resched-ampm"
+                  class="flex-1 border rounded-md p-2 text-sm"
+                  required>
+            <option value="" disabled selected>AM/PM</option>
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
 
-        <!-- Hour -->
-        <select id="resched-hour"
-                class="w-[48%] sm:flex-1 border rounded-md p-2 text-sm"
-                required>
-          <option value="" disabled selected >Hour</option>
-        </select>
+          <!-- Hour -->
+          <select id="resched-hour"
+                  class="flex-1 border rounded-md p-2 text-sm"
+                  required>
+            <option value="" disabled selected>Hour</option>
+          </select>
 
-        <!-- Minute -->
-        <select id="resched-minute"
-                class="w-full sm:flex-1 border rounded-md p-2 text-sm"
-                required>
-          <option value="" disabled selected >Min</option>
-          <option value="00">00</option>
-          <option value="05">05</option>
-          <option value="10">10</option>
-          <option value="15">15</option>
-          <option value="20">20</option>
-          <option value="25">25</option>
-          <option value="30">30</option>
-          <option value="35">35</option>
-          <option value="40">40</option>
-          <option value="45">45</option>
-          <option value="50">50</option>
-          <option value="55">55</option>
-        </select>
+          <!-- Minute -->
+          <select id="resched-minute"
+                  class="flex-1 border rounded-md p-2 text-sm"
+                  required>
+            <option value="" disabled selected>Min</option>
+            <option value="00">00</option>
+            <option value="05">05</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+            <option value="25">25</option>
+            <option value="30">30</option>
+            <option value="35">35</option>
+            <option value="40">40</option>
+            <option value="45">45</option>
+            <option value="50">50</option>
+            <option value="55">55</option>
+          </select>
+        </div>
       </div>
+
 
 
       <input type="hidden" name="time" id="resched-time-hidden">
