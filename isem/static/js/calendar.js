@@ -380,8 +380,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     mainCalendar.render();
     
+    mainCalendar.updateSize();
+
     applyMainCalendarMobileStyles();
-    window.addEventListener("resize", applyMainCalendarMobileStyles);
+    window.addEventListener("resize", () => {
+      applyMainCalendarMobileStyles();
+      if (mainCalendar) mainCalendar.updateSize();
+      if (timelineCalendar) timelineCalendar.updateSize();
+    });
 
   
     // Timeline calendar
@@ -661,9 +667,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //renders the calendar
     timelineCalendar.render();
+    timelineCalendar.updateSize();
 
     syncTimelineHeight();
-    window.addEventListener("resize", syncTimelineHeight);
+    window.addEventListener("resize", () => {
+      syncTimelineHeight();
+      if (timelineCalendar) timelineCalendar.updateSize();
+    });
 
     // EXPOSE THEM GLOBALLY so appointment.js can use them
     window.mainCalendar = mainCalendar;

@@ -355,8 +355,22 @@ document.addEventListener('DOMContentLoaded', function () {
   const toggleBtn = document.getElementById('sidebarToggle');
 
   toggleBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-  });
+  sidebar.classList.toggle('collapsed');
+
+  // let the CSS transition finish, then update calendars
+  setTimeout(() => {
+    if (window.mainCalendar && typeof window.mainCalendar.updateSize === "function") {
+      window.mainCalendar.updateSize();
+    }
+    if (window.timelineCalendar && typeof window.timelineCalendar.updateSize === "function") {
+      window.timelineCalendar.updateSize();
+    }
+    if (typeof window.syncTimelineHeight === "function") {
+      window.syncTimelineHeight();
+    }
+  }, 220); // a bit more than your Tailwind duration-200
+});
+
 
   function handleResize() {
     if (window.innerWidth < 768) {
