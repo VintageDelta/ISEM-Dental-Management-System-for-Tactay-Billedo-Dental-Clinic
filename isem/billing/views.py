@@ -11,6 +11,8 @@ from appointment.models import Appointment, Service
 from .models import BillingRecord
 from .forms import BillingRecordForm
 from django.core.paginator import Paginator
+
+from django.views.decorators.cache import never_cache
 # Create your views here.
 def billing(request):
     bill = BillingRecord.objects.select_related('patient', 'appointment').all().order_by('-date_issued')
@@ -35,7 +37,7 @@ def billing(request):
                                                         'patients': patients,
                                                         'services': services,
                                                         }) 
-
+@never_cache
 def billing_add(request):
     if request.method == 'POST':
         

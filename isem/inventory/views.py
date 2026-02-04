@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.contrib import messages
 from django.db.models import Q
+from django.views.decorators.cache import never_cache
 
 # LIST
 def inventory_list(request):
@@ -47,7 +48,7 @@ def inventory_list(request):
                                                         'out_of_stock_items': out_of_stock_items,
                                                         'has_out_of_stock_items': out_of_stock_items.exists(),})
 
-
+@never_cache
 def inventory_add(request):
     if request.method == 'POST':
         

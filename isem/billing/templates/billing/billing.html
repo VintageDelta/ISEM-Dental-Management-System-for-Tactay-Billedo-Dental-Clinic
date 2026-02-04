@@ -115,48 +115,111 @@
       </div>
 
 
-      <!-- Pagination -->
-      <div class="flex justify-between items-center border-t pt-4 mt-4">
-        <div class="flex space-x-2 text-sm">
-          {# Previous #}
-          {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}"
-               class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
+     <!-- Enhanced Pagination -->
+<div class="flex justify-between items-center border-t pt-4 mt-4">
+  <div class="flex items-center space-x-2 text-sm">
+    {# First Page (double arrow left) #}
+    {% if page_obj.number > 1 %}
+      <a href="?page=1" 
+         class="px-3 py-1 border rounded hover:bg-gray-100" 
+         title="First page">&laquo;</a>
+    {% else %}
+      <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
+    {% endif %}
+
+    {# Previous Page (single arrow left) #}
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" 
+         class="px-3 py-1 border rounded hover:bg-gray-100" 
+         title="Previous page">&lsaquo;</a>
+    {% else %}
+      <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&lsaquo;</span>
+    {% endif %}
+
+    {# Page Numbers (max 3 visible) #}
+    {% if page_obj.paginator.num_pages <= 3 %}
+      {# Show all pages if 3 or less #}
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+          <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
+        {% else %}
+          <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      {# More than 3 pages - show smart range #}
+      {% if page_obj.number <= 2 %}
+        {# Near start: show 1 2 3 ... last #}
+        {% for num in page_obj.paginator.page_range|slice:":3" %}
+          {% if num == page_obj.number %}
+            <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
           {% else %}
-            <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
+            <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
           {% endif %}
-
-
-          {# Page numbers #}
-          {% for num in page_obj.paginator.page_range %}
-            {% if num == page_obj.number %}
-              <span class="px-3 py-1 border rounded bg-blue-500 text-white">
-                {{ num }}
-              </span>
-            {% else %}
-              <a href="?page={{ num }}"
-                 class="px-3 py-1 border rounded hover:bg-gray-100">
-                {{ num }}
-              </a>
-            {% endif %}
-          {% endfor %}
-
-
-          {# Next #}
-          {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}"
-               class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
+        {% endfor %}
+        {% if page_obj.paginator.num_pages > 3 %}
+          <span class="px-2 text-gray-500">...</span>
+          <a href="?page={{ page_obj.paginator.num_pages }}" 
+             class="px-3 py-1 border rounded hover:bg-gray-100">
+            {{ page_obj.paginator.num_pages }}
+          </a>
+        {% endif %}
+      
+      {% elif page_obj.number >= page_obj.paginator.num_pages|add:"-1" %}
+        {# Near end: show 1 ... 8 9 10 #}
+        <a href="?page=1" class="px-3 py-1 border rounded hover:bg-gray-100">1</a>
+        {% if page_obj.paginator.num_pages > 3 %}
+          <span class="px-2 text-gray-500">...</span>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range|slice:"-3:" %}
+          {% if num == page_obj.number %}
+            <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
           {% else %}
-            <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
+            <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
           {% endif %}
-        </div>
-        <select class="border rounded px-2 py-1 text-sm" disabled>
-          <option selected>5/page</option>
-        </select>
-      </div>
-    </div>
+        {% endfor %}
+      
+      {% else %}
+        {# Middle: show 1 ... 5 ... 10 #}
+        <a href="?page=1" class="px-3 py-1 border rounded hover:bg-gray-100">1</a>
+        <span class="px-2 text-gray-500">...</span>
+        <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ page_obj.number }}</span>
+        <span class="px-2 text-gray-500">...</span>
+        <a href="?page={{ page_obj.paginator.num_pages }}" 
+           class="px-3 py-1 border rounded hover:bg-gray-100">
+          {{ page_obj.paginator.num_pages }}
+        </a>
+      {% endif %}
+    {% endif %}
+
+    {# Next Page (single arrow right) #}
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" 
+         class="px-3 py-1 border rounded hover:bg-gray-100" 
+         title="Next page">&rsaquo;</a>
+    {% else %}
+      <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&rsaquo;</span>
+    {% endif %}
+
+    {# Last Page (double arrow right) #}
+    {% if page_obj.number < page_obj.paginator.num_pages %}
+      <a href="?page={{ page_obj.paginator.num_pages }}" 
+         class="px-3 py-1 border rounded hover:bg-gray-100" 
+         title="Last page">&raquo;</a>
+    {% else %}
+      <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
+    {% endif %}
+  </div>
+
+  {# Page info and items per page #}
+  <div class="flex items-center gap-3 text-sm text-gray-600">
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <select class="border rounded px-2 py-1 text-sm" disabled>
+      <option selected>5/page</option>
+    </select>
   </div>
 </div>
+
 <div id="billing-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
   <div class="w-full h-full flex items-center justify-center">
     <div id="billing-content" class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">

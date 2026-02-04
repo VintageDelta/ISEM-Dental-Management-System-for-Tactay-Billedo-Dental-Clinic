@@ -10,6 +10,7 @@ from appointment.models import Dentist, Service
 from django.core.paginator import Paginator
 from django.shortcuts import render
 
+from django.views.decorators.cache import never_cache
 
 def patient_records(request):
     if request.method == "POST":
@@ -254,6 +255,7 @@ def medical_history(request, pk):
         "services": Service.objects.all(),
         "dentists": Dentist.objects.all()
     })
+@never_cache
 def add_medical_history(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     
@@ -335,7 +337,7 @@ def add_medical_history(request, patient_id):
 #     history = patient.financial_history.all()
 #     tooth_num = range(1, 33)
 #     return render(request, "patient/medical_history.html", {"patient": patient, "history": history, "tooth_num": tooth_num})
-
+@never_cache
 def add_financial_history(request, patient_id):
     # Debugging logs (keep these!)
     print("=" * 50)
@@ -375,7 +377,7 @@ def add_financial_history(request, patient_id):
             balance=balance,
         )
         
-        # 🔥 QUICK FIX: Auto-create treatment record (for Services billing)
+        # Auto-create treatment record 
         if bill_type == "Services":
             MedicalHistory.objects.create(
                 patient=patient,
@@ -445,7 +447,7 @@ def odontogram(request, patient_id):
     dentists = Dentist.objects.all()
 
     return render(request, "patient/medical_history.html", {"patient": patient, "tooth_num": tooth_num, "tooth_name": tooth_names, "services": services, "dentists": dentists})
-
+@never_cache
 def add_odontogram(request, patient_id):
     
     #idk why but shits not posting on my part!
@@ -507,25 +509,6 @@ def add_odontogram(request, patient_id):
                 return JsonResponse({"success": False, "error": "No valid odontogram entries were provided."}, status=400)
         return redirect("patient:odontogram", patient_id=patient_id)
     return render(request, "patient/medical_history.html", {"patient": patient})
-        # print("POST DATA:", request.POST)
-        # print("tooth_number getlist:", request.POST.get("tooth_number"))
-        # tooth_number=request.POST.getlist("tooth_number")
-        # services=request.POST.getlist("services")
-        # dentist=request.POST.get("dentist")
-        # print("TEETH:", tooth_number)
-
-        # for tooth_number in tooth_number:
-        #     odontogram = Odontogram.objects.create(
-        #         patient=patient,
-        #         tooth_number=int(tooth_number),
-        #         dentist=dentist,
-        #         status=request.POST.get("status"),
-        # )
-
-        #     if services:
-        #         odontogram.service.add(*services)
-        #     messages.success(request,f"Tooth {tooth_number} added successfully with services.")
-        # return redirect("patient:odontogram", patient_id=patient_id)
 
 
 def odontogram_history(request, patient_id, tooth_number):

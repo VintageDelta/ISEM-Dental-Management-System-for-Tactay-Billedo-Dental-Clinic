@@ -16,6 +16,8 @@ from django.contrib.auth import views as auth_views
 from django.core.paginator import Paginator
 from django.shortcuts import render
 
+from django.views.decorators.cache import never_cache
+
 class RoleBasedLoginView(Loginview):
     template_name = 'userprofile/sign-in.html'
     
@@ -25,7 +27,7 @@ class RoleBasedLoginView(Loginview):
         login(self.request, form.get_user())
         user = form.get_user()
         
-        # 🔥 Check if first-time login AND check if profile is incomplete
+        #  Check if first-time login AND check if profile is incomplete
         if not user.is_staff and not user.is_superuser:
             patient = getattr(user, 'patient_patient', None)
             
@@ -34,7 +36,7 @@ class RoleBasedLoginView(Loginview):
                 messages.info(self.request, "Welcome! Please complete your profile.")
                 return redirect("userprofile:patient_data")
         
-        # 🔥 Auto-link patient records if email matches
+        #  Auto-link patient records if email matches
         if not user.is_staff and not user.is_superuser:
             try:
                 existing_patient = Patient.objects.filter(
@@ -80,7 +82,7 @@ class RoleBasedLoginView(Loginview):
                 password = self.cleaned_data.get('password')
                 
                 if username and password:
-                    # 🔥 Try email login if @ is present
+                    #  Try email login if @ is present
                     if '@' in username:
                         try:
                             user_obj = User.objects.get(email=username)
@@ -134,21 +136,6 @@ def patient_dashboard(request):
     }
 
     return render(request, "userprofile/homepage.html", context)
-
-# def signin(request):
-#     if request.method == "POST":
-#         username = request.POST.get("username")
-#         password = request.POST.get("password")
-#         print("DEBUG - Username:", username)
-#         print("DEBUG - Password:", password)
-#         user = authenticate(request, username=username, password=password)
-#         if user is not None:
-#             login(request, user)
-#             messages.success(request, "Login successful.")
-#             return redirect("dashboard:index")
-#         else:
-#             messages.error(request, "Invalid username or password.")
-#     return render(request, 'userprofile/sign-in.html')
 
 def signup(request):
     if request.method == "POST":
@@ -228,32 +215,7 @@ def signup(request):
 
     return render(request, 'userprofile/sign-up.html')
 
-# @user_passes_test(lambda u: u.is_superuser)
-# def admin_dashboard(request):
-#     pending_staff = User.objects.filter(is_staff=False, is_active=False)
-#     decline_staff = User.objects.filter(is_staff=False, is_active=False)
-#     return render(request, 'userprofile/admin/admin-dashboard.html',
-#                    {'pending_staff': pending_staff,
-#                     'all_users': User.objects.all(),})
-
-# def approve_staff(request, user_id):
-#     user = get_object_or_404(User, pk=user_id)
-#     user.is_active = True
-#     user.is_staff = True
-#     user.save()
-#     messages.success(request, f"{user.username} has been approved as staff.")
-#     return redirect('userprofile:admin_dashboard')  
-
-# def decline_staff(request, user_id):
-#     user = get_object_or_404(User, pk=user_id)
-#     user.is_active = False
-#     user.is_staff = False
-#     user.save()
-#     messages.success(request, f"{user.username} has been declined as staff.")
-#     return redirect('userprofile:admin_dashboard')
-
-
-
+@never_cache
 def profile(request):
     if not request.user.is_authenticated:
         return redirect("userprofile:signin")
@@ -321,6 +283,7 @@ def is_patient(user):
     return hasattr(user, 'patient') or not user.is_staff
 
 @login_required
+@never_cache
 def patient_data(request):
     patient = getattr(request.user, 'patient_patient', None)
  
@@ -354,6 +317,7 @@ def patient_data(request):
 
     return render(request, 'userprofile/patient_data.html', {'patient': patient})
 
+@never_cache
 @user_passes_test(lambda u: u.is_superuser)
 def admin_dashboard(request):
     pending_staff = User.objects.filter(is_staff=False, is_active=False)
@@ -385,7 +349,7 @@ def admin_dashboard(request):
         'dentists': Dentist.objects.all(),
         'branches': branches,
     })
-
+@never_cache
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def add_staff(request):
     """Admin can add staff directly (already active)"""
@@ -428,7 +392,7 @@ def add_staff(request):
     
     return redirect("userprofile:admin_dashboard")
 
-
+@never_cache
 @user_passes_test(lambda u: u.is_superuser)
 def add_user(request):
     """Admin can add patient users"""

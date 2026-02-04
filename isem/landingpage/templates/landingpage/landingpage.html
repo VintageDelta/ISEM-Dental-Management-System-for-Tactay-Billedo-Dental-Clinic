@@ -35,8 +35,73 @@
 </div>
 
 
-    <!-- RIGHT: GUEST DROPDOWN -->
-    <div class="relative">
+<!-- RIGHT: USER/GUEST DROPDOWN -->
+<div class="relative">
+  {% if user.is_authenticated %}
+    <!-- LOGGED IN USER -->
+    <button id="userBtn" 
+            class="flex items-center gap-2 bg-white text-gray-800 
+                   w-auto px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg shadow hover:bg-gray-100 transition text-sm sm:text-base">
+        
+        <div class="w-5 h-5 sm:w-6 sm:h-8 bg-green-300 rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" 
+                 viewBox="0 0 24 24" 
+                 fill="currentColor" 
+                 class="w-3 h-3 sm:w-4 sm:h-5 text-green-600">
+                <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-3.314 0-10 1.657-10 5v1h20v-1c0-3.343-6.686-5-10-5Z"/>
+            </svg>
+        </div>
+
+        <span class="truncate max-w-[100px] sm:max-w-[150px]">
+          {% if user.first_name %}
+            {{ user.first_name }}
+          {% else %}
+            {{ user.username }}
+          {% endif %}
+        </span>
+        
+        <!-- Role Badge -->
+        {% if user.is_superuser %}
+          <span class="hidden sm:inline-block text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Admin</span>
+        {% elif user.is_staff %}
+          <span class="hidden sm:inline-block text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">Staff</span>
+        {% else %}
+          <span class="hidden sm:inline-block text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Patient</span>
+        {% endif %}
+    </button>
+
+    <!-- LOGGED IN DROPDOWN -->
+    <div id="userDropdown"
+         class="hidden absolute right-0 mt-2 bg-white shadow-lg rounded-lg py-2 w-48 text-gray-700 flex flex-col space-y-1 z-50">
+        
+        <!-- Dashboard Link -->
+        {% if user.is_superuser %}
+          <a href="{% url 'userprofile:admin_dashboard' %}" class="px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2">
+            <span></span> Admin Dashboard
+          </a>
+        {% elif user.is_staff %}
+          <a href="{% url 'dashboard:index' %}" class="px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2">
+            <span></span> Staff Dashboard
+          </a>
+        {% else %}
+          <a href="{% url 'userprofile:homepage' %}" class="px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2">
+            <span></span> Homepage
+          </a>
+        {% endif %}
+        
+        <a href="{% url 'userprofile:profile' %}" class="px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2">
+          <span></span> Profile
+        </a>
+        
+        <hr class="my-1">
+        
+        <a href="{% url 'userprofile:logout' %}" class="px-4 py-2 hover:bg-red-100 text-red-600 rounded flex items-center gap-2">
+          <span></span> Logout
+        </a>
+    </div>
+
+  {% else %}
+    <!-- GUEST USER -->
     <button id="guestBtn" 
             class="flex items-center gap-2 bg-white text-gray-800 
                    w-20 sm:w-28 md:w-36 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg shadow hover:bg-gray-100 transition text-sm sm:text-base">
@@ -53,30 +118,50 @@
         <span class="truncate">Guest</span>
     </button>
 
-    <!-- DROPDOWN -->
+    <!-- GUEST DROPDOWN -->
     <div id="guestDropdown"
-         class="hidden absolute right-0 mt-2 bg-white shadow-lg rounded-lg py-2 w-40 text-gray-700 flex flex-col space-y-1">
+         class="hidden absolute right-0 mt-2 bg-white shadow-lg rounded-lg py-2 w-40 text-gray-700 flex flex-col space-y-1 z-50">
         <a href="{% url 'userprofile:signin' %}" class="px-4 py-2 hover:bg-gray-100 rounded">Login</a>
         <a href="{% url 'userprofile:signup' %}" class="px-4 py-2 hover:bg-gray-100 rounded">Register</a>
     </div>
+  {% endif %}
 </div>
+
 
 </nav>
 
 <script>
-    const guestBtn = document.getElementById("guestBtn");
-    const guestDrop = document.getElementById("guestDropdown");
+    {% if user.is_authenticated %}
+        // Logged-in user dropdown
+        const userBtn = document.getElementById("userBtn");
+        const userDrop = document.getElementById("userDropdown");
 
-    guestBtn.addEventListener("click", () => {
-        guestDrop.classList.toggle("hidden");
-    });
+        userBtn.addEventListener("click", () => {
+            userDrop.classList.toggle("hidden");
+        });
 
-    document.addEventListener("click", (e) => {
-        if (!guestBtn.contains(e.target) && !guestDrop.contains(e.target)) {
-            guestDrop.classList.add("hidden");
-        }
-    });
+        document.addEventListener("click", (e) => {
+            if (!userBtn.contains(e.target) && !userDrop.contains(e.target)) {
+                userDrop.classList.add("hidden");
+            }
+        });
+    {% else %}
+        // Guest dropdown
+        const guestBtn = document.getElementById("guestBtn");
+        const guestDrop = document.getElementById("guestDropdown");
+
+        guestBtn.addEventListener("click", () => {
+            guestDrop.classList.toggle("hidden");
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!guestBtn.contains(e.target) && !guestDrop.contains(e.target)) {
+                guestDrop.classList.add("hidden");
+            }
+        });
+    {% endif %}
 </script>
+
 
 
 <!-- HERO CAROUSEL SECTION -->
