@@ -1,14 +1,24 @@
-{% extends "core/base.html" %} {% block title %}Profile{% endblock %}
-<!--prettier ignore-->
+{% extends "core/base.html" %} 
+{% block title %}Profile{% endblock %}
+
 {% block content %}
 <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow">
   <h1 class="text-2xl font-bold mb-6 text-green-700">Profile</h1>
+
+  <!--  Display Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="mb-4 p-3 rounded {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
 
   <form method="post" enctype="multipart/form-data" class="space-y-6">
     {% csrf_token %}
 
     <!-- Profile Photo -->
-    <div class="flex items-center space-x-4">
+    <div class="flex items-start space-x-4">
       <div class="relative">
         <div
           class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden"
@@ -16,12 +26,13 @@
           <!-- Existing avatar if available -->
           {% if user.profile.avatar %}
           <img
+            id="currentAvatar"
             src="{{ user.profile.avatar.url }}"
             alt="Profile Photo"
             class="w-full h-full object-cover"
           />
           {% else %}
-          <span class="text-gray-500 text-sm">No Photo</span>
+          <span id="noPhotoText" class="text-gray-500 text-sm">No Photo</span>
           {% endif %}
         </div>
         <!-- Remove button (only shows if avatar exists) -->
@@ -33,23 +44,49 @@
         </button>
         {% endif %}
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1"
-          >Profile Photo</label
-        >
+      
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Profile Photo
+        </label>
+        
+        <!--  File Input with Accept Attribute -->
         <input
           type="file"
           name="avatar"
-          class="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2"
+          id="avatarInput"
+          accept="image/png, image/jpeg, image/jpg"
+          class="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-500"
         />
+        <p class="text-xs text-gray-500 mt-1">
+          Only PNG and JPEG files (Max 5MB)
+        </p>
+        
+        <!-- Preview Selected Image -->
+        <div id="imagePreview" class="mt-3 hidden">
+          <p class="text-sm font-medium text-gray-700 mb-2">Preview:</p>
+          <img 
+            id="previewImg" 
+            src="" 
+            alt="Preview" 
+            class="w-24 h-24 rounded-full object-cover border-2 border-green-500"
+          >
+          <button 
+            type="button" 
+            onclick="clearPreview()"
+            class="mt-2 text-sm text-red-600 hover:underline"
+          >
+            Remove selection
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- First Name -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1"
-        >First Name</label
-      >
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        First Name
+      </label>
       <input
         type="text"
         name="first_name"
@@ -60,9 +97,9 @@
 
     <!-- Last Name -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1"
-        >Last Name</label
-      >
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Last Name
+      </label>
       <input
         type="text"
         name="last_name"
@@ -73,22 +110,24 @@
 
     <!-- Username -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1"
-        >Username</label
-      >
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Username
+      </label>
       <input
         type="text"
         name="username"
         value="{{ user.username }}"
-        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
+        readonly
       />
+      <p class="text-xs text-gray-500 mt-1">Username cannot be changed</p>
     </div>
 
     <!-- Email Address -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1"
-        >Email Address</label
-      >
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Email Address
+      </label>
       <input
         type="email"
         name="email"
@@ -101,15 +140,16 @@
     <div class="pt-4">
       <button
         type="submit"
-        class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg shadow"
+        class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg shadow transition"
       >
-        Save
+        Save Changes
       </button>
     </div>
   </form>
 </div>
 
 <script>
+//  Delete Avatar Function
 function deleteAvatar() {
     if (confirm('Are you sure you want to remove your profile picture?')) {
         const form = document.createElement('form');
@@ -127,5 +167,47 @@ function deleteAvatar() {
         form.submit();
     }
 }
+
+//  Image Preview with Validation
+document.getElementById('avatarInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    
+    if (file) {
+        // Validate file type
+        const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+            alert(' File type not supported!\nOnly PNG and JPEG files are allowed.');
+            e.target.value = '';
+            document.getElementById('imagePreview').classList.add('hidden');
+            return;
+        }
+        
+        // Validate file size (5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > maxSize) {
+            alert(' File size must be less than 5MB!\nYour file: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB');
+            e.target.value = '';
+            document.getElementById('imagePreview').classList.add('hidden');
+            return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            document.getElementById('previewImg').src = event.target.result;
+            document.getElementById('imagePreview').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        document.getElementById('imagePreview').classList.add('hidden');
+    }
+});
+
+// ✅ Clear Preview Function
+function clearPreview() {
+    document.getElementById('avatarInput').value = '';
+    document.getElementById('imagePreview').classList.add('hidden');
+}
 </script>
+
 {% endblock %}

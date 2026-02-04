@@ -1,3 +1,4 @@
+from django.forms import ValidationError
 from django.utils import timezone
 from datetime import timedelta
 from django.shortcuts import render, redirect, get_object_or_404
@@ -11,6 +12,7 @@ from patient.models import Patient
 from appointment.models import Appointment
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.password_validation import validate_password
 
 #pagination import
 from django.core.paginator import Paginator
@@ -94,7 +96,11 @@ class RoleBasedLoginView(Loginview):
                 return super().clean()
         
         return EmailOrUsernameAuthForm
-
+    
+def form_invalid(self, form):
+        """Keep username/email when login fails"""
+        messages.error(self.request, "Invalid username/email or password. Please try again.")
+        return super().form_invalid(form)
 
 @login_required
 def patient_dashboard(request):
@@ -156,7 +162,15 @@ def signup(request):
         if password1 != password2:
             messages.error(request, "Passwords do not match.")
             return redirect("userprofile:signup")
-       
+        #minimum password length
+          # ✅ NEW: Validate password strength
+        try:
+            validate_password(password1)
+        except ValidationError as e:
+            for error in e.messages:
+                messages.error(request, error)
+            return redirect("userprofile:signup")
+
         if User.objects.filter(username=username).exists():
             messages.error(request, "Username already exists.")
             return redirect("userprofile:signup")
@@ -226,33 +240,63 @@ def profile(request):
         first_name = request.POST.get("first_name")
         last_name = request.POST.get("last_name")
         email = request.POST.get("email")
-        password1 = request.POST.get("password1")
-        password2 = request.POST.get("password2")
 
         user = request.user
         if first_name:
             user.first_name = first_name
         if last_name:
             user.last_name = last_name
-        if user.username:
-                user.username = user.username
         if email:
             if User.objects.filter(email=email).exclude(pk=user.pk).exists():
                 messages.error(request, "Email already exists.")
                 return redirect("userprofile:profile")
             user.email = email
-        else:
-                
-                return redirect("userprofile:profile")
+        
         user.save()
 
+        # ✅ Handle avatar upload with validation
         if 'avatar' in request.FILES:
+            uploaded_file = request.FILES['avatar']
+            
+            # Check file extension
+            ext = os.path.splitext(uploaded_file.name)[1].lower()
+            valid_extensions = ['.png', '.jpg', '.jpeg']
+            
+            if ext not in valid_extensions:
+                messages.error(request, "Only PNG and JPEG files are allowed.")
+                return redirect("userprofile:profile")
+            
+            # Check file size (5MB)
+            max_size = 5 * 1024 * 1024  # 5MB
+            if uploaded_file.size > max_size:
+                messages.error(request, f"File size must be less than 5MB. Your file: {uploaded_file.size / 1024 / 1024:.2f}MB")
+                return redirect("userprofile:profile")
+            
+            # Verify it's actually an image
+            try:
+                from PIL import Image
+                img = Image.open(uploaded_file)
+                if img.format not in ['JPEG', 'PNG']:
+                    messages.error(request, "Only JPEG and PNG images are supported.")
+                    return redirect("userprofile:profile")
+                uploaded_file.seek(0)  # Reset file pointer after reading
+            except Exception:
+                messages.error(request, "Invalid image file.")
+                return redirect("userprofile:profile")
+            
+            # Delete old avatar
             if profile.avatar:
                 profile.avatar.delete()
-            profile.avatar = request.FILES['avatar']
+            
+            # Save new avatar
+            profile.avatar = uploaded_file
             profile.save()
-        messages.success(request, "Profile updated successfully.")
+            messages.success(request, "Profile picture updated successfully!")
+        else:
+            messages.success(request, "Profile updated successfully.")
+        
         return redirect("userprofile:profile")
+    
     return render(request, 'userprofile/profile.html')
 
 @login_required

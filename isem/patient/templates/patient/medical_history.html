@@ -141,126 +141,141 @@
           </div>
         </div>
       </div>
-
-      <!-- Edit Form -->
-      <form method="post" action="{% url 'patient:medical_history' pk=patient.id %}" id="patientInfoForm" class="hidden space-y-6" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="hidden" name="update_patient_info" value="1">
-        
-        <!-- Patient Data Section -->
-        <div>
-          <h3 class="text-md font-semibold mb-3 text-gray-700">Patient Data</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
-              <input type="number" name="age" value="{{ patient.age }}" 
-                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-              <select name="gender" class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Select</option>
-                <option value="Male" {% if patient.gender == "Male" %}selected{% endif %}>Male</option>
-                <option value="Female" {% if patient.gender == "Female" %}selected{% endif %}>Female</option>
-                <option value="Other" {% if patient.gender == "Other" %}selected{% endif %}>Other</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
-              <input type="text" name="occupation" value="{{ patient.occupation }}" 
-                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Telephone</label>
-              <input type="text" name="telephone" value="{{ patient.telephone }}" 
-                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-              <input type="text" name="address" value="{{ patient.address }}" 
-                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input type="email" name="email" value="{{ patient.email }}" 
-                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-          </div>
-        </div>
-
-        <!-- Medical Data Section -->
-        <div>
-          <h3 class="text-md font-semibold mb-3 text-gray-700">Medical Data</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Particular Condition</label>
-              <textarea name="particular_condition" rows="2" 
-                        class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.particular_condition }}</textarea>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Allergy</label>
-              <textarea name="allergy" rows="2" 
-                        class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.allergy }}</textarea>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Pregnancy Status</label>
-              <input type="text" name="pregnancy_status" value="{{ patient.pregnancy_status }}" 
-                     class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Medications</label>
-              <textarea name="medications" rows="2" 
-                        class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.medications }}</textarea>
-            </div>
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Abnormal Bleeding History</label>
-              <textarea name="abnormal_bleeding_history" rows="2" 
-                        class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.abnormal_bleeding_history }}</textarea>
-            </div>
-          </div>
-        </div>
-
-        <!-- X-ray Upload Section -->
-        <div>
-          <h3 class="text-md font-semibold mb-3 text-gray-700">Upload X-ray Images</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Select X-ray Images (Multiple allowed)</label>
-              <input 
-                type="file" 
-                name="xray_images" 
-                accept="image/*"
-                multiple
-                class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p class="text-xs text-gray-500 mt-1">You can select multiple images at once</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
-              <input 
-                type="text" 
-                name="xray_description"
-                placeholder="e.g., Panoramic X-ray, Right molar, etc."
-                class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- Save and Cancel Buttons -->
-        <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
-          <button type="button" id="cancelEditBtn"
-                  class="w-full sm:w-auto px-6 py-2 bg-gray-500 text-white font-medium rounded-md hover:bg-gray-600 focus:outline-none text-sm">
-            Cancel
-          </button>
-          <button type="submit" 
-                  class="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none text-sm">
-            Update Information
-          </button>
-        </div>
-      </form>
+<!-- Edit Form -->
+<form method="post" action="{% url 'patient:medical_history' pk=patient.id %}" id="patientInfoForm" class="hidden space-y-6" enctype="multipart/form-data">
+  {% csrf_token %}
+  <input type="hidden" name="update_patient_info" value="1">
+  
+  <!-- Patient Data Section -->
+  <div>
+    <h3 class="text-md font-semibold mb-3 text-gray-700">Patient Data</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
+        <input type="number" name="age" value="{{ patient.age }}" 
+               class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+        <select name="gender" class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Select</option>
+          <option value="Male" {% if patient.gender == "Male" %}selected{% endif %}>Male</option>
+          <option value="Female" {% if patient.gender == "Female" %}selected{% endif %}>Female</option>
+          <option value="Other" {% if patient.gender == "Other" %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
+        <input type="text" name="occupation" value="{{ patient.occupation }}" 
+               class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Telephone</label>
+        <input type="text" name="telephone" value="{{ patient.telephone }}" 
+               class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+        <input type="text" name="address" value="{{ patient.address }}" 
+               class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input type="email" name="email" value="{{ patient.email }}" 
+               class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
     </div>
   </div>
+
+  <!-- Medical Data Section -->
+  <div>
+    <h3 class="text-md font-semibold mb-3 text-gray-700">Medical Data</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Particular Condition</label>
+        <textarea name="particular_condition" rows="2" 
+                  class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.particular_condition }}</textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Allergy</label>
+        <textarea name="allergy" rows="2" 
+                  class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.allergy }}</textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Pregnancy Status</label>
+        <input type="text" name="pregnancy_status" value="{{ patient.pregnancy_status }}" 
+               class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Medications</label>
+        <textarea name="medications" rows="2" 
+                  class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.medications }}</textarea>
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Abnormal Bleeding History</label>
+        <textarea name="abnormal_bleeding_history" rows="2" 
+                  class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.abnormal_bleeding_history }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- X-ray Upload Section with Validation -->
+  <div>
+    <h3 class="text-md font-semibold mb-3 text-gray-700">Upload X-ray Images</h3>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Select X-ray Images (Multiple allowed)
+        </label>
+        <input 
+          type="file" 
+          name="xray_images" 
+          id="xrayInput"
+          accept="image/png, image/jpeg, image/jpg"
+          multiple
+          class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+        />
+        <p class="text-xs text-gray-500 mt-1">
+          Only PNG and JPEG files • Max 5MB per image • Multiple selection allowed
+        </p>
+        
+        <!-- Error Display -->
+        <div id="xrayError" class="hidden mt-2 p-2 bg-red-100 text-red-700 text-xs rounded"></div>
+        
+        <!-- Selected Files Preview -->
+        <div id="selectedFiles" class="hidden mt-3">
+          <p class="text-sm font-medium text-gray-700 mb-2">Selected Files:</p>
+          <div id="filesList" class="space-y-1"></div>
+        </div>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Description (Optional)
+        </label>
+        <input 
+          type="text" 
+          name="xray_description"
+          placeholder="e.g., Panoramic X-ray, Right molar, etc."
+          class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Save and Cancel Buttons -->
+  <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
+    <button type="button" id="cancelEditBtn"
+            class="w-full sm:w-auto px-6 py-2 bg-gray-500 text-white font-medium rounded-md hover:bg-gray-600 focus:outline-none text-sm">
+      Cancel
+    </button>
+    <button type="submit" 
+            id="submitBtn"
+            class="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none text-sm">
+      Update Information
+    </button>
+  </div>
+</form>
 
   <!-- === TREATMENT HISTORY TAB CONTENT === -->
   <div id="medicalContent" class="space-y-4 hidden">
