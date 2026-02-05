@@ -1,0 +1,181 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Appointment Logs{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-4">
+
+  <!-- Header + Back button -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-semibold text-gray-800">Appointment Logs</h1>
+    <a href="{% url 'appointment:list' %}"
+       class="inline-flex items-center px-4 py-2 rounded-md bg-gray-200 text-gray-800 text-sm font-medium hover:bg-gray-300">
+      <span class="material-icons text-base mr-1">arrow_back</span>
+      Back
+    </a>
+  </div>
+
+  <!-- Search bar -->
+  <div class="bg-white shadow rounded-lg p-4 sticky top-0 z-10">
+    <label for="logSearch" class="block text-sm font-medium text-gray-700 mb-1">
+      Search logs (date, appointment ID, action, status, actor, note)
+    </label>
+    <input
+      id="logSearch"
+      type="text"
+      placeholder="Type to filter logs..."
+      class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+    />
+  </div>
+
+  <!-- Logs -->
+  <div class="bg-white shadow rounded-lg overflow-hidden">
+
+    <!-- MOBILE VIEW -->
+    <div class="block md:hidden divide-y">
+      {% for log in logs %}
+      <div class="p-4 space-y-2 text-sm log-row">
+
+        <div class="flex justify-between text-xs text-gray-500">
+          <span>{{ log.created_at|date:"Y-m-d H:i" }}</span>
+          <span class="font-medium">{{ log.get_action_display }}</span>
+        </div>
+
+        <div>
+          <span class="font-medium text-gray-700">Appointment:</span>
+          {{ log.appointment.display_id }}
+          <div class="text-xs text-gray-500">
+            {{ log.appointment.date }} {{ log.appointment.time }}
+          </div>
+        </div>
+
+        <div class="flex gap-6 text-xs">
+          <div>
+            <span class="text-gray-500">Old:</span>
+            {{ log.old_status|default:"-" }}
+          </div>
+          <div>
+            <span class="text-gray-500">New:</span>
+            {{ log.new_status|default:"-" }}
+          </div>
+        </div>
+
+        <div class="text-xs">
+          <span class="text-gray-500">Actor:</span>
+          {% if log.actor %}
+            {{ log.actor.get_full_name|default:log.actor.username }}
+          {% else %}
+            <span class="text-gray-400">System</span>
+          {% endif %}
+        </div>
+
+        {% if log.note %}
+        <div class="text-xs text-gray-700 break-words">
+          <span class="text-gray-500">Note:</span>
+          {{ log.note }}
+        </div>
+        {% endif %}
+
+      </div>
+      {% empty %}
+      <div class="p-4 text-center text-gray-500 text-sm">
+        No logs found.
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- DESKTOP VIEW -->
+    <div class="hidden md:block overflow-x-auto">
+      <table class="min-w-full text-sm text-left">
+        <thead class="bg-gray-100 text-gray-700">
+          <tr>
+            <th class="px-4 py-2">Date / Time</th>
+            <th class="px-4 py-2">Appointment</th>
+            <th class="px-4 py-2">Action</th>
+            <th class="px-4 py-2">Old Status</th>
+            <th class="px-4 py-2">New Status</th>
+            <th class="px-4 py-2">Actor</th>
+            <th class="px-4 py-2">Note</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for log in logs %}
+          <tr class="log-row">
+            <td class="px-4 py-2 whitespace-nowrap">
+              {{ log.created_at|date:"Y-m-d H:i" }}
+            </td>
+            <td class="px-4 py-2">
+              {{ log.appointment.display_id }}
+              <div class="text-xs text-gray-500">
+                {{ log.appointment.date }} {{ log.appointment.time }}
+              </div>
+            </td>
+            <td class="px-4 py-2">{{ log.get_action_display }}</td>
+            <td class="px-4 py-2">{{ log.old_status|default:"-" }}</td>
+            <td class="px-4 py-2">{{ log.new_status|default:"-" }}</td>
+            <td class="px-4 py-2">
+              {% if log.actor %}
+                {{ log.actor.get_full_name|default:log.actor.username }}
+              {% else %}
+                <span class="text-gray-400">System</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-2 text-xs break-words max-w-xs">
+              {{ log.note|default:"-" }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-4 py-4 text-center text-gray-500">
+              No logs found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- SCROLL TO TOP BUTTON -->
+<button
+  id="scrollTopBtn"
+  class="fixed bottom-6 right-6 hidden z-50 rounded-full bg-green-600 text-white p-3 shadow-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 md:hidden"
+  aria-label="Scroll to top"
+>
+  <span class="material-icons">keyboard_arrow_up</span>
+</button>
+
+<!-- Inline JS -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("logSearch");
+    const rows = document.querySelectorAll(".log-row");
+    const scrollBtn = document.getElementById("scrollTopBtn");
+
+    // Search
+    if (searchInput) {
+      searchInput.addEventListener("input", function () {
+        const q = this.value.toLowerCase().trim();
+        rows.forEach(row => {
+          row.style.display = row.innerText.toLowerCase().includes(q)
+            ? ""
+            : "none";
+        });
+      });
+    }
+
+    // Show button after scrolling
+    window.addEventListener("scroll", function () {
+      scrollBtn.classList.toggle("hidden", window.scrollY < 300);
+    });
+
+    // Scroll to top
+    scrollBtn.addEventListener("click", function () {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+</script>
+{% endblock %}

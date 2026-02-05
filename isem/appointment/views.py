@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime, timedelta
+from django.contrib.auth.decorators import login_required
 
 from django.contrib import messages
 from django.core.mail import send_mail
@@ -12,6 +13,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 
 from billing.models import BillingRecord
 from patient.models import Patient
@@ -20,6 +22,14 @@ from .forms import AppointmentForm
 from .models import Dentist, Service, Appointment, AppointmentLog,Branch
 from .utils import find_next_available_slot
 
+@login_required
+def appointment_logs(request):
+    logs = (
+        AppointmentLog.objects
+        .select_related("appointment", "actor")
+        .order_by("-created_at")
+    )
+    return render(request, "appointment/appointment_logs.html", {"logs": logs})
 
 @csrf_exempt
 @require_POST
@@ -268,6 +278,10 @@ def appointment_page(request):
         email = request.POST.get("email")
 
         service_ids = request.POST.getlist("services")
+        if len(service_ids) > 4:
+            messages.error(request, "You can select at most 4 services per appointment.")
+            return redirect("appointment:appointment_page")
+        
         selected_services = Service.objects.filter(id__in=service_ids)
 
         dentist = Dentist.objects.get(id=dentist_id)

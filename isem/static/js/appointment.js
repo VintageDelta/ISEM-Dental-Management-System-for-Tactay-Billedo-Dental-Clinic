@@ -8,14 +8,57 @@ let reschedAppointmentId = null;
 let doneOdontogramHandlerAttached = false;
 
 let reschedHandlerAttached = false;
+let doneStepsHandlerAttached = false;
+let currentDoneAppointmentId = null;
 
 // ===== Appointment Modals & Utility =====
 document.addEventListener("DOMContentLoaded", () => {
+  const MAX_SERVICES = 4;
+    const serviceCheckboxes = document.querySelectorAll(".service-checkbox");
+    const saveBtn = document.querySelector(
+      "#appointment-modal button[type='submit']"
+    );
+
+    function updateLimit(e) {
+      const checked = Array.from(serviceCheckboxes).filter(cb => cb.checked);
+      if (checked.length > MAX_SERVICES) {
+        if (e && e.target) e.target.checked = false;
+
+        const msgEl = document.getElementById("service-limit-message");
+        if (msgEl) {
+          msgEl.textContent = `You can select at most ${MAX_SERVICES} services for one appointment.`;
+        }
+        openAppointmentModal("service-limit-modal");  // instead of alert
+        return;
+      }
+
+      if (saveBtn) {
+        saveBtn.disabled = checked.length === 0;
+        if (checked.length === 0) {
+          saveBtn.classList.add("opacity-50", "cursor-not-allowed");
+        } else {
+          saveBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+      }
+    }
+
+    serviceCheckboxes.forEach(cb => {
+      cb.addEventListener("change", updateLimit);
+    });
+
+    updateLimit();
+
+
+    const closeLimitBtn = document.getElementById("close-service-limit-modal");
+    if (closeLimitBtn) {
+      closeLimitBtn.addEventListener("click", () => {
+        closeAppointmentModal("service-limit-modal");
+      });
+    }
+
   const createBtn = document.getElementById("create-appointment-btn");
-  
   const appointmentModal = document.getElementById("appointment-modal");
   const closeAppointmentBtn = document.getElementById("close-appointment-btn");
-
   // Open / Close
   createBtn?.addEventListener("click", () => openAppointmentModal("appointment-modal"));
   closeAppointmentBtn?.addEventListener("click", () => closeAppointmentModal("appointment-modal"));
@@ -310,7 +353,7 @@ confirmYes?.addEventListener("click", () => {
     }
   });
 
-    // Notify Patient modal wiring
+  // Notify Patient modal wiring
   const notifyPatientBtn = document.getElementById("notify-patient-btn");
   const closeNotifyBtn = document.getElementById("close-notify-btn");
   const notifySmsBtn = document.getElementById("notify-sms-btn");
@@ -497,6 +540,17 @@ confirmYes?.addEventListener("click", () => {
       // Close overlay
       overlay.classList.add("hidden");
       overlay.classList.remove("flex");
+
+      // Close the main appointment modal too (for when the page returns)
+      closeAppointmentModal("appointment-modal");
+
+      // Recalculate calendar layout shortly after
+      setTimeout(() => {
+        if (window.recalcCalendarLayout) {
+          window.recalcCalendarLayout();
+        }
+      }, 50);
+
       // Now allow the real submit
       addForm.submit();
     });
@@ -1529,7 +1583,14 @@ document.addEventListener("DOMContentLoaded", function() {
   // NEW: Submit button - save all 3 steps at once
   const submitBtn = document.getElementById("done-steps-submit-btn");
   if (submitBtn) {
+    let doneStepsSubmitting = false;  // guard flag
+
     submitBtn.addEventListener("click", function () {
+      if (doneStepsSubmitting) return;  // ignore extra clicks
+      doneStepsSubmitting = true;
+      submitBtn.disabled = true;
+      submitBtn.classList.add("opacity-50", "cursor-not-allowed");
+
       window.doneStepsCurrentStep = 3;
       const forms = [
         document.getElementById("done-medical-form"),
@@ -1541,6 +1602,9 @@ document.addEventListener("DOMContentLoaded", function() {
       for (const f of forms) {
         if (!f.checkValidity()) {
           f.reportValidity();
+          doneStepsSubmitting = false;
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
           return;
         }
       }
@@ -1579,7 +1643,6 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(data3 => {
           if (!data3.success) throw new Error(data3.error || "Failed to save step 3");
 
-          // After all succeed, mark appointment as done and redirect
           if (window.currentEventId) {
             return fetch(`/dashboard/appointment/update-status/${window.currentEventId}/`, {
               method: "POST",
@@ -1596,7 +1659,6 @@ document.addEventListener("DOMContentLoaded", function() {
             alert("Failed to update appointment status.");
             return;
           }
-          // Refresh calendars and redirect to patient page
           if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
           if (window.mainCalendar) window.mainCalendar.refetchEvents();
           if (window.currentPatientId) {
@@ -1608,9 +1670,15 @@ document.addEventListener("DOMContentLoaded", function() {
         .catch(err => {
           console.error(err);
           alert(err.message || "Network error while saving done steps.");
+        })
+        .finally(() => {
+          doneStepsSubmitting = false;
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
         });
     });
   }
+
 
   // Close button
   const closeBtn = document.getElementById("done-steps-close-btn");
@@ -1649,59 +1717,4 @@ if (step1ServicesContainer && doneAmountInput) {
 }
 
 
-// Odontogram final step submit (attach only once)
-const doneOdontoForm = document.getElementById("done-odontogram-form");
-if (doneOdontoForm && !doneOdontogramHandlerAttached) {
-  doneOdontogramHandlerAttached = true;
-  
-  doneOdontoForm.addEventListener("submit", function(e) {
-    e.preventDefault();
-    if (!window.currentPatientId) {
-      // alert("Patient ID not found");
-      return;
-    }
-
-    const formData = new FormData(this);
-    fetch(this.action, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken"),
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: formData,
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        // Mark appointment as done
-        if (window.currentEventId) {
-          fetch(`/dashboard/appointment/update-status/${window.currentEventId}/`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": getCookie("csrftoken")
-            },
-            body: JSON.stringify({ status: "done" })
-          })
-          .then(res => res.json())
-          .then(statusData => {
-            if (statusData.success) {
-              if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
-              if (window.mainCalendar) window.mainCalendar.refetchEvents();
-              
-              // Redirect to patient page so you see all 3 records
-              window.location.href = `/dashboard/patient/${window.currentPatientId}/`;
-            }
-          });
-        }
-      } else {
-        alert(data.error || "Failed to save odontogram");
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Network error");
-    });
-  });
-}
 

@@ -309,17 +309,17 @@ def add_medical_history(request, patient_id):
             prescriptions=prescriptions or "",
         )
         
-        # QUICK FIX: Auto-create billing record (assumes paid in full)
-        FinancialHistory.objects.create(
-            patient=patient,
-            date=date,
-            bill_type="Services",
-            payment_mode="Cash",  # Default
-            amount=amount,         # Paid amount = treatment total
-            total_bill=amount,     # Total bill = treatment amount
-            balance=0              # Fully paid
-        )
-        print(" AUTO-CREATED BILLING FROM TREATMENT")
+        # # QUICK FIX: Auto-create billing record (assumes paid in full)
+        # FinancialHistory.objects.create(
+        #     patient=patient,
+        #     date=date,
+        #     bill_type="Services",
+        #     payment_mode="Cash",  # Default
+        #     amount=amount,         # Paid amount = treatment total
+        #     total_bill=amount,     # Total bill = treatment amount
+        #     balance=0              # Fully paid
+        # )
+        # print(" AUTO-CREATED BILLING FROM TREATMENT")
         
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse(
@@ -377,18 +377,21 @@ def add_financial_history(request, patient_id):
             balance=balance,
         )
         
-        # Auto-create treatment record 
-        if bill_type == "Services":
+        # Auto-create treatment only for non-AJAX/manual billing, not for Done Steps wizard
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+        if bill_type == "Services" and not is_ajax:
             MedicalHistory.objects.create(
                 patient=patient,
                 date=date,
-                dentist="",  # Default (add dentist field to form later)
-                services=bill_type,       # "Services"
-                amount=total_bill,        # Use total_bill as treatment amount
+                dentist="",  # TODO: expose dentist in manual billing form
+                services=bill_type,
+                amount=total_bill,
                 findings="",
                 prescriptions=""
             )
-            print(" AUTO-CREATED TREATMENT FROM BILLING")
+            print(" AUTO-CREATED TREATMENT FROM BILLING (manual)")
+
         
         print("FinancialHistory created successfully")
         

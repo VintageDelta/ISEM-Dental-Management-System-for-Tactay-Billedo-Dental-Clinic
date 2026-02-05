@@ -21,10 +21,17 @@
       <!-- Location -->
       <div>
         <select id="location" name="location" required
-          class="w-full border rounded-md p-2 text-sm">
+                class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select location</option>
           {% for branch in branches %}
-            <option value="{{ branch.id }}">{{ branch.name }}</option>
+            <option value="{{ branch.id }}">
+              {{ branch.name }},
+              {% if branch.address %}
+                {{ branch.address }}
+              {% else %}
+                .......
+              {% endif %}
+            </option>
           {% endfor %}
         </select>
       </div>

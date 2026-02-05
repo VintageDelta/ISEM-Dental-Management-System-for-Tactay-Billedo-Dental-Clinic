@@ -3,7 +3,13 @@ window.currentEventId = null;
 let mainCalendar = null;
 let timelineCalendar = null;
 
-document.addEventListener('DOMContentLoaded', function () {
+if (window.calendarsInitialized) {
+  console.log("Calendars already initialized, skipping.");
+} else {
+  window.calendarsInitialized = true;
+
+  document.addEventListener("DOMContentLoaded", function () {
+  
   const mainCalendarEl = document.getElementById('calendar');
   const timelineCalendarEl = document.getElementById('timeline-calendar');
   const timelineControlsEl = document.getElementById('timeline-controls');
@@ -13,6 +19,16 @@ document.addEventListener('DOMContentLoaded', function () {
   );
   const branchFilterEl = document.getElementById("branch-filter");
   const eventsUrl = "/dashboard/appointment/events/";
+
+  function recalcCalendarLayout() {
+    if (window.mainCalendar) window.mainCalendar.updateSize();
+    if (window.timelineCalendar) window.timelineCalendar.updateSize();
+    if (typeof window.syncTimelineHeight === "function") {
+      window.syncTimelineHeight();
+    }
+  }
+  window.recalcCalendarLayout = recalcCalendarLayout;
+
 
   // NEW: sync timeline height with main calendar (desktop only)
   function syncTimelineHeight() {
@@ -808,6 +824,7 @@ document.addEventListener('DOMContentLoaded', function () {
     timelineCalendar.on("eventChange", window.renderTodaysAppointments);
   }
 });
+}
 
 function hexToRgba(hex, alpha) {
   hex = hex.replace("#", "");

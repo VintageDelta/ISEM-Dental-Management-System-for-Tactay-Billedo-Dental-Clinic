@@ -83,3 +83,21 @@
     </div>
   </div>
 </div>
+
+<!-- Service Limit Modal -->
+<div id="service-limit-modal"
+     class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
+  <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-2">Too many services</h3>
+    <p id="service-limit-message" class="text-xs text-gray-600">
+      You can select at most 4 services for one appointment.
+    </p>
+    <div class="mt-4 flex justify-end">
+      <button id="close-service-limit-modal"
+              type="button"
+              class="px-3 py-1.5 text-xs bg-slate-700 text-white rounded-md hover:bg-slate-800">
+        Close
+      </button>
+    </div>
+  </div>
+</div>

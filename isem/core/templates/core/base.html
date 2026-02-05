@@ -372,16 +372,36 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
-  function handleResize() {
-    if (window.innerWidth < 768) {
-      sidebar.classList.add('collapsed');
-    } else {
-      sidebar.classList.remove('collapsed');
-    }
-  }
+    function handleResize() {
+      const wasCollapsed = sidebar.classList.contains('collapsed');
+      const shouldCollapse = window.innerWidth < 768;
 
-  window.addEventListener('resize', handleResize);
-  handleResize();
+      if (shouldCollapse && !wasCollapsed) {
+        sidebar.classList.add('collapsed');
+      } else if (!shouldCollapse && wasCollapsed) {
+        sidebar.classList.remove('collapsed');
+      } else {
+        return; // nothing changed, no need to resize calendars
+      }
+
+      // sidebar width changed -> update calendars after transition/layout
+      setTimeout(() => {
+        if (window.mainCalendar && typeof window.mainCalendar.updateSize === "function") {
+          window.mainCalendar.updateSize();
+        }
+        if (window.timelineCalendar && typeof window.timelineCalendar.updateSize === "function") {
+          window.timelineCalendar.updateSize();
+        }
+        if (typeof window.syncTimelineHeight === "function") {
+          window.syncTimelineHeight();
+        }
+      }, 220); // match your duration-200
+    }
+
+    // ADD THESE TWO LINES:
+    window.addEventListener('resize', handleResize);
+    handleResize(); // run once on first load
+
 
       // User dropdown toggle
       const btn = document.getElementById('userMenuButton');
