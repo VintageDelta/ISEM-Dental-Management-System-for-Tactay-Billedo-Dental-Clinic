@@ -396,7 +396,6 @@ def events(request):
         else:
             appointments = Appointment.objects.filter(user=user)
 
-
     if branch:
         appointments = appointments.filter(location=branch)
         appointments = appointments.filter(branch__name=branch)
@@ -413,13 +412,28 @@ def events(request):
 
         service_names = ", ".join([s.service_name for s in a.services.all()])
         service_ids = list(a.services.values_list("id", flat=True))
-        dentist_obj = Dentist.objects.filter(name=a.dentist_name).first()
+
+        # NEW: build full datetime for start
+        start_dt = datetime.combine(a.date, a.time)
+
+        # NEW: decide end_dt
+        if a.end_time:
+            # If end_time is stored in DB, use it
+            end_dt = datetime.combine(a.date, a.end_time)
+        else:
+            # Fallback: compute from total service duration (in minutes)
+            total_minutes = sum((s.duration or 0) for s in a.services.all())
+            end_dt = start_dt + timedelta(minutes=total_minutes)
 
         events.append({
             "id": str(a.id),
             "title": f"{service_names} - {(a.dentist.name if a.dentist else a.dentist_name) or 'N/A'}",
-            "start": f"{a.date}T{a.time}",
-            "end": f"{a.date}T{a.end_time}" if a.end_time else None,
+
+            # UPDATED: always send full ISO datetimes for start/end,
+            # so FullCalendar can compute the correct visual duration.
+            "start": start_dt.strftime("%Y-%m-%dT%H:%M:%S"),
+            "end": end_dt.strftime("%Y-%m-%dT%H:%M:%S"),
+
             "color": color_map.get(a.status, "gray"),
             "extendedProps": {
                 "dentist": a.dentist.name if a.dentist else a.dentist_name,
@@ -459,7 +473,7 @@ def get_booked_times(request):
         dentist_id=dentist_id,
         branch_id=branch_id,
         date=date_obj,
-    ).exclude(status="cancelled")
+    ).exclude(status__in=["cancelled", "done"])
 
     booked = [
         {
@@ -618,34 +632,40 @@ def precompute_appointment_slot(request):
     """
     try:
         dentist_id = request.POST.get("dentist")
-        location = request.POST.get("location")
-        date_str = request.POST.get("date")
-        time_str = request.POST.get("time")  # "HH:MM" 24h, from your hidden field
+        branch_id  = request.POST.get("location")  # BRANCH ID from form
+        date_str   = request.POST.get("date")
+        time_str   = request.POST.get("time")      # "HH:MM" 24h, from hidden field
         service_ids = request.POST.getlist("services")
 
         print("DEBUG precompute POST:", request.POST.dict())
 
-        if not (dentist_id and location and date_str and time_str and service_ids):
+        if not (dentist_id and branch_id and date_str and time_str and service_ids):
             return JsonResponse({"success": False, "error": "Missing fields"}, status=400)
 
-        dentist = Dentist.objects.get(id=dentist_id)
+        dentist   = Dentist.objects.get(id=dentist_id)
+        branch_obj = Branch.objects.get(id=branch_id)
+        # Use the SAME location key as appointment_page: branch name string
+        location_key = branch_obj.name
+
         date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
         preferred_time = datetime.strptime(time_str, "%H:%M").time()
         selected_services = Service.objects.filter(id__in=service_ids)
         total_minutes = sum(s.duration for s in selected_services)
 
-        print("DEBUG precompute:",
-        "dentist", dentist,
-        "location", location,
-        "total_minutes", total_minutes)
-        
+        print(
+            "DEBUG precompute:",
+            "dentist", dentist,
+            "location_key", location_key,
+            "total_minutes", total_minutes,
+        )
+
         with transaction.atomic():
             start_time, end_time = find_next_available_slot(
                 dentist,
                 date_obj,
                 total_minutes,
                 preferred_time,
-                location=location,
+                location=location_key,  # <-- pass branch name, not id
             )
 
         print("DEBUG precompute result:", start_time, end_time)

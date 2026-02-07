@@ -121,15 +121,15 @@ if (window.calendarsInitialized) {
           .map(ev => {
             const out = { ...ev };
 
-            // If backend sends date-only start (no 'T'), treat as 08:00 timed event
-            if (out.start && typeof out.start === "string" && !out.start.includes("T")) {
-              out.start = out.start + "T08:00:00";
-            }
+            // // If backend sends date-only start (no 'T'), treat as 08:00 timed event
+            // if (out.start && typeof out.start === "string" && !out.start.includes("T")) {
+            //   out.start = out.start + "T08:00:00";
+            // }
 
-            // Same for end, if present
-            if (out.end && typeof out.end === "string" && !out.end.includes("T")) {
-              out.end = out.end + "T08:30:00";
-            }
+            // // Same for end, if present
+            // if (out.end && typeof out.end === "string" && !out.end.includes("T")) {
+            //   out.end = out.end + "T08:30:00";
+            // }
 
             // Force non-all‑day
             out.allDay = false;
@@ -440,7 +440,7 @@ if (window.calendarsInitialized) {
         info.el.style.boxShadow = "none";
         info.el.style.padding = "0";
         info.el.style.margin = "0";
-        info.el.style.height = "100%";
+        // info.el.style.height = "100%";
         info.el.style.overflow = "hidden";
 
         // 2) HIDE any event that is NOT inside the main timegrid body
@@ -465,7 +465,7 @@ if (window.calendarsInitialized) {
         wrapper.style.display = "flex";
         wrapper.style.position = "relative";
         wrapper.style.width = "100%";
-        wrapper.style.height = "auto";      // allow content height, but parent is clamped
+        wrapper.style.height = "100%";      // allow content height, but parent is clamped
         wrapper.style.boxSizing = "border-box";
         wrapper.style.padding = "8px";
         wrapper.style.borderRadius = "8px";

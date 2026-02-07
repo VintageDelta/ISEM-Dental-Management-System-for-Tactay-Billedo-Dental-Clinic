@@ -438,131 +438,158 @@ confirmYes?.addEventListener("click", () => {
 
 
 
-  // --- Two-step create appointment flow (loading + confirm) ---
-  addForm = document.querySelector("#appointment-modal form");
-  addSaveBtn = addForm ? addForm.querySelector('button[type="submit"]') : null;
+// --- Two-step create appointment flow (loading + confirm) ---
+addForm = document.querySelector("#appointment-modal form");
+addSaveBtn = addForm ? addForm.querySelector("button[type='submit']") : null;
 
-  const overlay = document.getElementById("appointment-loading-overlay");
-  const loadingStep = document.getElementById("appointment-loading-step");
-  const confirmStep = document.getElementById("appointment-confirm-step");
-  const confirmDateEl = document.getElementById("confirm-picked-date");
-  const confirmTimeEl = document.getElementById("confirm-picked-time");
-  const confirmSaveBtn = document.getElementById("confirm-save-btn");
-  const confirmReschedBtn = document.getElementById("confirm-reschedule-btn");
+const overlay         = document.getElementById("appointment-loading-overlay");
+const loadingStep     = document.getElementById("appointment-loading-step");
+const confirmStep     = document.getElementById("appointment-confirm-step");
+const confirmDateEl   = document.getElementById("confirm-picked-date");
+const confirmTimeEl   = document.getElementById("confirm-picked-time");
+const confirmSaveBtn  = document.getElementById("confirm-save-btn");
+const confirmReschedBtn = document.getElementById("confirm-reschedule-btn");
 
-  let pendingSubmitTimeout = null;
+// NEW: hidden fields to store the actual picked slot from backend (optional but recommended)
+const pickedStartInput = document.getElementById("picked-start-time");
+const pickedEndInput   = document.getElementById("picked-end-time");
 
-  if (addForm && overlay && loadingStep && confirmStep) {
-    // Intercept the normal submit
-    addForm.addEventListener("submit", (e) => {
-      e.preventDefault(); // stop immediate POST
+let pendingSubmitTimeout = null;
 
-      // If form invalid by our existing validation, do nothing
-      if (addSaveBtn && addSaveBtn.disabled) return;
+if (addForm && overlay && loadingStep && confirmStep) {
+  // Intercept the normal submit
+  addForm.addEventListener("submit", (e) => {
+    e.preventDefault(); // stop immediate POST
 
-      // Prepare overlay: show loading step, hide confirm step
-      loadingStep.classList.remove("hidden");
-      confirmStep.classList.add("hidden");
-      overlay.classList.remove("hidden");
-      overlay.classList.add("flex");
+    // If form invalid by our existing validation, do nothing
+    if (addSaveBtn && addSaveBtn.disabled) return;
 
-      const content = overlay.querySelector(":scope > div");
-      if (content) {
-        content.classList.remove("opacity-100", "scale-100");
-        content.classList.add("opacity-0", "scale-95");
-        requestAnimationFrame(() => {
-          content.classList.remove("opacity-0", "scale-95");
-          content.classList.add("opacity-100", "scale-100");
+    // Prepare overlay: show loading step, hide confirm step
+    loadingStep.classList.remove("hidden");
+    confirmStep.classList.add("hidden");
+    overlay.classList.remove("hidden");
+    overlay.classList.add("flex");
+
+    // Small animation setup (same as before)
+    const content = overlay.querySelector("div");
+    if (content) {
+      content.classList.remove("opacity-100", "scale-100");
+      content.classList.add("opacity-0", "scale-95");
+      requestAnimationFrame(() => {
+        content.classList.remove("opacity-0", "scale-95");
+        content.classList.add("opacity-100", "scale-100");
+      });
+    }
+
+    // After 5 seconds, switch to confirmation step (and call backend)
+    if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
+    pendingSubmitTimeout = setTimeout(() => {
+      const formData = new FormData(addForm);
+
+        fetch("/dashboard/appointment/precompute-slot/", { 
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: formData,
+        })
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.success) {
+            // ❗ NO AVAILABLE NON-OVERLAPPING SLOT:
+            // show message and disable Save so user must change schedule
+            confirmDateEl.textContent = "N/A";
+            confirmTimeEl.textContent =
+              data.error || "No available time slot for the selected date and services.";
+
+            if (confirmSaveBtn) {
+              confirmSaveBtn.disabled = true;
+              confirmSaveBtn.classList.add("opacity-50", "cursor-not-allowed");
+            }
+          } else {
+            // ✅ USE ACTUAL PICKED SLOT FROM BACKEND (NOT PREFERRED TIME)
+            const dateVal = data.date;          // "YYYY-MM-DD"
+            const start   = data.start_time;    // "HH:MM" 24h
+            const end     = data.end_time;      // "HH:MM" 24h
+
+            confirmDateEl.textContent = dateVal || "N/A";
+
+            const format12 = (t) => {
+              if (!t) return "N/A";
+              let [h, m] = t.split(":");
+              let hour = parseInt(h, 10);
+              const ampm = hour >= 12 ? "PM" : "AM";
+              if (hour === 0) hour = 12;
+              if (hour > 12) hour -= 12;
+              return `${hour.toString().padStart(2, "0")}:${m} ${ampm}`;
+            };
+
+            if (start && end) {
+              confirmTimeEl.textContent = `${format12(start)} – ${format12(end)}`;
+            } else {
+              confirmTimeEl.textContent = "N/A";
+            }
+
+            // Re‑enable Save (slot is valid)
+            if (confirmSaveBtn) {
+              confirmSaveBtn.disabled = false;
+              confirmSaveBtn.classList.remove("opacity-50", "cursor-not-allowed");
+            }
+
+            // OPTIONAL: store picked slot in hidden inputs so backend can use it directly
+            if (pickedStartInput) pickedStartInput.value = start || "";
+            if (pickedEndInput)   pickedEndInput.value   = end || "";
+          }
+
+          loadingStep.classList.add("hidden");
+          confirmStep.classList.remove("hidden");
+        })
+        .catch(() => {
+          confirmDateEl.textContent = "N/A";
+          confirmTimeEl.textContent = "Error computing slot";
+          if (confirmSaveBtn) {
+            confirmSaveBtn.disabled = true;
+            confirmSaveBtn.classList.add("opacity-50", "cursor-not-allowed");
+          }
+          loadingStep.classList.add("hidden");
+          confirmStep.classList.remove("hidden");
         });
-      }
+    }, 5000);
+  });
 
-      // After ~5 seconds, switch to confirmation step
-      if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
-      
-        pendingSubmitTimeout = setTimeout(() => {
-          // Build form data to send to precompute API
-          const formData = new FormData(addForm);
+  // User confirms: actually submit form to Django
+  confirmSaveBtn?.addEventListener("click", () => {
+    if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
 
-          fetch("/dashboard/appointment/precompute-slot/", {
-            method: "POST",
-            headers: {
-              "X-CSRFToken": getCookie("csrftoken"),
-            },
-            body: formData,
-          })
-            .then(res => res.json())
-            .then(data => {
-              if (!data.success) {
-                // If API fails, you can show an error and close overlay
-                confirmDateEl.textContent = "N/A";
-                confirmTimeEl.textContent = "No available slot";
-              } else {
-                // Use the actual scheduled slot from the server
-                const dateVal = data.date;               // "YYYY-MM-DD"
-                const start = data.start_time;           // "HH:MM" 24h
-                const end = data.end_time;               // "HH:MM" 24h
+    overlay.classList.add("hidden");
+    overlay.classList.remove("flex");
+    closeAppointmentModal("appointment-modal");
 
-                confirmDateEl.textContent = dateVal || "N/A";
+    setTimeout(() => {
+      if (window.recalcCalendarLayout) window.recalcCalendarLayout();
+    }, 50);
 
-                if (start && end) {
-                  // Convert to AM/PM for display if you want
-                  const format12 = (t) => {
-                    const [h, m] = t.split(":");
-                    let hour = parseInt(h, 10);
-                    const ampm = hour >= 12 ? "PM" : "AM";
-                    hour = hour % 12;
-                    if (hour === 0) hour = 12;
-                    return `${hour.toString().padStart(2, "0")}:${m} ${ampm}`;
-                  };
+    addForm.submit();
+  });
 
-                  confirmTimeEl.textContent =
-                    `${format12(start)} – ${format12(end)}`;
-                } else {
-                  confirmTimeEl.textContent = "N/A";
-                }
-              }
+  // User wants to change schedule
+  confirmReschedBtn?.addEventListener("click", () => {
+    if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
+    overlay.classList.add("hidden");
+    overlay.classList.remove("flex");
+  });
+}
 
-              loadingStep.classList.add("hidden");
-              confirmStep.classList.remove("hidden");
-            })
-            .catch(() => {
-              confirmDateEl.textContent = "N/A";
-              confirmTimeEl.textContent = "Error computing slot";
-              loadingStep.classList.add("hidden");
-              confirmStep.classList.remove("hidden");
-            });
-        }, 5000);
-    });
+/*
+CHANGES:
+- When precompute API returns success, the confirm modal now uses data.date, data.start_time, and data.end_time
+  (converted to 12‑hour) instead of the raw preferred time from the AM/PM/hour/minute inputs.
+- When precompute returns success = false, it shows the backend error message and disables the "Save appointment"
+  button so overlapping/invalid slots cannot be saved; user must click "Change schedule".
+- Optional: pickedStartInput/pickedEndInput allow you to persist the exact picked slot to the backend if you add
+  corresponding hidden inputs in the form.
+*/
 
-    // User confirms: actually submit form to Django
-    confirmSaveBtn?.addEventListener("click", () => {
-      if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
-      // Close overlay
-      overlay.classList.add("hidden");
-      overlay.classList.remove("flex");
-
-      // Close the main appointment modal too (for when the page returns)
-      closeAppointmentModal("appointment-modal");
-
-      // Recalculate calendar layout shortly after
-      setTimeout(() => {
-        if (window.recalcCalendarLayout) {
-          window.recalcCalendarLayout();
-        }
-      }, 50);
-
-      // Now allow the real submit
-      addForm.submit();
-    });
-
-    // User wants to change schedule: close overlay, keep modal & inputs as-is
-    confirmReschedBtn?.addEventListener("click", () => {
-      if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
-      overlay.classList.add("hidden");
-      overlay.classList.remove("flex");
-      // Do NOT reset the form; all inputs stay the same
-    });
-  }
 
   // Initialize
   initTimeValidation();
