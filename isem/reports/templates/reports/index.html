@@ -1,0 +1,154 @@
+{% extends "core/base.html" %}
+{% block title %}Reports Dashboard{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="max-w-7xl mx-auto space-y-8">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Reports Dashboard</h1>
+
+        <div class="space-x-2">
+            <a href="?range=daily" class="px-4 py-2 rounded text-sm font-medium
+               {% if range_type == 'daily' %}bg-blue-600 text-white{% else %}bg-gray-200{% endif %}">
+                Daily
+            </a>
+            <a href="?range=monthly" class="px-4 py-2 rounded text-sm font-medium
+               {% if range_type == 'monthly' %}bg-blue-600 text-white{% else %}bg-gray-200{% endif %}">
+                Monthly
+            </a>
+            <a href="{% url 'reports:export' %}?range={{ range_type }}"
+                class="px-4 py-2 rounded text-sm font-medium bg-green-600 text-white hover:bg-green-700">
+                Export Reports
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="bg-white p-5 rounded shadow">
+            <p class="text-sm text-gray-500">Completed Appointments</p>
+            <p class="text-3xl font-bold text-green-600">{{ completed_appointments }}</p>
+        </div>
+
+        <div class="bg-white p-5 rounded shadow">
+            <p class="text-sm text-gray-500">Total Patients</p>
+            <p class="text-3xl font-bold">{{ total_patients }}</p>
+        </div>
+
+        <div class="bg-white p-5 rounded shadow">
+            <p class="text-sm text-gray-500">Paid Revenue</p>
+            <p class="text-3xl font-bold text-blue-600">₱{{ paid_revenue|floatformat:2 }}</p>
+        </div>
+
+        <div class="bg-white p-5 rounded shadow">
+            <p class="text-sm text-gray-500">Low Stock Items</p>
+            <p class="text-3xl font-bold text-yellow-600">{{ low_stock_count }}</p>
+        </div>
+
+        <div class="bg-white p-5 rounded shadow">
+            <p class="text-sm text-gray-500">Expired Items</p>
+            <p class="text-3xl font-bold text-red-600">{{ expired_item_count }}</p>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded shadow">
+            <h2 class="font-semibold mb-4">Appointment Trend</h2>
+            <canvas id="appointmentChart"></canvas>
+        </div>
+
+        <div class="bg-white p-6 rounded shadow">
+            <h2 class="font-semibold mb-4">Patient Growth</h2>
+            <canvas id="patientChart"></canvas>
+        </div>
+
+        <div class="bg-white p-6 rounded shadow">
+            <h2 class="font-semibold mb-4">Paid Revenue Trend</h2>
+            <canvas id="revenueChart"></canvas>
+        </div>
+
+        <div class="bg-white p-6 rounded shadow">
+            <h2 class="font-semibold mb-4">Inventory by Category</h2>
+            <canvas id="inventoryChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    function createLineChart(id, labels, data, label, color) {
+        new Chart(document.getElementById(id), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    borderColor: color,
+                    backgroundColor: color + "33",
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    function createBarChart(id, labels, data, label) {
+        new Chart(document.getElementById(id), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: '#3b82f6'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    createLineChart(
+        "appointmentChart",
+        {{ appointment_labels| safe }},
+        {{ appointment_data| safe }},
+        "Appointments",
+        "#10b981"
+    );
+
+    createLineChart(
+        "patientChart",
+        {{ patient_labels| safe }},
+        {{ patient_data| safe }},
+        "New Patients",
+        "#6366f1"
+    );
+
+    createLineChart(
+        "revenueChart",
+        {{ revenue_labels| safe }},
+        {{ revenue_data| safe }},
+        "Revenue",
+        "#2563eb"
+    );
+
+    createBarChart(
+        "inventoryChart",
+        {{ inventory_category_labels| safe }},
+        {{ inventory_category_data| safe }},
+        "Items"
+    );
+</script>
+{% endblock %}

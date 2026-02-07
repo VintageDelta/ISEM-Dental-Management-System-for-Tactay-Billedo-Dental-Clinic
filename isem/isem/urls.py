@@ -32,6 +32,7 @@ urlpatterns = [
     path("dashboard/billing/", include('billing.urls')),
     path("user/",include('userprofile.urls')),
     path("admin/", admin.site.urls),
+    path("reports/", include("reports.urls")),
 ]
 
 if settings.DEBUG:

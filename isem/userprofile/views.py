@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout as auth_logout
 from django.contrib.auth.models import User, Group
 from django.contrib import messages
+from django.contrib.messages import get_messages
 from django.contrib.auth.views import LoginView as Loginview
 from django.db import models
 from userprofile.models import Profile
@@ -67,8 +68,9 @@ class RoleBasedLoginView(Loginview):
                 return '/user/patient_data/'
         
         # Normal role-based redirect
+        messages.success(self.request, "Login successful.")
         if user.is_superuser:
-            return '/user/admin/dashboard/'
+            return '/dashboard/'
         elif user.is_staff:
             return '/dashboard/'
         else:
@@ -319,11 +321,11 @@ def delete_avatar(request):
 
 def logout(request):
     auth_logout(request)
-    messages.success(request, "You have been logged out.")
+    messages.info(request, "You have been logged out.")
     return redirect("userprofile:signin")
 
 def is_patient(user):
-    
+
     return hasattr(user, 'patient') or not user.is_staff
 
 @login_required

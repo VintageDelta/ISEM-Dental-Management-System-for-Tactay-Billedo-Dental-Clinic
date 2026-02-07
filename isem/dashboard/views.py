@@ -8,7 +8,7 @@ from patient.models import Patient
 def dashboard(request):
     today = date.today()
 
-    todays_appointments = Appointment.objects.all()
+    todays_appointments = Appointment.objects.filter(date=today)
     upcoming_appointments = Appointment.objects.filter(
         date__gt=today,
         date__lte=today + timedelta(days=7)
