@@ -276,6 +276,8 @@
     </button>
   </div>
 </form>
+</div>
+</div>
 
   <!-- === TREATMENT HISTORY TAB CONTENT === -->
   <div id="medicalContent" class="space-y-4 hidden">
@@ -765,8 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {% block extra_js %}
 <script src="{% static 'js/modal.js' %}"></script>
-
-//scripts for tab functionality
+{% comment %} scripts for tab functionality {% endcomment %}
 <script>
   const medicalTab = document.getElementById("medicalTab");
   const financialTab = document.getElementById("financialTab");

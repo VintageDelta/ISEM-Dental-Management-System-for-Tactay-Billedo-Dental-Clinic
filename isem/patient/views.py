@@ -118,6 +118,17 @@ def update_patient(request):
         patient.age = request.POST.get("age")
         patient.occupation = request.POST.get("occupation")
         patient.save()
+
+        # Sync telephone to Profile if user exists
+        if patient.user:
+            try:
+                profile = patient.user.profile
+                profile.mobile = patient.telephone
+                profile.save()
+                print(f" Synced Patient → Profile: {patient.telephone}")
+            except Exception as e:
+                print(f" Profile sync failed: {e}")
+
         messages.success(request, "Patient information updated successfully.")
         return redirect("patient:list")
 
@@ -146,6 +157,17 @@ def medical_history(request, pk):
         patient.abnormal_bleeding_history = request.POST.get("abnormal_bleeding_history") or patient.abnormal_bleeding_history
         
         patient.save()
+
+         #Sync telephone to Profile if user exists
+        if patient.user:
+            try:
+                from userprofile.models import Profile
+                profile, created = Profile.objects.get_or_create(user=patient.user)
+                profile.mobile = patient.telephone
+                profile.save()
+                print(f"     Synced Patient → Profile: {patient.telephone}")
+            except Exception as e:
+                print(f" Profile sync failed: {e}")
 
         xray_files = request.FILES.getlist('xray_images')
         if xray_files:

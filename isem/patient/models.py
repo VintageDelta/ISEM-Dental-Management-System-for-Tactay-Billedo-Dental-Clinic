@@ -10,7 +10,7 @@ class Patient(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(blank=True, null=True)
     address = models.TextField()
-    telephone = models.CharField(max_length=11, null=False, blank=False)
+    telephone = models.CharField(max_length=15, null=False, blank=False)
     age = models.PositiveIntegerField()
     occupation = models.CharField(max_length=100, blank=True, null=True)
  

@@ -1,3 +1,4 @@
+import os
 from django.forms import ValidationError
 from django.utils import timezone
 from datetime import timedelta
@@ -14,12 +15,19 @@ from appointment.models import Appointment
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.password_validation import validate_password
-
+from django import forms
 #pagination import
 from django.core.paginator import Paginator
 from django.shortcuts import render
 
 from django.views.decorators.cache import never_cache
+
+#PasswordReset - Mobile imports
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+import requests
+from decouple import config
 
 class RoleBasedLoginView(Loginview):
     template_name = 'userprofile/sign-in.html'
@@ -30,7 +38,7 @@ class RoleBasedLoginView(Loginview):
         login(self.request, form.get_user())
         user = form.get_user()
         
-        #  Check if first-time login AND check if profile is incomplete
+        # Check if first-time login AND check if profile is incomplete
         if not user.is_staff and not user.is_superuser:
             patient = getattr(user, 'patient_patient', None)
             
@@ -39,7 +47,7 @@ class RoleBasedLoginView(Loginview):
                 messages.info(self.request, "Welcome! Please complete your profile.")
                 return redirect("userprofile:patient_data")
         
-        #  Auto-link patient records if email matches
+        # Auto-link patient records if email matches
         if not user.is_staff and not user.is_superuser:
             try:
                 existing_patient = Patient.objects.filter(
@@ -93,12 +101,402 @@ class RoleBasedLoginView(Loginview):
                             username = user_obj.username
                             self.cleaned_data['username'] = username
                         except User.DoesNotExist:
-                            pass  # Will fail in parent clean()
+                            pass  # Will fail in authentication
+                    
+                    #  FIX: Authenticate WITHOUT password validation
+                    self.user_cache = authenticate(
+                        self.request,
+                        username=username,
+                        password=password
+                    )
+                    
+                    if self.user_cache is None:
+                        raise forms.ValidationError(
+                            "Please enter a correct username and password.",
+                            code='invalid_login',
+                        )
+                    else:
+                        self.confirm_login_allowed(self.user_cache)
                 
-                return super().clean()
+                return self.cleaned_data
         
         return EmailOrUsernameAuthForm
     
+    def form_invalid(self, form):
+        """Keep username/email when login fails"""
+        messages.error(self.request, "Invalid username/email or password. Please try again.")
+        return super().form_invalid(form)
+
+
+
+import random
+from django.views import View
+from django.contrib.auth.hashers import make_password
+from django.core.exceptions import ValidationError 
+from django.db.models import Q
+from .models import Profile
+
+
+def generate_otp():
+    """Generate 6-digit OTP"""
+    # Generate a random number between 100000 and 999999
+    # Convert to string for easy storage and transmission
+    return str(random.randint(100000, 999999))
+
+
+def send_otp_sms(mobile, otp_code):
+    """Send OTP via Semaphore SMS API"""
+    try:
+        # API
+        api_key = config('SEMAPHORE_API_KEY')  
+        message = f"Tactay-Billedo Dental: Your password reset code is {otp_code}. Valid for 5 minutes."
+        
+        # Send POST request to Semaphore SMS API
+        response = requests.post(
+            'https://api.semaphore.co/api/v4/messages',
+            data={
+                'apikey': api_key,
+                'number': mobile,   
+                'message': message,
+            },
+            timeout=10  # 10 second timeout to prevent hanging
+        )
+        
+        # Attempt to parse JSON response from API
+        try:
+            result = response.json()
+        except:
+            result = None
+        
+        # Check if request was successful (HTTP 200)
+        if response.status_code == 200:
+            # Handle dictionary response (most common)
+            if isinstance(result, dict):
+                # Success: message_id present means SMS was queued
+                if 'message_id' in result:
+                    return {'success': True, 'message_id': result['message_id']}
+                else:
+                    # Error response in dict format
+                    error_msg = result.get('message', result.get('error', 'Unknown error'))
+                    return {'success': False, 'error': error_msg}
+            
+            # Handle list response (sometimes API returns empty array on error)
+            elif isinstance(result, list):
+                if len(result) > 0:
+                    first_item = result[0]
+                    if isinstance(first_item, dict) and 'message_id' in first_item:
+                        return {'success': True, 'message_id': first_item['message_id']}
+                # Empty list means error
+                return {'success': False, 'error': 'API returned empty response'}
+            else:
+                # Unexpected response format
+                return {'success': False, 'error': f'Unexpected response: {result}'}
+        else:
+            # Non-200 HTTP status code
+            error_msg = f'HTTP {response.status_code}: {response.text}'
+            return {'success': False, 'error': error_msg}
+            
+    except requests.exceptions.Timeout:
+        # Request took longer than 10 seconds
+        return {'success': False, 'error': 'Request timeout'}
+    except requests.exceptions.RequestException as e:
+        # Network errors (no internet, DNS failure, etc.)
+        return {'success': False, 'error': f'Network error: {str(e)}'}
+    except Exception as e:
+        # Catch any other unexpected errors
+        return {'success': False, 'error': str(e)}
+
+
+class ForgotPasswordView(View):
+    """Step 1: Verify username/email and send OTP"""
+    
+    def get(self, request):
+        # Display the password reset form
+        return render(request, 'userprofile/password_reset.html')
+    
+    def post(self, request):
+        # Get username or email from form and remove whitespace
+        username_or_email = request.POST.get('email', '').strip()
+        
+        # Validate that input was provided
+        if not username_or_email:
+            messages.error(request, "Please enter your username or email.")
+            return redirect('userprofile:password_reset')
+        
+        try:
+            # Search for user by username OR email using Q objects
+            user = User.objects.filter(
+                Q(username=username_or_email) | Q(email=username_or_email)
+            ).first()
+            
+            # Check if user exists
+            if not user:
+                messages.error(request, "No account found with this username or email.")
+                return redirect('userprofile:password_reset')
+            
+            # Get or create user profile (handles case where profile doesn't exist)
+            profile, created = Profile.objects.get_or_create(user=user)
+            
+            # Verify user has a mobile number registered
+            if not profile.mobile:
+                messages.error(
+                    request, 
+                    "No mobile number registered for this account. Please contact support."
+                )
+                return redirect('userprofile:password_reset')
+            
+            # Generate 6-digit OTP code
+            otp_code = generate_otp()
+            
+            # Save OTP to profile with timestamp and unverified status
+            profile.otp_code = otp_code
+            profile.otp_created_at = timezone.now()
+            profile.otp_verified = False
+            profile.save()
+            
+            # Send OTP via SMS
+            result = send_otp_sms(profile.mobile, otp_code)
+            
+            # Check if SMS was sent successfully
+            if result.get('success'):
+                # Store user ID in session for next step
+                request.session['reset_user_id'] = user.id
+                
+                # Mask mobile number for security (e.g., +6399****6110)
+                if len(profile.mobile) > 8:
+                    masked_mobile = profile.mobile[:5] + '****' + profile.mobile[-4:]
+                else:
+                    masked_mobile = '****' + profile.mobile[-4:]
+                request.session['masked_mobile'] = masked_mobile
+                
+                messages.success(
+                    request, 
+                    f"Verification code sent to {masked_mobile}"
+                )
+                return redirect('userprofile:password_reset_done')
+            else:
+                # SMS sending failed, show error to user
+                error_msg = result.get('error', 'Unknown error')
+                messages.error(request, f"Failed to send SMS: {error_msg}")
+                return redirect('userprofile:password_reset')
+                
+        except Exception as e:
+            # Handle any unexpected errors
+            messages.error(request, f"Error: {str(e)}")
+            return redirect('userprofile:password_reset')
+
+
+class PasswordResetDoneView(View):
+    """Step 2: Enter OTP"""
+    
+    def get(self, request):
+        # Verify user came from step 1 (has session data)
+        if 'reset_user_id' not in request.session:
+            messages.error(request, "Please start the password reset process.")
+            return redirect('userprofile:password_reset')
+        
+        # Get masked mobile number from session
+        masked_mobile = request.session.get('masked_mobile', 'your phone')
+        
+        # Pass masked number to template to show where code was sent
+        context = {
+            'masked_mobile': masked_mobile
+        }
+        return render(request, 'userprofile/password_reset_done.html', context)
+    
+    def post(self, request):
+        # Get user ID from session
+        user_id = request.session.get('reset_user_id')
+        
+        # Verify session hasn't expired
+        if not user_id:
+            messages.error(request, "Session expired. Please try again.")
+            return redirect('userprofile:password_reset')
+        
+        # Collect 6 individual digits from separate input fields
+        otp_digits = [
+            request.POST.get('digit1', ''),
+            request.POST.get('digit2', ''),
+            request.POST.get('digit3', ''),
+            request.POST.get('digit4', ''),
+            request.POST.get('digit5', ''),
+            request.POST.get('digit6', ''),
+        ]
+        # Combine digits into single string
+        otp_entered = ''.join(otp_digits)
+        
+        # Validate that all 6 digits were entered
+        if len(otp_entered) != 6:
+            messages.error(request, "Please enter the complete 6-digit code.")
+            return redirect('userprofile:password_reset_done')
+        
+        try:
+            # Get user and their profile
+            user = User.objects.get(id=user_id)
+            profile = user.profile
+            
+            # Check if OTP has expired (5 minute validity)
+            if not profile.is_otp_valid():
+                messages.error(request, "OTP has expired. Please request a new one.")
+                # Clear session data to force restart
+                request.session.pop('reset_user_id', None)
+                request.session.pop('masked_mobile', None)
+                return redirect('userprofile:password_reset')
+            
+            # Verify entered OTP matches stored OTP
+            if profile.otp_code == otp_entered:
+                # Mark OTP as verified
+                profile.otp_verified = True
+                profile.save()
+                
+                messages.success(request, "Code verified! Set your new password.")
+                return redirect('userprofile:password_reset_confirm_otp')
+            else:
+                # OTP doesn't match
+                messages.error(request, "Invalid verification code. Please try again.")
+                return redirect('userprofile:password_reset_done')
+                
+        except User.DoesNotExist:
+            # User ID in session is invalid
+            messages.error(request, "Invalid session. Please try again.")
+            return redirect('userprofile:password_reset')
+
+
+class PasswordResetConfirmOTPView(View):
+    """Step 3: Set new password"""
+    
+    def get(self, request):
+        # Get user ID from session
+        user_id = request.session.get('reset_user_id')
+        
+        # Verify session exists
+        if not user_id:
+            messages.error(request, "Please complete OTP verification first.")
+            return redirect('userprofile:password_reset')
+        
+        try:
+            # Get user and profile
+            user = User.objects.get(id=user_id)
+            profile = user.profile
+            
+            # Verify OTP was successfully verified in previous step
+            if not profile.otp_verified:
+                messages.error(request, "Please verify your OTP first.")
+                return redirect('userprofile:password_reset_done')
+            
+        except User.DoesNotExist:
+            messages.error(request, "Invalid session.")
+            return redirect('userprofile:password_reset')
+        
+        # Show password reset form
+        context = {
+            'validlink': True,
+        }
+        return render(request, 'userprofile/password_reset_confirm.html', context)
+    
+    def post(self, request):
+        # Get user ID from session
+        user_id = request.session.get('reset_user_id')
+        
+        # Verify session is still valid
+        if not user_id:
+            messages.error(request, "Session expired. Please try again.")
+            return redirect('userprofile:password_reset')
+        
+        # Get both password fields
+        new_password1 = request.POST.get('new_password1')
+        new_password2 = request.POST.get('new_password2')
+        
+        # Verify passwords match
+        if new_password1 != new_password2:
+            messages.error(request, "Passwords do not match.")
+            return redirect('userprofile:password_reset_confirm_otp')
+        
+        # Validate password strength (min 8 chars, not too common, etc.)
+        try:
+            validate_password(new_password1)
+        except ValidationError as e:
+            # Show all validation errors to user
+            for error in e.messages:
+                messages.error(request, error)
+            return redirect('userprofile:password_reset_confirm_otp')
+        
+        try:
+            # Get user and update password
+            user = User.objects.get(id=user_id)
+            # Hash and save new password
+            user.password = make_password(new_password1)
+            user.save()
+            
+            # Clean up OTP data from profile
+            profile = user.profile
+            profile.otp_code = None
+            profile.otp_created_at = None
+            profile.otp_verified = False
+            profile.save()
+            
+            # Clear session data
+            request.session.pop('reset_user_id', None)
+            request.session.pop('masked_mobile', None)
+            
+            messages.success(request, "Password changed successfully! You can now log in.")
+            return redirect('userprofile:password_reset_complete')
+            
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+            return redirect('userprofile:password_reset')
+
+
+class PasswordResetCompleteView(View):
+    """Step 4: Success page"""
+    
+    def get(self, request):
+        # Show success page with link to sign in
+        return render(request, 'userprofile/password_reset_complete.html')
+
+
+class ResendOTPView(View):
+    """Resend OTP code"""
+    
+    def post(self, request):
+        # Get user ID from session
+        user_id = request.session.get('reset_user_id')
+        
+        # Verify session is valid
+        if not user_id:
+            messages.error(request, "Session expired. Please try again.")
+            return redirect('userprofile:password_reset')
+        
+        try:
+            # Get user and profile
+            user = User.objects.get(id=user_id)
+            profile = user.profile
+            
+            # Generate new OTP code
+            otp_code = generate_otp()
+            
+            # Save new OTP with fresh timestamp
+            profile.otp_code = otp_code
+            profile.otp_created_at = timezone.now()
+            profile.save()
+            
+            # Send new OTP via SMS
+            result = send_otp_sms(profile.mobile, otp_code)
+            
+            # Check if SMS was sent successfully
+            if result.get('success'):
+                messages.success(request, "New verification code sent!")
+            else:
+                error_msg = result.get('error', 'Unknown error')
+                messages.error(request, f"Failed to send SMS: {error_msg}")
+                
+        except User.DoesNotExist:
+            messages.error(request, "Invalid session.")
+        
+        # Return to OTP entry page
+        return redirect('userprofile:password_reset_done')
+
+
 def form_invalid(self, form):
         """Keep username/email when login fails"""
         messages.error(self.request, "Invalid username/email or password. Please try again.")
@@ -232,6 +630,7 @@ def signup(request):
     return render(request, 'userprofile/sign-up.html')
 
 @never_cache
+@never_cache
 def profile(request):
     if not request.user.is_authenticated:
         return redirect("userprofile:signin")
@@ -242,8 +641,19 @@ def profile(request):
         first_name = request.POST.get("first_name")
         last_name = request.POST.get("last_name")
         email = request.POST.get("email")
+        username = request.POST.get("username")
+        mobile = request.POST.get("mobile")
+        country_code = request.POST.get("country_code", "+63")
 
         user = request.user
+        
+        # Validate and save username
+        if username and username != user.username:
+            if User.objects.filter(username=username).exclude(pk=user.pk).exists():
+                messages.error(request, "Username already taken.")
+                return redirect("userprofile:profile")
+            user.username = username
+        
         if first_name:
             user.first_name = first_name
         if last_name:
@@ -255,8 +665,61 @@ def profile(request):
             user.email = email
         
         user.save()
-
-        # ✅ Handle avatar upload with validation
+        
+        # ✅ FIXED: Save mobile with better error handling
+        if mobile:
+            full_mobile = f"{country_code}{mobile}"
+            
+            # Save to Profile
+            profile.mobile = full_mobile
+            profile.save()
+            print(f"✅ Saved to Profile: {full_mobile}")
+            
+            # ✅ FIXED: Sync to Patient with proper error handling
+            from patient.models import Patient
+            
+            try:
+                # Try multiple ways to find patient
+                patient = None
+                
+                # Method 1: Try by user relationship
+                try:
+                    patient = Patient.objects.get(user=user)
+                    print(f"✅ Found patient by user: {patient.name}")
+                except Patient.DoesNotExist:
+                    print("⚠️ No patient linked by user")
+                
+                # Method 2: Try by email
+                if not patient:
+                    try:
+                        patient = Patient.objects.get(email=user.email)
+                        print(f"✅ Found patient by email: {patient.name}")
+                        # Link the patient to user
+                        patient.user = user
+                    except Patient.DoesNotExist:
+                        print(f"⚠️ No patient found with email: {user.email}")
+                    except Patient.MultipleObjectsReturned:
+                        # If multiple, get the non-guest one
+                        patient = Patient.objects.filter(email=user.email, is_guest=False).first()
+                        if patient:
+                            print(f"✅ Found non-guest patient: {patient.name}")
+                            patient.user = user
+                
+                # Update patient telephone
+                if patient:
+                    patient.telephone = full_mobile
+                    patient.save()
+                    print(f"✅ Synced to Patient: {patient.name} - {full_mobile}")
+                    messages.success(request, "Profile and patient record updated successfully.")
+                else:
+                    print("⚠️ No patient record found to sync")
+                    messages.success(request, "Profile updated successfully. (No patient record found)")
+                    
+            except Exception as e:
+                print(f"❌ Patient sync error: {type(e).__name__}: {e}")
+                messages.warning(request, f"Profile updated, but patient sync failed: {e}")
+            
+        # Handle avatar upload with validation
         if 'avatar' in request.FILES:
             uploaded_file = request.FILES['avatar']
             
@@ -269,7 +732,7 @@ def profile(request):
                 return redirect("userprofile:profile")
             
             # Check file size (5MB)
-            max_size = 5 * 1024 * 1024  # 5MB
+            max_size = 5 * 1024 * 1024
             if uploaded_file.size > max_size:
                 messages.error(request, f"File size must be less than 5MB. Your file: {uploaded_file.size / 1024 / 1024:.2f}MB")
                 return redirect("userprofile:profile")
@@ -281,7 +744,7 @@ def profile(request):
                 if img.format not in ['JPEG', 'PNG']:
                     messages.error(request, "Only JPEG and PNG images are supported.")
                     return redirect("userprofile:profile")
-                uploaded_file.seek(0)  # Reset file pointer after reading
+                uploaded_file.seek(0)
             except Exception:
                 messages.error(request, "Invalid image file.")
                 return redirect("userprofile:profile")
@@ -293,13 +756,17 @@ def profile(request):
             # Save new avatar
             profile.avatar = uploaded_file
             profile.save()
-            messages.success(request, "Profile picture updated successfully!")
+            
+            if not mobile:
+                messages.success(request, "Profile picture updated successfully!")
         else:
-            messages.success(request, "Profile updated successfully.")
+            if not mobile:
+                messages.success(request, "Profile updated successfully.")
         
         return redirect("userprofile:profile")
     
     return render(request, 'userprofile/profile.html')
+
 
 @login_required
 def delete_avatar(request):

@@ -23,7 +23,6 @@
         <div
           class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden"
         >
-          <!-- Existing avatar if available -->
           {% if user.profile.avatar %}
           <img
             id="currentAvatar"
@@ -35,7 +34,6 @@
           <span id="noPhotoText" class="text-gray-500 text-sm">No Photo</span>
           {% endif %}
         </div>
-        <!-- Remove button (only shows if avatar exists) -->
         {% if user.profile.avatar %}
         <button type="button"
                 onclick="deleteAvatar()"
@@ -50,7 +48,6 @@
           Profile Photo
         </label>
         
-        <!--  File Input with Accept Attribute -->
         <input
           type="file"
           name="avatar"
@@ -62,7 +59,6 @@
           Only PNG and JPEG files (Max 5MB)
         </p>
         
-        <!-- Preview Selected Image -->
         <div id="imagePreview" class="mt-3 hidden">
           <p class="text-sm font-medium text-gray-700 mb-2">Preview:</p>
           <img 
@@ -117,10 +113,11 @@
         type="text"
         name="username"
         value="{{ user.username }}"
-        class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
-        readonly
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
       />
-      <p class="text-xs text-gray-500 mt-1">Username cannot be changed</p>
+      <p class="text-xs text-gray-500 mt-1">
+        You can change your username
+      </p>
     </div>
 
     <!-- Email Address -->
@@ -136,6 +133,36 @@
       />
     </div>
 
+    <!-- Mobile Number -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Mobile Number
+        <span class="text-red-500">*</span>
+        <span class="text-xs text-gray-500 font-normal">(Required for password reset)</span>
+      </label>
+      <div class="flex gap-2">
+        <select
+          name="country_code"
+          class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+        >
+          <option value="+63">🇵🇭 +63</option>
+          <option value="+1">🇺🇸 +1</option>
+          <option value="+44">🇬🇧 +44</option>
+        </select>
+        <input
+          type="tel"
+          name="mobile"
+          value="{{ user.profile.mobile|slice:'3:' }}"
+          placeholder="9123456789"
+          pattern="[0-9]{10}"
+          class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+        />
+      </div>
+      <p class="text-xs text-gray-500 mt-1">
+        Enter 10-digit mobile number (without leading 0). Example: 9123456789
+      </p>
+    </div>
+
     <!-- Save Button -->
     <div class="pt-4">
       <button
@@ -149,7 +176,7 @@
 </div>
 
 <script>
-//  Delete Avatar Function
+// Delete Avatar Function
 function deleteAvatar() {
     if (confirm('Are you sure you want to remove your profile picture?')) {
         const form = document.createElement('form');
@@ -168,30 +195,27 @@ function deleteAvatar() {
     }
 }
 
-//  Image Preview with Validation
+// Image Preview with Validation
 document.getElementById('avatarInput').addEventListener('change', function(e) {
     const file = e.target.files[0];
     
     if (file) {
-        // Validate file type
         const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
         if (!validTypes.includes(file.type)) {
-            alert(' File type not supported!\nOnly PNG and JPEG files are allowed.');
+            alert('⚠️ File type not supported!\nOnly PNG and JPEG files are allowed.');
             e.target.value = '';
             document.getElementById('imagePreview').classList.add('hidden');
             return;
         }
         
-        // Validate file size (5MB)
-        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        const maxSize = 5 * 1024 * 1024;
         if (file.size > maxSize) {
-            alert(' File size must be less than 5MB!\nYour file: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB');
+            alert('⚠️ File size must be less than 5MB!\nYour file: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB');
             e.target.value = '';
             document.getElementById('imagePreview').classList.add('hidden');
             return;
         }
         
-        // Show preview
         const reader = new FileReader();
         reader.onload = function(event) {
             document.getElementById('previewImg').src = event.target.result;
@@ -203,7 +227,6 @@ document.getElementById('avatarInput').addEventListener('change', function(e) {
     }
 });
 
-// ✅ Clear Preview Function
 function clearPreview() {
     document.getElementById('avatarInput').value = '';
     document.getElementById('imagePreview').classList.add('hidden');
