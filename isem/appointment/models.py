@@ -133,6 +133,15 @@ class Appointment(models.Model):
     reason = models.TextField(blank=True)
     email = models.EmailField(null=False, blank=False)
 
+
+    patient = models.ForeignKey(
+        "patient.Patient",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="appointments",
+    )
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

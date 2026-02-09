@@ -15,6 +15,9 @@ urlpatterns = [
     path("get-appointment-details/<int:appointment_id>/", views.get_appointment_details, name="get_appointment_details"),
     path("precompute-slot/", views.precompute_appointment_slot, name="precompute_slot"),
     path("logs/", views.appointment_logs, name="logs"),
+    # email search
+    path("autocomplete-patients/", views.autocomplete_patients, 
+         name="autocomplete_patients"), 
     # emailing 
     path(
         "notify-email/<int:appointment_id>/",

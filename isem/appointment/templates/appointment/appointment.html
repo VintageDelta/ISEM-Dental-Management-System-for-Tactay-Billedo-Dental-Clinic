@@ -12,12 +12,14 @@
     <h1 class="text-2xl font-semibold text-gray-800">Appointments</h1>
 
     <div class="flex items-center gap-2">
-      <!-- NEW: Logs button -->
-      <a href="{% url 'appointment:logs' %}"
-         class="inline-flex items-center px-4 py-2 rounded-md bg-gray-200 text-gray-800 text-sm font-medium hover:bg-gray-300">
-        <span class="material-icons text-base mr-1">history</span>
-        Logs
-      </a>
+      {% if request.user.is_staff or request.user.is_superuser %}
+        <!-- Logs button only for staff/admin -->
+        <a href="{% url 'appointment:logs' %}"
+          class="inline-flex items-center px-4 py-2 rounded-md bg-gray-200 text-gray-800 text-sm font-medium hover:bg-gray-300">
+          <span class="material-icons text-base mr-1">history</span>
+          Logs
+        </a>
+      {% endif %}
     </div>
   </div>
 
@@ -27,6 +29,7 @@
   <div class="flex flex-col w-full md:flex-1 md:max-w-[700px]">
     <!-- Create appointment button (full width, outside card) -->
     <button id="create-appointment-btn"
+      title="Create a new appointment for a patient."
       class="w-full mb-3 px-3 py-2 text-sm bg-green-600 text-white rounded-md flex items-center justify-center gap-1 hover:bg-green-700 transition">
       <i class="la la-plus"></i> Create Appointment
     </button>

@@ -13,6 +13,90 @@ let currentDoneAppointmentId = null;
 
 // ===== Appointment Modals & Utility =====
 document.addEventListener("DOMContentLoaded", () => {
+
+  // === Email autocomplete for patients (admin/staff only input) ===
+  const emailInput = document.getElementById("email");
+  const emailSuggestionsBox = document.getElementById("email-suggestions");
+
+  if (emailInput && emailSuggestionsBox) {
+    let emailFetchTimeout = null;
+
+    function hideEmailSuggestions() {
+      emailSuggestionsBox.classList.add("hidden");
+      emailSuggestionsBox.innerHTML = "";
+    }
+
+    function showEmailSuggestions(items) {
+      if (!items.length) {
+        hideEmailSuggestions();
+        return;
+      }
+
+      emailSuggestionsBox.innerHTML = "";
+      items.forEach((item) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className =
+          "w-full text-left px-3 py-1.5 hover:bg-gray-100 flex flex-col";
+        btn.innerHTML = `
+          <span class="font-medium text-gray-800">
+            ${item.name || "Unnamed patient"}
+            ${item.guest_id ? `\u00A0(${item.guest_id})` : ""}
+            ${!item.guest_id && item.id ? `\u00A0(#${item.id})` : ""}
+          </span>
+          <span class="text-xs text-gray-500">${item.email}</span>
+        `;
+        btn.addEventListener("click", () => {
+          emailInput.value = item.email;
+          hideEmailSuggestions();
+          emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+        emailSuggestionsBox.appendChild(btn);
+      });
+
+      emailSuggestionsBox.classList.remove("hidden");
+    }
+
+    emailInput.addEventListener("input", () => {
+      const q = emailInput.value.trim();
+
+      if (emailFetchTimeout) clearTimeout(emailFetchTimeout);
+
+      if (!q || q.length < 2) {
+        hideEmailSuggestions();
+        return;
+      }
+
+      emailFetchTimeout = setTimeout(() => {
+        fetch(`/dashboard/appointment/autocomplete-patients/?q=${encodeURIComponent(q)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            const results = (data && data.results) || [];
+            showEmailSuggestions(results);
+          })
+          .catch(() => {
+            hideEmailSuggestions();
+          });
+      }, 200);
+    });
+
+    document.addEventListener("click", (e) => {
+      if (
+        !emailInput.contains(e.target) &&
+        !emailSuggestionsBox.contains(e.target)
+      ) {
+        hideEmailSuggestions();
+      }
+    });
+
+    emailInput.addEventListener("focus", () => {
+      if (emailInput.value.trim().length >= 2) {
+        emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    });
+  }
+
+  // max amount of services a patient can choose/select
   const MAX_SERVICES = 4;
     const serviceCheckboxes = document.querySelectorAll(".service-checkbox");
     const saveBtn = document.querySelector(
@@ -596,6 +680,29 @@ CHANGES:
   initRescheduleForm();
   initFollowupForm();
 });
+
+
+// === Validation: Step 3 must have at least one tooth selected ===
+function validateDoneStep3Teeth() {
+  const warningEl = document.getElementById("done-tooth-warning");
+  const toothCheckboxes = document.querySelectorAll(
+    "#done-odontogram-teeth-container .done-tooth-checkbox"
+  );
+  const anyChecked = Array.from(toothCheckboxes).some(cb => cb.checked);
+
+  if (!anyChecked) {
+    if (warningEl) warningEl.classList.remove("hidden");
+    // Optional: scroll into view to make it REALLY visible
+    const teethContainer = document.getElementById("done-odontogram-teeth-container");
+    if (teethContainer) {
+      teethContainer.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    return false;
+  }
+  if (warningEl) warningEl.classList.add("hidden");
+  return true;
+}
+
 
 //helper mdecial
 function computeDoneMedicalTotal() {
@@ -1339,6 +1446,28 @@ function initFollowupForm() {
   validateFollowupForm();
 }
 
+// NEW: helper to populate status modal details from get-appointment-details JSON
+function fillStatusModalDetails(apptData, patientData) {
+  const detailDentistEl = document.getElementById("detail-dentist");
+  const detailPatientEl = document.getElementById("detail-patient");
+  const detailLocationEl = document.getElementById("detail-location");
+  const detailDateEl = document.getElementById("detail-date");
+  const detailTimeEl = document.getElementById("detail-time");
+  const detailServiceEl = document.getElementById("detail-service");
+
+  if (detailDentistEl) detailDentistEl.textContent = apptData.dentist || "";
+  if (detailPatientEl) {
+    detailPatientEl.textContent =
+      (patientData.name && patientData.name.trim()) ||
+      (patientData.email && patientData.email.trim()) ||
+      "Unknown";
+  }
+  if (detailLocationEl) detailLocationEl.textContent = apptData.location || "";
+  if (detailDateEl) detailDateEl.textContent = apptData.date || "";
+  if (detailTimeEl) detailTimeEl.textContent = apptData.time || "";
+  if (detailServiceEl) detailServiceEl.textContent = apptData.services || "";
+}
+
 // ===== Done Steps Modal =====
 window.initDoneStepsModal = function(appointmentId) {
   console.log("=== INIT DONE STEPS MODAL CALLED ===");
@@ -1370,6 +1499,9 @@ window.initDoneStepsModal = function(appointmentId) {
       const apptData = data.appointment;
       const patientData = data.patient;
       window.currentPatientId = patientData.id;
+
+      // NEW: populate status modal details via helper
+      fillStatusModalDetails(apptData, patientData);
 
       console.log("Setting form actions with patient ID:", patientData.id);
 
@@ -1614,6 +1746,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
     submitBtn.addEventListener("click", function () {
       if (doneStepsSubmitting) return;  // ignore extra clicks
+
+      // NEW: enforce Step 3 tooth selection BEFORE locking submit
+      if (!validateDoneStep3Teeth()) {
+        // Do NOT set doneStepsSubmitting, do not disable button
+        return;
+      }
+
       doneStepsSubmitting = true;
       submitBtn.disabled = true;
       submitBtn.classList.add("opacity-50", "cursor-not-allowed");

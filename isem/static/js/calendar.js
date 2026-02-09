@@ -409,14 +409,14 @@ if (window.calendarsInitialized) {
     // Timeline calendar
     timelineCalendar = new FullCalendar.Calendar(timelineCalendarEl, {
     initialView: 'timeGridDay',
-    height: "100%",
     expandRows: true,
     headerToolbar: {
       left: "prev,next today",
-      center: "title",
+      center: "",
       right: "timeGridDay,timeGridWeek"
     },
     buttonText: { today: 'Today', day: 'Day', week: 'Week' },
+    height: "auto",
     slotMinTime: "08:00:00",
     slotMaxTime: "18:00:00",
     slotDuration: "00:15:00",
@@ -532,6 +532,7 @@ if (window.calendarsInitialized) {
       if (info.view && info.view.type === "timeGridDay") {
         const followBtn = document.createElement("button");
         followBtn.textContent = "Follow up";
+        followBtn.title = "Create a follow-up appointment with the same services.";  // tooltip
         followBtn.style.padding = isMobile ? "2px 3px" : "3px 6px";
         followBtn.style.fontSize = isMobile ? "0.55rem" : "0.65rem";
         followBtn.style.borderRadius = "6px";
@@ -542,6 +543,7 @@ if (window.calendarsInitialized) {
 
         const rescheduleBtn = document.createElement("button");
         rescheduleBtn.textContent = "Reschedule";
+        rescheduleBtn.title = "Change this appointment to a different date and time.";  // tooltip
         rescheduleBtn.style.padding = isMobile ? "2px 3px" : "3px 6px";
         rescheduleBtn.style.fontSize = isMobile ? "0.55rem" : "0.65rem";
         rescheduleBtn.style.borderRadius = "6px";
@@ -635,48 +637,67 @@ if (window.calendarsInitialized) {
         wrapper.appendChild(stripe);
         wrapper.appendChild(content);
 
+    if (!isCancelled || canManage) {
+      wrapper.addEventListener("click", () => {
+        console.log("timeline card clicked", info.event.id);
+        console.log("opening status modal");
 
+        currentEventId = info.event.id;
+        window.reschedAppointmentId = info.event.id;
+        window.currentEventId = currentEventId;
 
-      if (!isCancelled || canManage) {
-        wrapper.addEventListener("click", () => {
-          console.log("timeline card clicked", info.event.id);
-          console.log("opening status modal"); 
+        // keep this so you can still use status/can_manage for the Cancel button
+        const props2 = info.event.extendedProps || {};
 
-          currentEventId = info.event.id;
-          window.reschedAppointmentId = info.event.id;
-          window.currentEventId = currentEventId;
-          const props2 = info.event.extendedProps || {};
-
-          const dDentist  = document.getElementById("detail-dentist");
-          const dLocation = document.getElementById("detail-location");
-          const dDate     = document.getElementById("detail-date");
-          const dTime     = document.getElementById("detail-time");
-          const dService  = document.getElementById("detail-service");
-
-          if (dDentist)  dDentist.textContent  = props2.dentist || "N/A";
-          if (dLocation) dLocation.textContent = props2.location || "N/A";
-          if (dDate)     dDate.textContent     = props2.preferred_date || props2.date || "N/A";
-          if (dTime)     dTime.textContent     = props2.time || props2.preferred_time || "N/A";
-          if (dService)  dService.textContent  = props2.service || "N/A";
-
-          const cancelBtn = document.getElementById("status-cancel-btn");
-          if (cancelBtn) {
-            const status    = props2.status;
-            const canManage = !!props2.can_manage;
-
-            if (status === "done" && !canManage) {
-              cancelBtn.disabled = true;
-              cancelBtn.classList.add("opacity-50", "cursor-not-allowed");
-            } else {
-              cancelBtn.disabled = false;
-              cancelBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        // NEW: fetch full details (includes patient.name)
+        fetch(`/dashboard/appointment/get-appointment-details/${currentEventId}/`)
+          .then(res => res.json())
+          .then(data => {
+            if (!data.success) {
+              alert("Failed to load appointment details");
+              return;
             }
-          }
 
-          openAppointmentModal("status-modal");
-        });
+            const appt   = data.appointment;
+            const patient = data.patient || {};
 
-      }
+            const dDentist  = document.getElementById("detail-dentist");
+            const dPatient  = document.getElementById("detail-patient");
+            const dLocation = document.getElementById("detail-location");
+            const dDate     = document.getElementById("detail-date");
+            const dTime     = document.getElementById("detail-time");
+            const dService  = document.getElementById("detail-service");
+
+            if (dDentist)  dDentist.textContent  = appt.dentist || "N/A";
+            if (dPatient)  dPatient.textContent  =
+              (patient.name && patient.name.trim()) ||
+              (patient.email && patient.email.trim()) ||
+              "Unknown";
+            if (dLocation) dLocation.textContent = appt.location || "N/A";
+            if (dDate)     dDate.textContent     = appt.date || "N/A";
+            if (dTime)     dTime.textContent     = appt.time || "N/A";
+            if (dService)  dService.textContent  = appt.services || "N/A";
+
+            // keep existing Cancel button enable/disable logic
+            const cancelBtn = document.getElementById("status-cancel-btn");
+            if (cancelBtn) {
+              const status    = props2.status;
+              const canManage = !!props2.can_manage;
+
+              if (status === "done" && !canManage) {
+                cancelBtn.disabled = true;
+                cancelBtn.classList.add("opacity-50", "cursor-not-allowed");
+              } else {
+                cancelBtn.disabled = false;
+                cancelBtn.classList.remove("opacity-50", "cursor-not-allowed");
+              }
+            }
+
+            openAppointmentModal("status-modal");
+          });
+      });
+    }
+
       return { domNodes: [wrapper] };
       }
     });
@@ -700,10 +721,10 @@ if (window.calendarsInitialized) {
       const btn = document.createElement("button");
       btn.textContent = label;
       btn.className =
-        "px-1.5 py-0.5 text-[0.65rem] md:px-3 md:py-1.5 md:text-sm font-medium " +
+        "px-1 py-0.5 text-[0.6rem] md:px-1.5 md:py-0.5 md:text-xs font-medium " +
         "border border-gray-300 rounded-md " +
         "bg-white/80 text-gray-600 hover:bg-gray-100 transition " +
-        "focus:outline-none focus:ring-2 focus:ring-blue-500";
+        "focus:outline-none focus:ring-1 focus:ring-blue-500";
       btn.onclick = onClick;
       return btn;
     }
@@ -778,12 +799,14 @@ if (window.calendarsInitialized) {
                     window.currentEventId = currentEventId;
 
                     const dDentist  = document.getElementById("detail-dentist");
+                    const dPatient  = document.getElementById("detail-patient");
                     const dLocation = document.getElementById("detail-location");
                     const dDate     = document.getElementById("detail-date");
                     const dTime     = document.getElementById("detail-time");
                     const dService  = document.getElementById("detail-service");
 
                     if (dDentist)  dDentist.textContent  = ev.extendedProps.dentist || "N/A";
+                    if (dPatient)  dPatient.textContent  = ev.extendedProps.email || "Unknown";
                     if (dLocation) dLocation.textContent = ev.extendedProps.location || "N/A";
                     if (dDate)     dDate.textContent     = ev.extendedProps.preferred_date || ev.extendedProps.date || "N/A";
                     if (dTime)     dTime.textContent     = ev.extendedProps.time || ev.extendedProps.preferred_time || "N/A";

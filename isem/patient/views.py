@@ -399,23 +399,23 @@ def add_financial_history(request, patient_id):
             balance=balance,
         )
         
-        # Auto-create treatment only for non-AJAX/manual billing, not for Done Steps wizard
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        # # Auto-create treatment only for non-AJAX/manual billing, not for Done Steps wizard
+        # is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
-        if bill_type == "Services" and not is_ajax:
-            MedicalHistory.objects.create(
-                patient=patient,
-                date=date,
-                dentist="",  # TODO: expose dentist in manual billing form
-                services=bill_type,
-                amount=total_bill,
-                findings="",
-                prescriptions=""
-            )
-            print(" AUTO-CREATED TREATMENT FROM BILLING (manual)")
+        # if bill_type == "Services" and not is_ajax:
+        #     MedicalHistory.objects.create(
+        #         patient=patient,
+        #         date=date,
+        #         dentist="",  # TODO: expose dentist in manual billing form
+        #         services=bill_type,
+        #         amount=total_bill,
+        #         findings="",
+        #         prescriptions=""
+        #     )
+        #     print(" AUTO-CREATED TREATMENT FROM BILLING (manual)")
 
         
-        print("FinancialHistory created successfully")
+        # print("FinancialHistory created successfully")
         
         # Return JSON response for AJAX requests
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':

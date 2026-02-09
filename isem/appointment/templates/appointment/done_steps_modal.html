@@ -200,8 +200,6 @@
             class="w-full border rounded-md p-2 text-sm"
           />
 
-
-
           <input
             type="number"
             name="balance"
@@ -221,7 +219,14 @@
             <div class="odontogram-record border rounded-md p-3 space-y-3">
               <input type="date" name="date_0" id="done-odontogram-date-0" placeholder="Date of Operation" required class="w-full border rounded-md p-2 text-sm">
 
-              <label class="font-semibold text-sm">Tooth Number:</label>
+              <label class="font-semibold text-sm flex items-center justify-between">
+                <span>Tooth Number:</span>
+                <!-- NEW: visible warning when no tooth is selected -->
+                <span id="done-tooth-warning"
+                      class="text-xs text-red-600 font-medium hidden">
+                  Please select at least one tooth.
+                </span>
+              </label>
               <!-- Check All-->
               <div class="flex items-center gap-2 mb-1 text-xs">
                 <input type="checkbox" class="tooth-check-all rounded border-gray-300" />

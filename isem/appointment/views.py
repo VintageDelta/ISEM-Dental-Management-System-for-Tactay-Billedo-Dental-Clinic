@@ -13,7 +13,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_GET
+from django.db.models import Q
+from django.contrib.auth.decorators import login_required, user_passes_test
 
 from billing.models import BillingRecord
 from patient.models import Patient
@@ -22,7 +24,11 @@ from .forms import AppointmentForm
 from .models import Dentist, Service, Appointment, AppointmentLog,Branch
 from .utils import find_next_available_slot
 
+def is_staff_or_superuser(user):
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
+
 @login_required
+@user_passes_test(is_staff_or_superuser)
 def appointment_logs(request):
     logs = (
         AppointmentLog.objects
@@ -298,24 +304,6 @@ def appointment_page(request):
         # We will use branch name as the location key for your greedy util
         location_key = branch_obj.name
 
-        # Create or find patient by email (keep your existing code)
-        patient = None
-        if email:
-            patient = Patient.objects.filter(email=email).first()
-            if not patient:
-                total = Patient.objects.filter(is_guest=True).count() + 1
-                temp_id = f"P-{total:06d}-T"
-                patient = Patient.objects.create(
-                    name=email.split("@")[0] or "Guest Patient",
-                    email=email,
-                    address="TBD",
-                    telephone="00000000000",
-                    age=0,
-                    occupation="",
-                    is_guest=True,
-                    guest_id=temp_id,
-                )
-
         with transaction.atomic():
             start_time, end_time = find_next_available_slot(
                 dentist,
@@ -557,13 +545,13 @@ def get_appointment_details(request, appointment_id):
     try:
         appointment = get_object_or_404(Appointment, id=appointment_id)
         
-        # Find or create patient by email
-        patient = None
-        patient_id = None
-        if appointment.email:
+        # Prefer the FK if set, otherwise fall back to email lookup
+        patient = appointment.patient
+        patient_id = patient.id if patient else None
+
+        if not patient and appointment.email:
             patient = Patient.objects.filter(email=appointment.email).first()
             if not patient:
-                # Create patient if doesn't exist (for older appointments)
                 total = Patient.objects.filter(is_guest=True).count() + 1
                 temp_id = f"P-{total:06d}-T"
                 patient = Patient.objects.create(
@@ -578,6 +566,10 @@ def get_appointment_details(request, appointment_id):
                 )
             if patient:
                 patient_id = patient.id
+                # Back‑fill appointment.patient so next time it's direct
+                if appointment.patient_id is None:
+                    appointment.patient = patient
+                    appointment.save(update_fields=["patient"])
         
         # Services and prices
         service_qs = appointment.services.all()
@@ -684,3 +676,36 @@ def precompute_appointment_slot(request):
         })
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+
+@require_GET
+@login_required
+def autocomplete_patients(request):
+    """
+    Return up to 10 patients matching the query in ?q=...
+    Search by email, name, or guest_id/id.
+    """
+    q = request.GET.get("q", "").strip()
+    results = []
+
+    if q:
+        qs = (
+            Patient.objects
+            .filter(
+                Q(email__icontains=q) |
+                Q(name__icontains=q) |
+                Q(guest_id__icontains=q) |   # if you use guest_id
+                Q(id__icontains=q)          # numeric id, cast to text by DB
+            )
+            .order_by("name", "email")[:10]
+        )
+
+        for p in qs:
+            results.append({
+                "id": p.id,
+                "name": p.name or "",
+                "email": p.email or "",
+                "guest_id": getattr(p, "guest_id", "") or "",
+            })
+
+    return JsonResponse({"results": results})

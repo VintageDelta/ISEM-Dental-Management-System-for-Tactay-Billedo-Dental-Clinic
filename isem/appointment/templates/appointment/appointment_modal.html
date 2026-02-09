@@ -164,7 +164,7 @@
       <!-- Email -->
       {% if request.user.is_staff or request.user.is_superuser %}
         <!-- Email (admin/staff can edit) -->
-        <div>
+        <div class="relative">
           <input
             type="email"
             id="email"
@@ -172,8 +172,17 @@
             placeholder="Email"
             value="{{ request.user.email }}"
             required
+            autocomplete="off"
             class="w-full border rounded-md p-2 text-sm"
           >
+
+          <!-- NEW: autocomplete dropdown -->
+          <div
+            id="email-suggestions"
+            class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto text-sm hidden"
+          >
+            <!-- suggestions inserted here by JS -->
+          </div>
         </div>
       {% else %}
         <!-- For normal logged-in users: use their email automatically, no visible field -->

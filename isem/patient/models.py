@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from appointment.models import Service
+
 
 
 class Patient(models.Model):
@@ -46,7 +46,6 @@ class MedicalHistory(models.Model):
     def __str__(self):
         return f"{self.patient.name} - {self.date} - {self.procedure}"
     
-    
 
 
 class FinancialHistory(models.Model):
@@ -72,7 +71,7 @@ class Odontogram(models.Model):
     patient = models.ForeignKey(Patient, related_name="odontograms", on_delete=models.CASCADE)
     tooth_number = models.PositiveIntegerField()
     date = models.DateField(auto_now_add=True)
-    service = models.ManyToManyField(Service, blank=True)
+    service = models.ManyToManyField("appointment.Service", blank=True)
     # condition = models.CharField(max_length=255)
     # treatment = models.CharField(max_length=255, blank=True, null=True)
     dentist = models.CharField(max_length=255, blank=True, null=True)
