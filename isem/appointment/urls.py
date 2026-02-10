@@ -18,6 +18,12 @@ urlpatterns = [
     # email search
     path("autocomplete-patients/", views.autocomplete_patients, 
          name="autocomplete_patients"), 
+    # sms
+    path(
+        "notify-sms/<int:appointment_id>/",
+          views.notify_patient_sms,
+            name="notify_sms"
+            ), 
     # emailing 
     path(
         "notify-email/<int:appointment_id>/",

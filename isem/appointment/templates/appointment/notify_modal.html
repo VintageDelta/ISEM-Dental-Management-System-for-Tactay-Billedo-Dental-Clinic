@@ -17,42 +17,60 @@
     </div>
 
     <!-- Body: buttons -->
-    <div class="space-y-3 mt-4">
-      <button
-        id="notify-sms-btn"
-        type="button"
-        class="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition text-sm"
-      >
-        <div class="flex items-center gap-3">
-          <div class="h-9 w-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-            📱
-          </div>
+<div class="space-y-3 mt-4">
+  <p id="notify-patient-info"
+    class="text-[11px] text-slate-500 text-center mb-1 whitespace-pre-line">
+    <!-- filled by JS -->
+  </p>
 
-          <div class="text-left">
-            <p class="font-semibold text-slate-800 text-sm">SMS</p>
-            <p class="text-[11px] text-slate-500">Send a text reminder to the patient.</p>
-          </div>
-        </div>
-        <span class="text-xs text-slate-400">&rarr;</span>
-      </button>
+  <button
+    id="notify-sms-btn"
+    type="button"
+    class="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition text-sm"
+  >
+    <div class="flex items-center gap-3">
+      <div class="h-9 w-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+        📱
+      </div>
 
-      <button
-        id="notify-email-btn"
-        type="button"
-        class="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition text-sm"
-      >
-        <div class="flex items-center gap-3">
-          <div class="h-9 w-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
-            ✉️
-          </div>
-          <div class="text-left">
-            <p class="font-semibold text-slate-800 text-sm">Email</p>
-            <p class="text-[11px] text-slate-500">Send a detailed email notification.</p>
-          </div>
-        </div>
-        <span class="text-xs text-slate-400">&rarr;</span>
-      </button>
+      <div class="text-left">
+        <p id="notify-sms-label"
+           class="font-semibold text-slate-800 text-sm">
+          SMS
+        </p>
+        <p id="notify-sms-desc"
+           class="text-[11px] text-slate-500">
+          Send a text reminder to the patient.
+        </p>
+      </div>
     </div>
+    <span class="text-xs text-slate-400">&rarr;</span>
+  </button>
+
+  <button
+    id="notify-email-btn"
+    type="button"
+    class="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition text-sm"
+  >
+    <div class="flex items-center gap-3">
+      <div class="h-9 w-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+        ✉️
+      </div>
+      <div class="text-left">
+        <p id="notify-email-label"
+           class="font-semibold text-slate-800 text-sm">
+          Email
+        </p>
+        <p id="notify-email-desc"
+           class="text-[11px] text-slate-500">
+          Send a detailed email notification.
+        </p>
+      </div>
+    </div>
+    <span class="text-xs text-slate-400">&rarr;</span>
+  </button>
+</div>
+
 
     <!-- Footer -->
     <div class="mt-5 flex justify-end">

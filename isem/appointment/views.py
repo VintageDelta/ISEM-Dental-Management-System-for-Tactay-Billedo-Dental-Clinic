@@ -2,6 +2,8 @@
 
 import json
 from datetime import datetime, timedelta
+import requests
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 
 from django.contrib import messages
@@ -143,13 +145,16 @@ def notify_patient_email(request, appointment_id):
         date_str = appt.date.strftime("%B %d, %Y")  # e.g. January 22, 2026
         time_str = appt.time.strftime("%I:%M %p")   # e.g. 09:30 AM
 
+        branch_name = appt.branch.name if appt.branch else "Tactay Billedo Dental Clinic"
+        branch_addr = appt.branch.address if appt.branch and appt.branch.address else "our clinic"
+
         subject = "Your appointment schedule"
         message = (
-            f"Good day!\n\n"
-            f"This is a reminder that you have an appointment scheduled on "
-            f"{date_str} at {time_str} at Tactay Billedo Dental Clinic.\n\n"
-            f"If you need to reschedule, please contact the clinic.\n\n"
-            f"Thank you."
+            "Good day!\n\n"
+            f"This is a reminder that you have an appointment at {branch_name} "
+            f"({branch_addr}) on {date_str} at {time_str}.\n\n"
+            "Please be in time. If you need to reschedule, please contact the clinic.\n\n"
+            "Thank you."
         )
 
         send_mail(
@@ -172,6 +177,69 @@ def notify_patient_email(request, appointment_id):
     except Appointment.DoesNotExist:
         return JsonResponse({"success": False, "error": "Appointment not found."}, status=404)
     except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+
+@csrf_exempt
+@require_POST
+def notify_patient_sms(request, appointment_id):
+    try:
+        appt = Appointment.objects.get(id=appointment_id)
+
+        patient = appt.patient or Patient.objects.filter(email=appt.email).first()
+        number = patient.telephone if patient and patient.telephone else None
+
+        if not number:
+            return JsonResponse(
+                {"success": False, "error": "No patient mobile number available."},
+                status=400,
+            )
+
+        date_str = appt.date.strftime("%B %d, %Y")
+        time_str = appt.time.strftime("%I:%M %p")
+
+        branch_name = appt.branch.name if appt.branch else "Tactay Billedo Dental Clinic"
+        branch_addr = appt.branch.address if appt.branch and appt.branch.address else "our clinic"
+
+        message = (
+            f"Reminder: You have an appointment at {branch_name} "
+            f"({branch_addr}) on {date_str} at {time_str}. "
+            f"Please be in time. If you need to reschedule, please contact us."
+        )
+        payload = {
+            "apikey": settings.SEMAPHORE_API_KEY,
+            "number": number,
+            "message": message,
+            "sendername": settings.SEMAPHORE_SENDER_NAME,
+        }
+
+        if settings.SEMAPHORE_SENDER_NAME:
+            payload["sendername"] = settings.SEMAPHORE_SENDER_NAME
+
+        resp = requests.post("https://api.semaphore.co/api/v4/messages", data=payload)
+
+        try:
+            data = resp.json()
+        except Exception:
+            data = None
+
+        if resp.status_code == 200 and isinstance(data, list) and data and data[0].get("status") != "failed":
+            AppointmentLog.objects.create(
+                appointment=appt,
+                action="updated",
+                note="Patient notified by SMS",
+                actor=request.user if request.user.is_authenticated else None,
+            )
+            return JsonResponse({"success": True})
+        else:
+            return JsonResponse(
+                {"success": False, "error": "SMS sending failed."},
+                status=400,
+            )
+    except Appointment.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Appointment not found."}, status=404)
+    except Exception as e:
+        print("SMS notify exception:", e)
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 

@@ -37,24 +37,27 @@
     <div class="bg-white p-3 md:p-5 lg:p-6 rounded-xl shadow flex flex-col w-full">
       <!-- Drop down Branch Select-->
       <div class="mb-4">
-        <label class="font-semibold">Select Branch:</label>
-        <select id="branch-filter"
-        class="border p-2 rounded-md text-sm">
-          <option value="">All Branches</option>
-          {% for branch in branches %}
-            <option value="{{ branch.name }}">
-              {{ branch.name }},
-              {% if branch.address %}
-                {{ branch.address }}
-              {% else %}
-                .......
-              {% endif %}
-            </option>
-          {% endfor %}
-        </select>
+        <label class="font-semibold block mb-1 text-sm">Select Branch:</label>
 
+        <div class="w-full max-w-full">
+          <select
+            id="branch-filter"
+            class="block w-full border p-2 rounded-md text-sm truncate"
+          >
+            <option value="">All Branches</option>
+            {% for branch in branches %}
+              <option value="{{ branch.name }}">
+                {{ branch.name }},
+                {% if branch.address %}
+                  {{ branch.address }}
+                {% else %}
+                  .......
+                {% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
-      
       <div class="w-full overflow-x-auto">
         <div class="w-full md:min-w-[360px] text-xs md:text-sm px-1 md:px-0">
           <div id="calendar" class="h-full"></div>

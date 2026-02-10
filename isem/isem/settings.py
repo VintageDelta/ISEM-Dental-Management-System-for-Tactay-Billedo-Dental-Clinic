@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -159,3 +160,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "isem.dental.clinic@gmail.com"
 EMAIL_HOST_PASSWORD = "hiombzdukkcwbrwg" #app password
 DEFAULT_FROM_EMAIL = 'Tactay Billedo Dental Clinic <isem.dental.clinic@gmail.com>'
+
+# SMS / Semaphore config (from .env)
+SEMAPHORE_API_KEY = config("SEMAPHORE_API_KEY")
+SEMAPHORE_SENDER_NAME = config("SEMAPHORE_SENDER_NAME", default=None)

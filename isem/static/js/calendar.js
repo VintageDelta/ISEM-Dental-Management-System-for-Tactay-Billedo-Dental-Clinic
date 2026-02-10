@@ -97,6 +97,10 @@ if (window.calendarsInitialized) {
       if (typeof window.renderTodaysAppointments === "function") {
         window.renderTodaysAppointments();
       }
+      if (mainCalendar) {
+        if (typeof squashMonthHarnesses === "function") squashMonthHarnesses();
+        if (typeof pruneExtraDayEvents === "function") pruneExtraDayEvents();
+      }
     }, 300);
   });
 
@@ -197,11 +201,13 @@ if (window.calendarsInitialized) {
             if (timelineCalendar) timelineCalendar.refetchEvents();
             if (mainCalendar) mainCalendar.refetchEvents();
 
-            setTimeout(() => {
-              if (typeof window.renderTodaysAppointments === "function") {
-                window.renderTodaysAppointments();
-              }
-            }, 250);
+              setTimeout(() => {
+                if (typeof window.renderTodaysAppointments === "function") {
+                  window.renderTodaysAppointments();
+                }
+                if (typeof squashMonthHarnesses === "function") squashMonthHarnesses();
+                if (typeof pruneExtraDayEvents === "function") pruneExtraDayEvents();
+              }, 250);
 
             closeAppointmentModal("status-modal");
 
@@ -255,6 +261,25 @@ if (window.calendarsInitialized) {
       }
     }
 
+    // Shared function: select a date and sync timeline
+    function handleMainDateClick(dateObj, dateStr) {
+      // dateStr: "YYYY-MM-DD"
+      // dateObj: Date instance
+      setMainSelectedDate(dateStr);
+
+      const current = timelineCalendar.view.currentStart.toISOString().split("T")[0];
+      const clicked = dateObj.toISOString().split("T")[0];
+
+      if (current !== clicked) {
+        timelineCalendar.changeView("timeGridDay", dateObj);
+      }
+
+      // If you want the side list to refresh whenever date changes:
+      if (typeof window.renderTodaysAppointments === "function") {
+        window.renderTodaysAppointments();
+      }
+    }
+
     // Main monthly calendar
     mainCalendar = new FullCalendar.Calendar(mainCalendarEl, {
       initialView: 'dayGridMonth',
@@ -283,126 +308,178 @@ if (window.calendarsInitialized) {
     },
     headerToolbar: { left: "prev myToday", center: "title", right: "next" },
 
-      events: fetchEvents,
+    events: fetchEvents,
 
     eventContent: function(info) {
-  if (info.view.type !== "dayGridMonth") {
-    return {};
-  }
+      if (info.view.type !== "dayGridMonth") {
+        return {};
+      }
+      const calendar = info.view.calendar;
+      const allEvents = calendar.getEvents();
+      const dateStr = info.event.startStr.split("T")[0];
 
-  const calendar = info.view.calendar;
-  const allEvents = calendar.getEvents();
-  const dateStr = info.event.startStr.split("T")[0];
+      const sameDayEvents = allEvents.filter(ev => ev.startStr.startsWith(dateStr));
 
-  const sameDayEvents = allEvents.filter(ev => ev.startStr.startsWith(dateStr));
-
-  sameDayEvents.sort((a, b) => a.start - b.start);
-  if (sameDayEvents[0].id !== info.event.id) {
-    return { domNodes: [] };
-  }
-
-  const counts = {
-    not_arrived: 0,
-    arrived: 0,
-    ongoing: 0,
-    done: 0,
-    cancelled: 0,
-  };
-
-  sameDayEvents.forEach(ev => {
-    const status = ev.extendedProps && ev.extendedProps.status;
-    if (status && counts.hasOwnProperty(status)) {
-      counts[status]++;
-    }
-  });
-
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  if (!total) {
-    return { domNodes: [] };
-  }
-
-  const statusColors = {
-    not_arrived: "#9CA3AF",
-    arrived: "#3B82F6",
-    ongoing: "#F59E0B",
-    done: "#10B981",
-    cancelled: "#EF4444",
-  };
-
-  const statusOrder = ["done", "ongoing", "arrived", "not_arrived", "cancelled"];
-
-  // Outer container
-  const container = document.createElement("div");
-  container.style.display = "flex";
-  container.style.flexWrap = "wrap";          // allow multiple lines
-  container.style.alignItems = "center";
-  container.style.gap = "4px";
-  container.style.fontSize = "0.7rem";
-  container.style.fontWeight = "600";
-  container.style.maxWidth = "100%";          // stay inside the cell
-  container.style.pointerEvents = "none";     // do NOT block clicks on the day cell
-  container.style.overflow = "hidden";        // avoid overflow into next day
-
-  function makePill(count, colorHex) {
-    const wrapper = document.createElement("div");
-    wrapper.style.display = "flex";
-    wrapper.style.alignItems = "center";
-    wrapper.style.gap = "3px";
-    wrapper.style.flexShrink = "0";
-    wrapper.style.maxWidth = "100%";
-
-    const num = document.createElement("span");
-    num.textContent = count;
-    num.style.color = "#111827";
-
-    const dot = document.createElement("span");
-    dot.style.display = "inline-block";
-    dot.style.width = "8px";
-    dot.style.height = "8px";
-    dot.style.borderRadius = "9999px";
-    dot.style.backgroundColor = colorHex;
-
-    wrapper.appendChild(num);
-    wrapper.appendChild(dot);
-    return wrapper;
-  }
-
-  statusOrder.forEach(key => {
-    if (counts[key] > 0) {
-      container.appendChild(makePill(counts[key], statusColors[key]));
-    }
-  });
-
-  return { domNodes: [container] };
-},
-
-
-
-      titleFormat: { year: 'numeric', month: 'short' },
-
-      dateClick: function(info) {
-        // 1) Use the exact YYYY-MM-DD string from FullCalendar
-        setMainSelectedDate(info.dateStr);
-
-        // 2) Sync timeline view (still using Date)
-        const current = timelineCalendar.view.currentStart.toISOString().split("T")[0];
-        const clicked = info.date.toISOString().split("T")[0];
-
-        if (current !== clicked) {
-          timelineCalendar.changeView("timeGridDay", info.date);
-        }
+      sameDayEvents.sort((a, b) => a.start - b.start);
+      if (sameDayEvents[0].id !== info.event.id) {
+        return { domNodes: [] };
       }
 
-    });
-    mainCalendar.render();
-    
-    mainCalendar.updateSize();
+      const counts = {
+        not_arrived: 0,
+        arrived: 0,
+        ongoing: 0,
+        done: 0,
+        cancelled: 0,
+      };
 
-    applyMainCalendarMobileStyles();
+      sameDayEvents.forEach(ev => {
+        const status = ev.extendedProps && ev.extendedProps.status;
+        if (status && counts.hasOwnProperty(status)) {
+          counts[status]++;
+        }
+      });
+
+      const total = Object.values(counts).reduce((a, b) => a + b, 0);
+      if (!total) {
+        return { domNodes: [] };
+      }
+
+      const statusColors = {
+        not_arrived: "#9CA3AF",
+        arrived: "#3B82F6",
+        ongoing: "#F59E0B",
+        done: "#10B981",
+        cancelled: "#EF4444",
+      };
+
+      const statusOrder = ["done", "ongoing", "arrived", "not_arrived", "cancelled"];
+
+      // Outer container
+      const container = document.createElement("div");
+      container.style.display = "flex";
+      container.style.flexWrap = "wrap";          // allow multiple lines
+      container.style.alignItems = "center";
+      container.style.gap = "4px";
+      container.style.fontSize = "0.7rem";
+      container.style.fontWeight = "600";
+      container.style.maxWidth = "100%";          // stay inside the cell
+      container.style.cursor = "pointer";         // show it is clickable
+      container.style.overflow = "hidden";        // avoid overflow into next day
+
+      // When clicking the dots, behave EXACTLY like clicking the day cell
+      container.addEventListener("click", (e) => {
+        e.stopPropagation(); // don't trigger other handlers
+
+        // dateStr is "YYYY-MM-DD" for this cell
+        // Recreate a Date for that exact day (ignore event time)
+        const clickedDate = new Date(dateStr + "T00:00:00");
+
+        handleMainDateClick(clickedDate, dateStr);
+      });
+
+      function makePill(count, colorHex) {
+        const wrapper = document.createElement("div");
+        wrapper.style.display = "flex";
+        wrapper.style.alignItems = "center";
+        wrapper.style.gap = "3px";
+        wrapper.style.flexShrink = "0";
+        wrapper.style.maxWidth = "100%";
+
+        const num = document.createElement("span");
+        num.textContent = count;
+        num.style.color = "#111827";
+
+        const dot = document.createElement("span");
+        dot.style.display = "inline-block";
+        dot.style.width = "8px";
+        dot.style.height = "8px";
+        dot.style.borderRadius = "9999px";
+        dot.style.backgroundColor = colorHex;
+
+        wrapper.appendChild(num);
+        wrapper.appendChild(dot);
+        return wrapper;
+      }
+
+      statusOrder.forEach(key => {
+        if (counts[key] > 0) {
+          container.appendChild(makePill(counts[key], statusColors[key]));
+        }
+      });
+
+      return { domNodes: [container] };
+    },
+    titleFormat: { year: 'numeric', month: 'short' },
+
+    dateClick: function(info) {
+      // info.date  = Date object
+      // info.dateStr = "YYYY-MM-DD"
+      handleMainDateClick(info.date, info.dateStr);
+    },
+
+  });
+
+
+    mainCalendar.render();
+
+    // Helper: remove extra empty harnesses in month view
+    function squashMonthHarnesses() {
+      const calendarEl = document.getElementById("calendar");
+      if (!calendarEl) return;
+
+      const harnesses = calendarEl.querySelectorAll(".fc-daygrid-day .fc-daygrid-event-harness");
+      harnesses.forEach(h => {
+        // This is the inner element which holds our custom eventContent
+        const eventInner = h.querySelector(".fc-daygrid-event");
+        // Our dots container is the first child we returned in eventContent
+        const dotsContainer = eventInner && eventInner.firstElementChild;
+
+        // If there is no inner event element, or it has no dots container,
+        // this harness is "empty" for our purposes -> remove it completely.
+        if (!eventInner || !dotsContainer) {
+          h.remove();
+          return;
+        }
+
+        // Keep harnesses that actually contain dots, but make them tight/non-interactive
+        h.style.pointerEvents = "none";
+        h.style.height = "auto";   // let dots control height
+        h.style.margin = "0";
+        h.style.padding = "0";
+      });
+    }
+
+    // Remove extra fc-daygrid-event anchors so only one per day cell remains
+    function pruneExtraDayEvents() {
+      const calendarEl = document.getElementById("calendar");
+      if (!calendarEl) return;
+
+      const dayCells = calendarEl.querySelectorAll(".fc-daygrid-day");
+      dayCells.forEach(cell => {
+        // All <a> elements that FullCalendar created in this cell
+        const anchors = cell.querySelectorAll("a.fc-daygrid-event");
+        if (anchors.length <= 1) return; // nothing to prune
+
+        // Keep the first one (the one we actually used for dots), remove the rest
+        for (let i = 1; i < anchors.length; i++) {
+          anchors[i].remove();
+        }
+      });
+    }
+
+
+
+    mainCalendar.updateSize();
+    squashMonthHarnesses();
+    pruneExtraDayEvents();
+
     window.addEventListener("resize", () => {
       applyMainCalendarMobileStyles();
       if (mainCalendar) mainCalendar.updateSize();
       if (timelineCalendar) timelineCalendar.updateSize();
+      squashMonthHarnesses();
+      pruneExtraDayEvents();
     });
 
   

@@ -14,6 +14,48 @@ let currentDoneAppointmentId = null;
 // ===== Appointment Modals & Utility =====
 document.addEventListener("DOMContentLoaded", () => {
 
+// ===== Notify Patient modal wiring =====
+  const notifyPatientBtn = document.getElementById("notify-patient-btn");
+  const closeNotifyBtn = document.getElementById("close-notify-btn");
+  const notifySmsBtn = document.getElementById("notify-sms-btn");
+  const notifyEmailBtn = document.getElementById("notify-email-btn");
+  const notifyEmailModal = document.getElementById("notify-email-modal");
+  const notifyEmailMessage = document.getElementById("notify-email-message");
+  const closeNotifyEmailModalBtn = document.getElementById("close-notify-email-modal");
+  const notifyModal = document.getElementById("notify-modal");
+
+  // OLD quick SMS handler below will be removed in step 3
+  const smsBtn = document.getElementById("notify-sms-btn");
+  if (smsBtn) {
+    smsBtn.addEventListener("click", function () {
+      if (!window.currentEventId) {
+        alert("No appointment selected.");
+        return;
+      }
+
+      if (!confirm("Send SMS reminder to this patient?")) return;
+
+      fetch(`/dashboard/appointment/notify-sms/${window.currentEventId}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            alert("SMS sent successfully.");
+          } else {
+            alert(data.error || "Failed to send SMS.");
+          }
+        })
+        .catch(() => {
+          alert("Error sending SMS.");
+        });
+    });
+  }
+
+
   // === Email autocomplete for patients (admin/staff only input) ===
   const emailInput = document.getElementById("email");
   const emailSuggestionsBox = document.getElementById("email-suggestions");
@@ -438,13 +480,6 @@ confirmYes?.addEventListener("click", () => {
   });
 
   // Notify Patient modal wiring
-  const notifyPatientBtn = document.getElementById("notify-patient-btn");
-  const closeNotifyBtn = document.getElementById("close-notify-btn");
-  const notifySmsBtn = document.getElementById("notify-sms-btn");
-  const notifyEmailBtn = document.getElementById("notify-email-btn");
-  const notifyEmailModal = document.getElementById("notify-email-modal");
-  const notifyEmailMessage = document.getElementById("notify-email-message");
-  const closeNotifyEmailModalBtn = document.getElementById("close-notify-email-modal");
 
   closeNotifyEmailModalBtn?.addEventListener("click", () => {
   closeAppointmentModal("notify-email-modal");
@@ -453,27 +488,71 @@ confirmYes?.addEventListener("click", () => {
     if (e.target === notifyEmailModal) closeAppointmentModal("notify-email-modal");
   });
 
-  notifyPatientBtn?.addEventListener("click", () => {
-    if (!window.currentEventId) return; // set by calendar.js when opening status modal
-    openAppointmentModal("notify-modal");
-  });
-
   closeNotifyBtn?.addEventListener("click", () => {
     closeAppointmentModal("notify-modal");
   });
 
-  // Optional: clicking on the backdrop closes the notify modal as well
-  const notifyModal = document.getElementById("notify-modal");
+    // Close notify-email modal
+  closeNotifyEmailModalBtn?.addEventListener("click", () => {
+    closeAppointmentModal("notify-email-modal");
+  });
+  notifyEmailModal?.addEventListener("click", e => {
+    if (e.target === notifyEmailModal) closeAppointmentModal("notify-email-modal");
+  });
+
+  // Close notify modal
+  closeNotifyBtn?.addEventListener("click", () => {
+    closeAppointmentModal("notify-modal");
+  });
   notifyModal?.addEventListener("click", (e) => {
     if (e.target === notifyModal) closeAppointmentModal("notify-modal");
   });
 
-  // For now, just close after click; you can replace with real API calls later
-  notifySmsBtn?.addEventListener("click", () => {
-    console.log("Send SMS to patient for event", window.currentEventId);
-    // TODO: call your SMS endpoint here
-    closeAppointmentModal("notify-modal");
+  // Open notify modal and load patient info
+  notifyPatientBtn?.addEventListener("click", () => {
+    if (!window.currentEventId) return;
+
+    const idStr = String(window.currentEventId);
+
+    fetch(`/dashboard/appointment/get-appointment-details/${idStr}/`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          console.error("Failed to load appointment details for notify modal", data.error);
+          return;
+        }
+
+        const patient = data.patient || {};
+        const appt    = data.appointment || {};
+
+        const name  = patient.name || appt.email || "Unknown";
+        const email = patient.email || appt.email || "No email";
+        const phone = patient.telephone || "No number";
+
+        const infoEl      = document.getElementById("notify-patient-info");
+        const smsDescEl   = document.getElementById("notify-sms-desc");
+        const emailDescEl = document.getElementById("notify-email-desc");
+
+        if (infoEl) {
+          infoEl.textContent =
+            `Patient: ${name}\n` +
+            `Email:   ${email}\n` +
+            `Mobile:  ${phone}`;
+        }
+        if (smsDescEl) {
+          smsDescEl.textContent = `Send a text reminder to ${phone}.`;
+        }
+        if (emailDescEl) {
+          emailDescEl.textContent = `Send an email notification to ${email}.`;
+        }
+
+        openAppointmentModal("notify-modal");
+      })
+      .catch(err => {
+        console.error("Error loading appointment details for notify modal", err);
+      });
   });
+
 
   // Email notif block
   notifyEmailBtn?.addEventListener("click", () => {
@@ -519,6 +598,49 @@ confirmYes?.addEventListener("click", () => {
         openAppointmentModal("notify-email-modal");
       });
   });
+
+notifySmsBtn?.addEventListener("click", () => {
+  if (!window.currentEventId) return;
+
+  const idStr = String(window.currentEventId);
+
+  notifySmsBtn.disabled = true;
+  notifySmsBtn.classList.add("opacity-50", "cursor-not-allowed");
+
+  fetch(`/dashboard/appointment/notify-sms/${idStr}/`, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken"),
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  })
+    .then(res => res.json())
+    .then(data => {
+      notifySmsBtn.disabled = false;
+      notifySmsBtn.classList.remove("opacity-50", "cursor-not-allowed");
+
+      if (!data.success) {
+        console.error("Notify SMS failed:", data.error);
+        notifyEmailMessage.textContent =
+          data.error || "Failed to send SMS notification.";
+        closeAppointmentModal("notify-modal");
+        openAppointmentModal("notify-email-modal");
+        return;
+      }
+
+      notifyEmailMessage.textContent = "SMS notification sent to the patient.";
+      closeAppointmentModal("notify-modal");
+      openAppointmentModal("notify-email-modal");
+    })
+    .catch(err => {
+      notifySmsBtn.disabled = false;
+      notifySmsBtn.classList.remove("opacity-50", "cursor-not-allowed");
+      console.error("Notify SMS error:", err);
+      notifyEmailMessage.textContent = "Network error while sending SMS.";
+      closeAppointmentModal("notify-modal");
+      openAppointmentModal("notify-email-modal");
+    });
+});
 
 
 
