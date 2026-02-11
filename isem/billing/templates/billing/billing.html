@@ -1,5 +1,8 @@
-{% extends 'core/base.html' %} {% load static %} {% block title %} Billing
-{%endblock %} {% block content %}
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %} Billing {%endblock %}
+{% block content %}
+
 <div class="w-full">
   <div class="w-full">
     <div class="p-4 rounded-xl">
@@ -9,10 +12,7 @@
           <nav aria-label="breadcrumb">
             <ol class="flex space-x-2 text-sm text-gray-500">
               <li>
-                <a
-                  href="{% url 'dashboard:index' %}"
-                  class="hover:text-gray-700"
-                >
+                <a href="{% url 'dashboard:index' %}" class="hover:text-gray-700">
                   <i class="las la-home"></i> Dashboard
                 </a>
               </li>
@@ -26,10 +26,10 @@
   </div>
 </div>
 
-
 <div class="w-full mt-6">
   <div class="w-full">
     <div class="bg-white w-full p-5 md:px-8 rounded-xl shadow mb-6">
+
       <!-- Top controls -->
       <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
         <!-- Search bar with dropdown -->
@@ -41,12 +41,9 @@
             autocomplete="off"
             class="bg-transparent outline-none text-sm w-full"
           />
-          <!-- Dropdown results -->
           <div id="search-results" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto z-50">
-            <!-- Results -->
           </div>
         </div>
-
 
         <!-- Add Billing Button -->
         <div class="flex gap-2 mt-4 md:mt-0">
@@ -59,7 +56,6 @@
         </div>
       </div>
 
-
       <!-- Billing Table -->
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm border">
@@ -68,7 +64,10 @@
               <th class="py-3 px-4 border-b"><input type="checkbox" /></th>
               <th class="py-3 px-4 border-b">Patient ID</th>
               <th class="py-3 px-4 border-b">Patient Name</th>
-              <th class="py-3 px-4 border-b">Amount</th>
+              {% comment %} <th class="py-3 px-4 border-b">Branch</th> {% endcomment %}
+              <th class="py-3 px-4 border-b">Total Amount</th>
+              <th class="py-3 px-4 border-b">Amount Paid</th>
+              <th class="py-3 px-4 border-b">Balance</th>
               <th class="py-3 px-4 border-b">Type</th>
               <th class="py-3 px-4 border-b">Date</th>
               <th class="py-3 px-4 border-b text-right">Actions</th>
@@ -80,32 +79,37 @@
               <td class="py-3 px-4"><input type="checkbox" /></td>
               <td class="py-3 px-4">{{ billing.patient.id }}</td>
               <td class="py-3 px-4">{{ billing.patient.name }}</td>
+              {% comment %} <td class="py-3 px-4">
+                {% if billing.appointment and billing.appointment.branch %}
+                  {{ billing.appointment.branch.name }}
+                {% else %}
+                  <span class="text-gray-400">N/A</span>
+                {% endif %}
+              </td> {% endcomment %}
               <td class="py-3 px-4">₱{{ billing.amount }}</td>
+              <td class="py-3 px-4">₱{{ billing.amount_paid|floatformat:2 }}</td>
+              <td class="py-3 px-4 font-semibold {% if billing.balance <= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                ₱{{ billing.balance|floatformat:2 }}
+              </td>
               <td class="py-3 px-4">{{ billing.type }}</td>
               <td class="py-3 px-4">{{ billing.date_issued|date:"M d, Y" }}</td>
               <td class="py-3 px-4 text-right">
-  <div class="flex justify-end gap-2">
-    <a href="#" 
-       class="text-gray-500 hover:text-gray-700 view-btn" 
-       data-id="{{ billing.pk }}">
-      <i class="uil uil-eye"></i>
-    </a>
-    <a href="#"
-       class="text-gray-500 hover:text-gray-700 edit-btn"
-       data-id="{{ billing.pk }}">
-      <i class="uil uil-edit"></i>
-    </a>
-    <a href="#"
-       class="text-gray-500 hover:text-red-600 delete-btn"
-       data-id="{{ billing.pk }}">
-      <i class="uil uil-trash-alt"></i>
-    </a>
-  </div>
-</td>
+                <div class="flex justify-end gap-2">
+                  <a href="#" class="text-gray-500 hover:text-gray-700 view-btn" data-id="{{ billing.pk }}">
+                    <i class="uil uil-eye"></i>
+                  </a>
+                  <a href="#" class="text-gray-500 hover:text-gray-700 edit-btn" data-id="{{ billing.pk }}">
+                    <i class="uil uil-edit"></i>
+                  </a>
+                  <a href="#" class="text-gray-500 hover:text-red-600 delete-btn" data-id="{{ billing.pk }}">
+                    <i class="uil uil-trash-alt"></i>
+                  </a>
+                </div>
+              </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="7" class="py-4 text-center text-gray-500">
+              <td colspan="10" class="py-4 text-center text-gray-500">
                 No billing records found.
               </td>
             </tr>
@@ -114,124 +118,113 @@
         </table>
       </div>
 
-
-     <!-- Enhanced Pagination -->
-<div class="flex justify-between items-center border-t pt-4 mt-4">
-  <div class="flex items-center space-x-2 text-sm">
-    {# First Page (double arrow left) #}
-    {% if page_obj.number > 1 %}
-      <a href="?page=1" 
-         class="px-3 py-1 border rounded hover:bg-gray-100" 
-         title="First page">&laquo;</a>
-    {% else %}
-      <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
-    {% endif %}
-
-    {# Previous Page (single arrow left) #}
-    {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}" 
-         class="px-3 py-1 border rounded hover:bg-gray-100" 
-         title="Previous page">&lsaquo;</a>
-    {% else %}
-      <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&lsaquo;</span>
-    {% endif %}
-
-    {# Page Numbers (max 3 visible) #}
-    {% if page_obj.paginator.num_pages <= 3 %}
-      {# Show all pages if 3 or less #}
-      {% for num in page_obj.paginator.page_range %}
-        {% if num == page_obj.number %}
-          <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
-        {% else %}
-          <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
-        {% endif %}
-      {% endfor %}
-    {% else %}
-      {# More than 3 pages - show smart range #}
-      {% if page_obj.number <= 2 %}
-        {# Near start: show 1 2 3 ... last #}
-        {% for num in page_obj.paginator.page_range|slice:":3" %}
-          {% if num == page_obj.number %}
-            <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
+      <!-- Enhanced Pagination -->
+      <div class="flex justify-between items-center border-t pt-4 mt-4">
+        <div class="flex items-center space-x-2 text-sm">
+          {% if page_obj.number > 1 %}
+            <a href="?page=1" class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
           {% else %}
-            <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
+            <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
           {% endif %}
-        {% endfor %}
-        {% if page_obj.paginator.num_pages > 3 %}
-          <span class="px-2 text-gray-500">...</span>
-          <a href="?page={{ page_obj.paginator.num_pages }}" 
-             class="px-3 py-1 border rounded hover:bg-gray-100">
-            {{ page_obj.paginator.num_pages }}
-          </a>
-        {% endif %}
-      
-      {% elif page_obj.number >= page_obj.paginator.num_pages|add:"-1" %}
-        {# Near end: show 1 ... 8 9 10 #}
-        <a href="?page=1" class="px-3 py-1 border rounded hover:bg-gray-100">1</a>
-        {% if page_obj.paginator.num_pages > 3 %}
-          <span class="px-2 text-gray-500">...</span>
-        {% endif %}
-        {% for num in page_obj.paginator.page_range|slice:"-3:" %}
-          {% if num == page_obj.number %}
-            <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
+
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border rounded hover:bg-gray-100">&lsaquo;</a>
           {% else %}
-            <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
+            <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&lsaquo;</span>
           {% endif %}
-        {% endfor %}
-      
-      {% else %}
-        {# Middle: show 1 ... 5 ... 10 #}
-        <a href="?page=1" class="px-3 py-1 border rounded hover:bg-gray-100">1</a>
-        <span class="px-2 text-gray-500">...</span>
-        <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ page_obj.number }}</span>
-        <span class="px-2 text-gray-500">...</span>
-        <a href="?page={{ page_obj.paginator.num_pages }}" 
-           class="px-3 py-1 border rounded hover:bg-gray-100">
-          {{ page_obj.paginator.num_pages }}
-        </a>
-      {% endif %}
-    {% endif %}
 
-    {# Next Page (single arrow right) #}
-    {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}" 
-         class="px-3 py-1 border rounded hover:bg-gray-100" 
-         title="Next page">&rsaquo;</a>
-    {% else %}
-      <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&rsaquo;</span>
-    {% endif %}
+          {% if page_obj.paginator.num_pages <= 3 %}
+            {% for num in page_obj.paginator.page_range %}
+              {% if num == page_obj.number %}
+                <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
+              {% else %}
+                <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            {% if page_obj.number <= 2 %}
+              {% for num in page_obj.paginator.page_range|slice:":3" %}
+                {% if num == page_obj.number %}
+                  <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
+                {% else %}
+                  <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
+                {% endif %}
+              {% endfor %}
+              {% if page_obj.paginator.num_pages > 3 %}
+                <span class="px-2 text-gray-500">...</span>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ page_obj.paginator.num_pages }}</a>
+              {% endif %}
+            {% elif page_obj.number >= page_obj.paginator.num_pages|add:"-1" %}
+              <a href="?page=1" class="px-3 py-1 border rounded hover:bg-gray-100">1</a>
+              {% if page_obj.paginator.num_pages > 3 %}
+                <span class="px-2 text-gray-500">...</span>
+              {% endif %}
+              {% for num in page_obj.paginator.page_range|slice:"-3:" %}
+                {% if num == page_obj.number %}
+                  <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
+                {% else %}
+                  <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <a href="?page=1" class="px-3 py-1 border rounded hover:bg-gray-100">1</a>
+              <span class="px-2 text-gray-500">...</span>
+              <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ page_obj.number }}</span>
+              <span class="px-2 text-gray-500">...</span>
+              <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ page_obj.paginator.num_pages }}</a>
+            {% endif %}
+          {% endif %}
 
-    {# Last Page (double arrow right) #}
-    {% if page_obj.number < page_obj.paginator.num_pages %}
-      <a href="?page={{ page_obj.paginator.num_pages }}" 
-         class="px-3 py-1 border rounded hover:bg-gray-100" 
-         title="Last page">&raquo;</a>
-    {% else %}
-      <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
-    {% endif %}
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border rounded hover:bg-gray-100">&rsaquo;</a>
+          {% else %}
+            <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&rsaquo;</span>
+          {% endif %}
+
+          {% if page_obj.number < page_obj.paginator.num_pages %}
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
+          {% else %}
+            <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
+          {% endif %}
+        </div>
+
+        <div class="flex items-center gap-3 text-sm text-gray-600">
+          <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+          <select class="border rounded px-2 py-1 text-sm" disabled>
+            <option selected>5/page</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
   </div>
 
-  {# Page info and items per page #}
-  <div class="flex items-center gap-3 text-sm text-gray-600">
-    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    <select class="border rounded px-2 py-1 text-sm" disabled>
-      <option selected>5/page</option>
-    </select>
-  </div>
-</div>
-
+<!-- Modals remain the same -->
 <div id="billing-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
   <div class="w-full h-full flex items-center justify-center">
     <div id="billing-content" class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
       <h2 id="modal-title" class="text-lg font-semibold mb-4 text-center">Add Billing Record</h2>
 
-      <!-- Form -->
       <form method="post" id="billing-form" class="space-y-3">
         {% csrf_token %}
         <input type="hidden" name="id" id="billing-id" />
         <input type="hidden" name="patient" id="patient-id-hidden" />
 
-               <!-- Searchable Patient Field -->
+        {% comment %} <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+          <select
+            name="branch"
+            id="branch"
+            class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          >
+            <option value="">Select Branch</option>
+            {% for branch in branches %}
+            <option value="{{ branch.id }}">{{ branch.name }}</option>
+            {% endfor %}
+          </select>
+        </div> {% endcomment %}
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
           <div class="relative">
@@ -243,17 +236,14 @@
               class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             />
-            <!-- Dropdown Results -->
             <div id="patient-dropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-48 overflow-y-auto hidden shadow-lg">
-              <!-- Results will be populated here -->
             </div>
           </div>
           <p id="selected-patient-display" class="text-xs text-gray-500 mt-1"></p>
         </div>
 
-        <!-- Amount -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Amount (₱)</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Total Amount (₱)</label>
           <input
             type="number"
             name="amount"
@@ -267,35 +257,52 @@
         </div>
 
         <div>
-  <label class="block text-sm font-medium text-gray-700 mb-1">Services</label>
-  
-  <!-- Search and Add Services -->
-  <div class="relative mb-2">
-    <input
-      type="text"
-      id="service-search"
-      placeholder="Search and add services..."
-      autocomplete="off"
-      class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-    />
-    <!-- Dropdown Results -->
-    <div id="service-dropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-48 overflow-y-auto hidden shadow-lg">
-      <!-- Results will be populated here -->
-    </div>
-  </div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Amount Paid (₱)</label>
+          <input
+            type="number"
+            name="amount_paid"
+            id="amount-paid"
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+            class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
 
-  <!-- Selected Services List -->
-  <div id="selected-services-container" class="space-y-2 mb-2">
-    <!-- Selected services will appear here -->
-  </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Balance</label>
+          <input
+            type="text"
+            id="balance-display"
+            readonly
+            class="w-full border border-gray-300 rounded-md p-2 text-sm bg-gray-100 font-semibold"
+            placeholder="₱0.00"
+          />
+        </div>
 
-  <!-- Hidden input to store all service names -->
-  <input type="hidden" name="type" id="service-names-hidden" />
-  
-  <p id="selected-services-count" class="text-xs text-gray-500"></p>
-</div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Services</label>
+          
+          <div class="relative mb-2">
+            <input
+              type="text"
+              id="service-search"
+              placeholder="Search and add services..."
+              autocomplete="off"
+              class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <div id="service-dropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-48 overflow-y-auto hidden shadow-lg">
+            </div>
+          </div>
 
-        <!-- Date -->
+          <div id="selected-services-container" class="space-y-2 mb-2">
+          </div>
+
+          <input type="hidden" name="type" id="service-names-hidden" />
+          
+          <p id="selected-services-count" class="text-xs text-gray-500"></p>
+        </div>
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
           <input
@@ -307,7 +314,6 @@
           />
         </div>
 
-        <!-- Buttons -->
         <div class="flex justify-end gap-2 pt-3">
           <button type="button" id="close-modal-btn" class="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600">
             Cancel
@@ -321,7 +327,6 @@
   </div>
 </div>
 
-<!--VIEW-->
 <div id="billing-view-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
   <div class="w-full h-full flex items-center justify-center">
     <div id="billing-view-content" class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 transform transition-all duration-200 opacity-0 scale-95">
@@ -343,11 +348,9 @@
     </div>
   </div>
 </div>
-<!-- Delete Billing Modal -->
-<div id="delete-modal"
-     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-  <div id="delete-modal-content"
-       class="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 transform transition-all duration-200 opacity-0 scale-95">
+
+<div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div id="delete-modal-content" class="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 transform transition-all duration-200 opacity-0 scale-95">
     <h2 class="text-lg font-semibold mb-4 text-center text-red-600">
       Confirm Delete
     </h2>
@@ -355,21 +358,19 @@
       Are you sure you want to delete this billing record?
     </p>
     <div class="flex justify-center gap-4">
-      <button id="cancel-delete"
-              class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
+      <button id="cancel-delete" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
         Cancel
       </button>
-      <button id="confirm-delete"
-              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+      <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
         Delete
       </button>
     </div>
   </div>
 </div>
 
+{% endblock %}
 
-{% endblock %} {% block extra_js %}
-<script src="{% static 'js/modal.js' %}"></script>
+{% block extra_js %}
 <script src="{% static 'js/modal.js' %}"></script>
 
 <script>
@@ -379,30 +380,17 @@ const closeModalBtn = document.getElementById("close-modal-btn");
 const modalTitle = document.getElementById("modal-title");
 const form = document.getElementById("billing-form");
 
-// Inputs
 const billingIdField = document.getElementById("billing-id");
 const patientSearchField = document.getElementById("patient-search");
 const patientIdHidden = document.getElementById("patient-id-hidden");
 const patientDropdown = document.getElementById("patient-dropdown");
 const selectedPatientDisplay = document.getElementById("selected-patient-display");
 const amountField = document.getElementById("amount");
+const amountPaidField = document.getElementById("amount-paid");
+const balanceDisplay = document.getElementById("balance-display");
 const typeField = document.getElementById("type");
 const dateIssuedField = document.getElementById("date-issued");
 
-// Check if all elements exist
-console.log("Checking elements:");
-console.log("modal:", modal);
-console.log("modalContent:", modalContent);
-console.log("form:", form);
-console.log("patientSearchField:", patientSearchField);
-console.log("patientIdHidden:", patientIdHidden);
-
-if (!modal) console.error("❌ Missing: billing-modal");
-if (!modalContent) console.error("❌ Missing: billing-content");
-if (!form) console.error("❌ Missing: billing-form");
-if (!patientSearchField) console.error("❌ Missing: patient-search");
-if (!patientIdHidden) console.error("❌ Missing: patient-id-hidden");
-// Patient data from Django
 const patients = [
   {% for patient in patients %}
   {
@@ -413,7 +401,6 @@ const patients = [
   {% endfor %}
 ];
 
-// Search patients function
 if (patientSearchField) {
   patientSearchField.addEventListener("input", function() {
     const searchTerm = this.value.toLowerCase().trim();
@@ -423,14 +410,12 @@ if (patientSearchField) {
       return;
     }
 
-    // Filter patients
     const filteredPatients = patients.filter(patient => 
       patient.name.toLowerCase().includes(searchTerm) ||
       patient.id.toString().includes(searchTerm) ||
       (patient.email && patient.email.toLowerCase().includes(searchTerm))
     );
 
-    // Display results
     if (filteredPatients.length > 0) {
       patientDropdown.innerHTML = filteredPatients.map(patient => `
         <div class="patient-option px-3 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0" 
@@ -443,7 +428,6 @@ if (patientSearchField) {
       
       patientDropdown.classList.remove("hidden");
 
-      // Add click handlers
       document.querySelectorAll(".patient-option").forEach(option => {
         option.addEventListener("click", function() {
           const patientId = this.dataset.id;
@@ -462,15 +446,12 @@ if (patientSearchField) {
   });
 }
 
-// Close dropdown when clicking outside
 document.addEventListener("click", function(e) {
   if (patientSearchField && patientDropdown && !patientSearchField.contains(e.target) && !patientDropdown.contains(e.target)) {
     patientDropdown.classList.add("hidden");
   }
 });
-// ============================================
-// MULTIPLE SERVICES SEARCH WITH AUTO-SUM AMOUNT
-// ============================================
+
 const services = [
   {% for service in services %}
   {
@@ -487,19 +468,14 @@ const serviceDropdown = document.getElementById("service-dropdown");
 const selectedServicesContainer = document.getElementById("selected-services-container");
 const selectedServicesCount = document.getElementById("selected-services-count");
 
-// Array to store selected services
 let selectedServices = [];
 
-// Update hidden field and display
 function updateSelectedServices() {
-  // Update hidden field with comma-separated service names
   const serviceNames = selectedServices.map(s => s.name).join(", ");
   if (serviceNamesHidden) serviceNamesHidden.value = serviceNames;
   
-  // Calculate total amount
   const totalAmount = selectedServices.reduce((sum, s) => sum + s.price, 0);
   
-  // Update amount field
   if (amountField) {
     amountField.value = totalAmount.toFixed(2);
     if (totalAmount > 0) {
@@ -510,18 +486,15 @@ function updateSelectedServices() {
     }
   }
   
-  // Update count display
   if (selectedServicesCount) {
     selectedServicesCount.textContent = selectedServices.length > 0 
       ? `${selectedServices.length} service(s) selected - Total: ₱${totalAmount.toFixed(2)}`
       : "";
   }
   
-  // Render selected services
   renderSelectedServices();
 }
 
-// Render selected services as tags
 function renderSelectedServices() {
   if (!selectedServicesContainer) return;
   
@@ -544,7 +517,6 @@ function renderSelectedServices() {
     </div>
   `).join('');
   
-  // Add remove button handlers
   document.querySelectorAll(".remove-service-btn").forEach(btn => {
     btn.addEventListener("click", function() {
       const index = parseInt(this.dataset.index);
@@ -554,7 +526,6 @@ function renderSelectedServices() {
   });
 }
 
-// Search services function
 if (serviceSearchField) {
   serviceSearchField.addEventListener("input", function() {
     const searchTerm = this.value.toLowerCase().trim();
@@ -564,7 +535,6 @@ if (serviceSearchField) {
       return;
     }
 
-    // Filter services (exclude already selected)
     const selectedIds = selectedServices.map(s => s.id);
     const filteredServices = services.filter(service => 
       !selectedIds.includes(service.id) &&
@@ -572,7 +542,6 @@ if (serviceSearchField) {
        service.id.toString().includes(searchTerm))
     );
 
-    // Display results
     if (filteredServices.length > 0) {
       serviceDropdown.innerHTML = filteredServices.map(service => `
         <div class="service-option px-3 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0" 
@@ -588,27 +557,20 @@ if (serviceSearchField) {
       
       serviceDropdown.classList.remove("hidden");
 
-      // Add click handlers
       document.querySelectorAll(".service-option").forEach(option => {
         option.addEventListener("click", function() {
           const serviceId = parseInt(this.dataset.id);
           const serviceName = this.dataset.name;
           const servicePrice = parseFloat(this.dataset.price);
           
-          // Add to selected services
           selectedServices.push({
             id: serviceId,
             name: serviceName,
             price: servicePrice
           });
           
-          // Clear search field
           serviceSearchField.value = "";
-          
-          // Update display and amount
           updateSelectedServices();
-          
-          // Hide dropdown
           serviceDropdown.classList.add("hidden");
         });
       });
@@ -619,7 +581,6 @@ if (serviceSearchField) {
   });
 }
 
-// Close service dropdown when clicking outside
 document.addEventListener("click", function(e) {
   if (serviceSearchField && serviceDropdown && 
       !serviceSearchField.contains(e.target) && 
@@ -628,28 +589,60 @@ document.addEventListener("click", function(e) {
   }
 });
 
-// Open Add Modal
+function calculateBalance() {
+  const amount = parseFloat(amountField.value) || 0;
+  const amountPaid = parseFloat(amountPaidField.value) || 0;
+  const balance = amount - amountPaid;
+  
+  if (balanceDisplay) {
+    balanceDisplay.value = `₱${balance.toFixed(2)}`;
+    
+    if (balance <= 0) {
+      balanceDisplay.classList.add("text-green-600");
+      balanceDisplay.classList.remove("text-red-600", "text-yellow-600");
+    } else if (amountPaid > 0) {
+      balanceDisplay.classList.add("text-yellow-600");
+      balanceDisplay.classList.remove("text-green-600", "text-red-600");
+    } else {
+      balanceDisplay.classList.add("text-red-600");
+      balanceDisplay.classList.remove("text-green-600", "text-yellow-600");
+    }
+  }
+}
+
+if (amountField && amountPaidField) {
+  amountField.addEventListener("input", calculateBalance);
+  amountPaidField.addEventListener("input", calculateBalance);
+}
+
 const addModalBtn = document.getElementById("add-modal-btn");
 if (addModalBtn) {
   addModalBtn.addEventListener("click", () => {
     if (modalTitle) modalTitle.textContent = "Add Billing Record";
     if (form) form.action = "{% url 'billing:billing_add' %}";
     if (billingIdField) billingIdField.value = "";
+    
+    {% comment %} const branchField = document.getElementById("branch");
+    if (branchField) branchField.value = ""; {% endcomment %}
+    
     if (patientSearchField) patientSearchField.value = "";
     if (patientIdHidden) patientIdHidden.value = "";
     if (selectedPatientDisplay) selectedPatientDisplay.textContent = "";
 
-    // Clear service fields ← Add these
     if (serviceSearchField) serviceSearchField.value = "";
     if (serviceNamesHidden) serviceNamesHidden.value = "";
     if (selectedServicesCount) selectedServicesCount.textContent = "";
 
     if (amountField) amountField.value = "";
+    if (amountPaidField) amountPaidField.value = "";
+    if (balanceDisplay) balanceDisplay.value = "";
+    
     if (typeField) typeField.value = "";
     if (dateIssuedField) dateIssuedField.value = "";
-    updateSelectedServices(); // Clear selected services
-
     
+    selectedServices = [];
+    updateSelectedServices();
+
     if (modal && modalContent) {
       modal.classList.remove("hidden");
       modal.style.display = "flex";
@@ -661,7 +654,6 @@ if (addModalBtn) {
   });
 }
 
-// Open Edit Modal
 document.querySelectorAll(".edit-btn").forEach((btn) => {
   btn.addEventListener("click", (e) => {
     e.preventDefault();
@@ -676,12 +668,54 @@ document.querySelectorAll(".edit-btn").forEach((btn) => {
         if (form) form.action = `/dashboard/billing/${billingId}/edit/`;
 
         if (billingIdField) billingIdField.value = data.id;
+        
+        {% comment %} const branchField = document.getElementById("branch");
+        if (branchField) branchField.value = data.branch_id || ""; {% endcomment %}
+        
         if (patientIdHidden) patientIdHidden.value = data.patient_id;
         if (patientSearchField) patientSearchField.value = data.patient_name;
         if (selectedPatientDisplay) selectedPatientDisplay.textContent = `Selected: ${data.patient_name} (ID: ${data.patient_id})`;
+        
         if (amountField) amountField.value = data.amount;
-        if (typeField) typeField.value = data.type;
+        if (amountPaidField) amountPaidField.value = data.amount_paid || 0;
         if (dateIssuedField) dateIssuedField.value = data.date_issued;
+        
+        if (serviceNamesHidden) serviceNamesHidden.value = data.type || "";
+        
+        selectedServices = [];
+        
+        if (selectedServicesContainer) {
+          if (data.type && data.type !== "N/A") {
+            selectedServicesContainer.innerHTML = `
+              <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p class="text-sm font-medium text-gray-700">
+                  <i class="uil uil-check-circle text-blue-600"></i> Current Services:
+                </p>
+                <p class="text-sm text-gray-600 mt-1">
+                  ${data.type}
+                </p>
+                <p class="text-xs text-gray-500 mt-2">
+                  <i class="uil uil-info-circle"></i> To change services, adjust the Total Amount manually.
+                </p>
+              </div>
+            `;
+          } else {
+            selectedServicesContainer.innerHTML = `
+              <p class="text-xs text-gray-400">No services recorded</p>
+            `;
+          }
+        }
+        
+        if (serviceSearchField) {
+          serviceSearchField.disabled = true;
+          serviceSearchField.placeholder = "Service editing disabled in edit mode";
+          serviceSearchField.value = "";
+          serviceSearchField.classList.add("bg-gray-100");
+        }
+        
+        if (selectedServicesCount) selectedServicesCount.textContent = '';
+        
+        calculateBalance();
 
         if (modal && modalContent) {
           modal.classList.remove("hidden");
@@ -699,7 +733,6 @@ document.querySelectorAll(".edit-btn").forEach((btn) => {
   });
 });
 
-// Close modal
 if (closeModalBtn) {
   closeModalBtn.addEventListener("click", () => {
     if (modalContent) {
@@ -715,7 +748,6 @@ if (closeModalBtn) {
   });
 }
 
-// Prevent form submission if no patient selected
 if (form) {
   form.addEventListener("submit", function(e) {
     if (!patientIdHidden || !patientIdHidden.value) {
@@ -732,10 +764,10 @@ if (form) {
     }
   });
 }
+
 const viewModal = document.getElementById("billing-view-modal");
 const viewContent = document.getElementById("billing-view-content");
 const closeViewBtn = document.getElementById("close-view-btn");
-
 const viewPatientName = document.getElementById("view-patient-name");
 const viewAmount = document.getElementById("view-amount");
 const viewType = document.getElementById("view-type");
@@ -805,16 +837,13 @@ function formatStatusBadge(status) {
   };
   return statusMap[status] || `<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded">${status}</span>`;
 }
-</script>
-<!-- Delete Billing Script -->
-<script>
+
 const deleteModal = document.getElementById("delete-modal");
 const deleteModalContent = document.getElementById("delete-modal-content");
 const cancelDeleteBtn = document.getElementById("cancel-delete");
 const confirmDeleteBtn = document.getElementById("confirm-delete");
 let deleteTargetId = null;
 
-// Open delete modal
 document.querySelectorAll(".delete-btn").forEach((btn) => {
   btn.addEventListener("click", (e) => {
     e.preventDefault();
@@ -829,7 +858,6 @@ document.querySelectorAll(".delete-btn").forEach((btn) => {
   });
 });
 
-// Cancel delete
 cancelDeleteBtn.addEventListener("click", () => {
   deleteModalContent.classList.remove("opacity-100", "scale-100");
   deleteModalContent.classList.add("opacity-0", "scale-95");
@@ -839,7 +867,6 @@ cancelDeleteBtn.addEventListener("click", () => {
   }, 200);
 });
 
-// Confirm delete
 confirmDeleteBtn.addEventListener("click", () => {
   fetch(`/dashboard/billing/${deleteTargetId}/delete/`, {
     method: "POST",
@@ -850,13 +877,11 @@ confirmDeleteBtn.addEventListener("click", () => {
   .then((res) => res.json())
   .then((data) => {
     if (data.status === "ok") {
-      // Close modal
       deleteModalContent.classList.remove("opacity-100", "scale-100");
       deleteModalContent.classList.add("opacity-0", "scale-95");
       setTimeout(() => {
         deleteModal.classList.add("hidden");
         deleteModal.style.display = "none";
-        // Reload page to show toast
         location.reload();
       }, 200);
     } else {
@@ -868,8 +893,7 @@ confirmDeleteBtn.addEventListener("click", () => {
     alert("An error occurred while deleting.");
   });
 });
-</script>
-<script>
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-bar');
     const searchResults = document.getElementById('search-results');
@@ -886,9 +910,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Wait 300ms before searching
             searchTimeout = setTimeout(() => {
-                fetch(`{% url 'billing:search_billing' %}?search=${encodeURIComponent(searchValue)}`, {
+                const searchUrl = `{% url 'billing:search_billing' %}?search=${encodeURIComponent(searchValue)}`;
+                
+                fetch(searchUrl, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
@@ -898,7 +923,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.billings && data.billings.length > 0) {
                         let html = '';
                         data.billings.forEach(billing => {
-                            // Status badge color
                             let statusColor = 'bg-red-500';
                             let statusText = 'Unpaid';
                             if (billing.payment_status === 'paid') {
@@ -939,7 +963,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         });
 
-        // Hide dropdown when clicking outside
         document.addEventListener('click', function(e) {
             if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                 searchResults.classList.add('hidden');

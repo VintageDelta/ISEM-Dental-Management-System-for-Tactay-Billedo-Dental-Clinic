@@ -10,13 +10,30 @@ from django.shortcuts import render
 from django.contrib import messages
 from django.db.models import Q
 from django.views.decorators.cache import never_cache
+from appointment.models import Branch  
 
 # LIST
 def inventory_list(request):
     for item in InventoryItem.objects.all():
         item.save()
+
+    # Get branch filter
+    selected_branch_id = request.GET.get('branch', '')
+    # print(f"DEBUG: Branch filter = '{selected_branch_id}' | Items before filter = {InventoryItem.objects.count()}")
+    
     qs = InventoryItem.objects.all().order_by('-created_at')
     
+    # Apply branch filter
+    if selected_branch_id:
+        try:
+            branch_id_int = int(selected_branch_id)
+            qs = qs.filter(branch_id=branch_id_int)
+        except ValueError:
+            pass
+    
+    branches = Branch.objects.filter(is_active=True)
+
+
 
     paginator = Paginator(qs, 5)  # Show 5 items per page
     page_number = request.GET.get('page')
@@ -46,7 +63,11 @@ def inventory_list(request):
                                                         'has_expiring_items': expiring_items.exists(),
                                                         'expired_items': expired_items,
                                                         'out_of_stock_items': out_of_stock_items,
-                                                        'has_out_of_stock_items': out_of_stock_items.exists(),})
+                                                        'has_out_of_stock_items': out_of_stock_items.exists(),
+                                                        'branches': branches,
+                                                        'selected_branch': selected_branch_id,
+                                                        })
+                                                        
 
 @never_cache
 def inventory_add(request):
@@ -72,6 +93,7 @@ def inventory_edit(request, pk):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return JsonResponse({
             "id": item.id,
+            "branch_id": item.branch.id if item.branch else "", 
             "item_name": item.item_name,
             "category": item.category,
             "description": item.description,
@@ -82,6 +104,12 @@ def inventory_edit(request, pk):
         })
 
     if request.method == "POST":
+
+        branch_id = request.POST.get("branch")
+        if branch_id:
+            item.branch_id = int(branch_id)
+
+
         item.item_name = request.POST.get("item_name")
         item.category = request.POST.get("category")
         item.description = request.POST.get("description")

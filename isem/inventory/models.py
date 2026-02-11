@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from appointment.models import Branch
 
 class InventoryItem(models.Model):
     STATUS_CHOICES = (
@@ -13,6 +14,14 @@ class InventoryItem(models.Model):
         ('consumable', 'Consumable'),
         ('equipment', 'Equipment'),
         ('other', 'Other'),
+    )
+
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.CASCADE,
+        related_name="inventory_items",
+        null=True,  # Allow existing records to have null
+        blank=True
     )
     
     item_name = models.CharField(max_length=200)

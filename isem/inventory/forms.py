@@ -1,11 +1,19 @@
 from django import forms
+from appointment.models import Branch
 from .models import InventoryItem
 
 class InventoryItemForm(forms.ModelForm):
-    class Meta:
-        model = InventoryItem
-        fields = ['item_name', 'category', 'description', 'stock', 'low_stock_threshold', 'expiry_date']
-        widgets = {
+        branch = forms.ModelChoiceField(
+        queryset=Branch.objects.filter(is_active=True),
+        required=True,
+        empty_label="Select Branch",
+        widget=forms.Select(attrs={'class': 'w-full border border-gray-300 rounded-md p-2 text-sm'})
+    )
+
+        class Meta:
+            model = InventoryItem
+            fields = ['branch', 'item_name', 'category', 'description', 'stock', 'low_stock_threshold', 'expiry_date']
+            widgets = {
             'item_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter item name'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter description'}),

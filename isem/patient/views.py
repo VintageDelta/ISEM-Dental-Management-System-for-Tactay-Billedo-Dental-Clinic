@@ -260,9 +260,9 @@ def medical_history(request, pk):
             'date': bill_date,  
             'bill_type': 'Services',
             'payment_mode': 'N/A',
-            'amount': bill.amount,
-            'total_bill': bill.amount,
-            'balance': 0,
+            'amount': bill.amount_paid,     
+            'total_bill': bill.amount,       
+            'balance': bill.balance, 
         })
     
     billing_history.sort(key=lambda x: x['date'], reverse=True)

@@ -30,6 +30,25 @@
 <div class="w-full mt-6">
   <div class="w-full">
     <div class="bg-white w-full p-5 md:px-8 rounded-xl shadow mb-6">
+
+<!--  Branch Filter -->
+<div class="mb-4">
+  <label for="branch-filter" class="block text-sm font-medium text-gray-700 mb-2">
+    Select Branch:
+  </label>
+  <select 
+    id="branch-filter" 
+    class="w-full md:w-64 border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+  >
+    <option value="">All Branches</option>
+    {% for branch in branches %}
+    <option value="{{ branch.id }}">
+      {{ branch.name }}{% if branch.address %}, {{ branch.address }}{% endif %}
+    </option>
+    {% endfor %}
+  </select>
+</div>
+
       <!-- Top controls -->
       <div
         class="flex flex-col md:flex-row md:justify-between md:items-center mb-6"
@@ -83,6 +102,7 @@
                 <input type="checkbox" />
               </th>
               <th class="py-3 px-4 border-b">ID</th>
+              <th class="py-3 px-4 border-b">Branch</th>
               <th class="py-3 px-4 border-b">Item Name</th>
               <th class="py-3 px-4 border-b">Category</th>
               <th class="py-3 px-4 border-b">Stock</th>
@@ -98,6 +118,13 @@
                 <input type="checkbox" />
               </td>
               <td class="py-3 px-4">{{ item.id }}</td>
+              <td class="py-3 px-4"> 
+      {% if item.branch %}
+        <span class="text-sm text-gray-700">{{ item.branch.name }}</span>
+      {% else %}
+        <span class="text-sm text-gray-400">No branch</span>
+      {% endif %}
+              </td>
               <td class="py-3 px-4">{{ item.item_name }}</td>
               <td class="py-3 px-4">{{ item.category }}</td>
               <td class="py-3 px-4">{{ item.stock }}</td>
@@ -162,59 +189,53 @@
         </table>
       </div>
 
-                 <!-- Enhanced Pagination -->
-<div class="flex justify-between items-center border-t pt-4 mt-4">
+                 <div class="flex justify-between items-center border-t pt-4 mt-4">
   <div class="flex items-center space-x-2 text-sm">
-    {# First Page (double arrow left) #}
+    {# First Page #}
     {% if page_obj.number > 1 %}
-      <a href="?page=1" 
-         class="px-3 py-1 border rounded hover:bg-gray-100" 
-         title="First page">&laquo;</a>
+      <a href="?page=1{% if selected_branch %}&branch={{ selected_branch }}{% endif %}" 
+         class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
     {% else %}
       <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&laquo;</span>
     {% endif %}
 
-    {# Previous Page (single arrow left) #}
+    {# Previous Page #}
     {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}" 
-         class="px-3 py-1 border rounded hover:bg-gray-100" 
-         title="Previous page">&lsaquo;</a>
+      <a href="?page={{ page_obj.previous_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}" 
+         class="px-3 py-1 border rounded hover:bg-gray-100">&lsaquo;</a>
     {% else %}
       <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&lsaquo;</span>
     {% endif %}
 
-    {# Page Numbers (max 3 visible) #}
+    {# Page Numbers #}
     {% if page_obj.paginator.num_pages <= 3 %}
-      {# Show all pages if 3 or less #}
       {% for num in page_obj.paginator.page_range %}
         {% if num == page_obj.number %}
           <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
         {% else %}
-          <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
+          <a href="?page={{ num }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}" 
+             class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
         {% endif %}
       {% endfor %}
     {% else %}
-      {# More than 3 pages - show smart range #}
       {% if page_obj.number <= 2 %}
-        {# Near start: show 1 2 3 ... last #}
         {% for num in page_obj.paginator.page_range|slice:":3" %}
           {% if num == page_obj.number %}
             <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
           {% else %}
-            <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
+            <a href="?page={{ num }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}" 
+               class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
           {% endif %}
         {% endfor %}
         {% if page_obj.paginator.num_pages > 3 %}
           <span class="px-2 text-gray-500">...</span>
-          <a href="?page={{ page_obj.paginator.num_pages }}" 
-             class="px-3 py-1 border rounded hover:bg-gray-100">
-            {{ page_obj.paginator.num_pages }}
-          </a>
+          <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}" 
+             class="px-3 py-1 border rounded hover:bg-gray-100">{{ page_obj.paginator.num_pages }}</a>
         {% endif %}
       
       {% elif page_obj.number >= page_obj.paginator.num_pages|add:"-1" %}
-        {# Near end: show 1 ... 8 9 10 #}
-        <a href="?page=1" class="px-3 py-1 border rounded hover:bg-gray-100">1</a>
+        <a href="?page=1{% if selected_branch %}&branch={{ selected_branch }}{% endif %}" 
+           class="px-3 py-1 border rounded hover:bg-gray-100">1</a>
         {% if page_obj.paginator.num_pages > 3 %}
           <span class="px-2 text-gray-500">...</span>
         {% endif %}
@@ -222,43 +243,39 @@
           {% if num == page_obj.number %}
             <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ num }}</span>
           {% else %}
-            <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
+            <a href="?page={{ num }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}" 
+               class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
           {% endif %}
         {% endfor %}
       
       {% else %}
-        {# Middle: show 1 ... 5 ... 10 #}
-        <a href="?page=1" class="px-3 py-1 border rounded hover:bg-gray-100">1</a>
+        <a href="?page=1{% if selected_branch %}&branch={{ selected_branch }}{% endif %}" 
+           class="px-3 py-1 border rounded hover:bg-gray-100">1</a>
         <span class="px-2 text-gray-500">...</span>
         <span class="px-3 py-1 border rounded bg-blue-500 text-white">{{ page_obj.number }}</span>
         <span class="px-2 text-gray-500">...</span>
-        <a href="?page={{ page_obj.paginator.num_pages }}" 
-           class="px-3 py-1 border rounded hover:bg-gray-100">
-          {{ page_obj.paginator.num_pages }}
-        </a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}" 
+           class="px-3 py-1 border rounded hover:bg-gray-100">{{ page_obj.paginator.num_pages }}</a>
       {% endif %}
     {% endif %}
 
-    {# Next Page (single arrow right) #}
+    {# Next Page #}
     {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}" 
-         class="px-3 py-1 border rounded hover:bg-gray-100" 
-         title="Next page">&rsaquo;</a>
+      <a href="?page={{ page_obj.next_page_number }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}" 
+         class="px-3 py-1 border rounded hover:bg-gray-100">&rsaquo;</a>
     {% else %}
       <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&rsaquo;</span>
     {% endif %}
 
-    {# Last Page (double arrow right) #}
+    {# Last Page #}
     {% if page_obj.number < page_obj.paginator.num_pages %}
-      <a href="?page={{ page_obj.paginator.num_pages }}" 
-         class="px-3 py-1 border rounded hover:bg-gray-100" 
-         title="Last page">&raquo;</a>
+      <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}" 
+         class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
     {% else %}
       <span class="px-3 py-1 border rounded text-gray-400 bg-gray-100">&raquo;</span>
     {% endif %}
   </div>
 
-  {# Page info and items per page #}
   <div class="flex items-center gap-3 text-sm text-gray-600">
     <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
     <select class="border rounded px-2 py-1 text-sm" disabled>
@@ -266,6 +283,7 @@
     </select>
   </div>
 </div>
+
 
 
 <!-- Inventory Modal (Add & Edit) -->
@@ -284,7 +302,17 @@
       <form method="post" id="inventory-form" class="space-y-3">
         {% csrf_token %}
         <input type="hidden" name="id" id="item-id" />
-
+          <select
+        name="branch"
+        id="branch"
+        class="w-full border border-gray-300 rounded-md p-2 text-sm"
+        required
+        >
+        <option value="">Select Branch</option>
+        {% for branch in branches %}
+        <option value="{{ branch.id }}">{{ branch.name }}</option>
+        {% endfor %}
+        </select>
         <input
           type="text"
           name="item_name"
@@ -492,6 +520,7 @@ document.getElementById("add-modal-btn").addEventListener("click", () => {
   modalTitle.textContent = "Add Item";
   form.action = "{% url 'inventory:add' %}";
   itemIdField.value = "";
+  document.getElementById("branch").value = "";
   itemNameField.value = "";
   categoryField.value = "consumable";
   descriptionField.value = "";
@@ -529,6 +558,7 @@ document.querySelectorAll(".edit-btn").forEach((btn) => {
         form.action = `/dashboard/inventory/${itemId}/edit/`;
 
         itemIdField.value = data.id;
+        document.getElementById("branch").value = data.branch_id || "";
         itemNameField.value = data.item_name;
         categoryField.value = data.category;
         descriptionField.value = data.description;
@@ -847,6 +877,39 @@ function getStatusClass(status) {
   return classes[status] || 'text-sm font-medium text-gray-600';
 }
 </script>
+<script>
+// Branch filter change handler
+const branchFilter = document.getElementById('branch-filter');
+
+if (branchFilter) {
+  // On page load, set the dropdown to match URL parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const branchParam = urlParams.get('branch');
+  
+  if (branchParam) {
+    branchFilter.value = branchParam;
+  }
+  
+  // Handle branch change
+  branchFilter.addEventListener('change', function() {
+    const selectedBranch = this.value;
+    const currentUrl = new URL(window.location.href);
+    
+    if (selectedBranch === '') {
+      currentUrl.searchParams.delete('branch');
+    } else {
+      currentUrl.searchParams.set('branch', selectedBranch);
+    }
+    
+    // Reset to page 1 when changing branch
+    currentUrl.searchParams.delete('page');
+    
+    window.location.href = currentUrl.toString();
+  });
+}
+</script>
+
+
 
   {% endblock %}
 </div>
