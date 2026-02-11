@@ -300,6 +300,7 @@ Records {% endblock %} {% block content %}
             class="space-y-3"
           >
             {% csrf_token %}
+            <label class="block text-sm font-medium text-gray-700 mb-1">Patient Name</label>
             <input
               type="text"
               name="name"
@@ -307,12 +308,14 @@ Records {% endblock %} {% block content %}
               required
               class="w-full border rounded-md p-2 text-sm"
             />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               type="email"
               name="email"
               placeholder="Email"
               class="w-full border rounded-md p-2 text-sm"
             />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
             <input
               type="text"
               name="address"
@@ -320,6 +323,7 @@ Records {% endblock %} {% block content %}
               required
               class="w-full border rounded-md p-2 text-sm"
             />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
             <input
               type="text"
               name="telephone"
@@ -327,6 +331,7 @@ Records {% endblock %} {% block content %}
               required
               class="w-full border rounded-md p-2 text-sm"
             />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
             <input
               type="number"
               name="age"
@@ -334,6 +339,7 @@ Records {% endblock %} {% block content %}
               required
               class="w-full border rounded-md p-2 text-sm"
             />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
             <input
               type="text"
               name="occupation"
@@ -410,6 +416,7 @@ Records {% endblock %} {% block content %}
           >
             {% csrf_token %}
             <input type="hidden" name="id" id="edit-id" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Patient's Name</label>
             <input
               type="text"
               name="name"
@@ -418,6 +425,7 @@ Records {% endblock %} {% block content %}
               required
               class="w-full border rounded-md p-2 text-sm"
             />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               type="email"
               name="email"
@@ -425,6 +433,7 @@ Records {% endblock %} {% block content %}
               placeholder="Email"
               class="w-full border rounded-md p-2 text-sm"
             />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
             <input
               type="text"
               name="address"
@@ -433,6 +442,7 @@ Records {% endblock %} {% block content %}
               required
               class="w-full border rounded-md p-2 text-sm"
             />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
             <input
               type="text"
               name="telephone"
@@ -441,6 +451,7 @@ Records {% endblock %} {% block content %}
               required
               class="w-full border rounded-md p-2 text-sm"
             />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
             <input
               type="number"
               name="age"
@@ -449,6 +460,7 @@ Records {% endblock %} {% block content %}
               required
               class="w-full border rounded-md p-2 text-sm"
             />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
             <input
               type="text"
               name="occupation"

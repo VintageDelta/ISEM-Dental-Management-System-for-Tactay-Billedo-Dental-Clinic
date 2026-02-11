@@ -1,0 +1,38 @@
+<!-- Reusable Create Modal -->
+<div id="createModal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4">
+
+  <div class="bg-white w-full max-w-lg rounded-xl shadow-xl p-6 relative">
+
+    <!-- Close Button -->
+    <button onclick="closeCreateModal()"
+            class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">
+      &times;
+    </button>
+
+    <!-- Title -->
+    <h2 id="modalTitle" class="text-lg font-semibold mb-4"></h2>
+
+    <!-- Form -->
+    <form id="createForm" method="POST">
+      {% csrf_token %}
+
+      <div id="modalFields" class="space-y-4">
+        <!-- Fields injected via JS -->
+      </div>
+
+      <div class="mt-6 flex justify-end gap-2">
+        <button type="button"
+                onclick="closeCreateModal()"
+                class="px-4 py-2 text-sm border rounded-md">
+          Cancel
+        </button>
+
+        <button type="submit"
+                class="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700">
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

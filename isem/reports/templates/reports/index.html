@@ -7,21 +7,54 @@
 <div class="max-w-7xl mx-auto space-y-8">
 
     <!-- Header -->
-    <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">Reports Dashboard</h1>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <h1 class="text-2xl font-bold text-gray-800">
+            Reports Dashboard
+        </h1>
 
-        <div class="space-x-2">
+        <div class="flex flex-wrap items-center gap-2">
+
+            <!-- Range Filters -->
             <a href="?range=daily" class="px-4 py-2 rounded text-sm font-medium
-               {% if range_type == 'daily' %}bg-blue-600 text-white{% else %}bg-gray-200{% endif %}">
+           {% if range_type == 'daily' %}bg-blue-600 text-white{% else %}bg-gray-200{% endif %}">
                 Daily
             </a>
+
             <a href="?range=monthly" class="px-4 py-2 rounded text-sm font-medium
-               {% if range_type == 'monthly' %}bg-blue-600 text-white{% else %}bg-gray-200{% endif %}">
+           {% if range_type == 'monthly' %}bg-blue-600 text-white{% else %}bg-gray-200{% endif %}">
                 Monthly
             </a>
-            <a href="{% url 'reports:export' %}?range={{ range_type }}"
-                class="px-4 py-2 rounded text-sm font-medium bg-green-600 text-white hover:bg-green-700">
-                Export Reports
+
+            <!-- Divider -->
+            <div class="w-px h-6 bg-gray-300 mx-2"></div>
+
+            <!-- Export Buttons -->
+            <a href="{% url 'reports:export' %}?range={{ range_type }}&format=excel"
+                class="group relative inline-flex items-center px-4 py-2 rounded bg-green-600 text-white text-sm font-medium hover:bg-green-700">
+                Export Excel
+                <span class="pointer-events-none absolute bottom-full mb-2
+               opacity-0 scale-95
+               group-hover:opacity-100 group-hover:scale-100
+               transition-all duration-200
+               whitespace-nowrap
+               rounded bg-green-900 px-2 py-1
+               text-xs text-green-100 shadow-lg">
+                    Data & breakdowns
+                </span>
+            </a>
+
+            <a href="{% url 'reports:export' %}?range={{ range_type }}&format=pdf"
+                class="group relative inline-flex items-center px-4 py-2 rounded bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+                Export PDF
+                <span class="pointer-events-none absolute bottom-full mb-2
+               opacity-0 scale-95
+               group-hover:opacity-100 group-hover:scale-100
+               transition-all duration-200
+               whitespace-nowrap
+               rounded bg-indigo-900 px-2 py-1
+               text-xs text-indigo-100 shadow-lg">
+                    Charts & summary
+                </span>
             </a>
         </div>
     </div>
@@ -150,5 +183,16 @@
         {{ inventory_category_data| safe }},
         "Items"
     );
+</script>
+
+<script>
+    function setExportFormat(format) {
+        const btn = document.getElementById("exportBtn");
+        const baseUrl = "{% url 'reports:export' %}";
+        btn.href = `${baseUrl}?range={{ range_type }}&format=${format}`;
+
+        // Close dropdown
+        document.getElementById('exportDropdown').classList.add('hidden');
+    }
 </script>
 {% endblock %}

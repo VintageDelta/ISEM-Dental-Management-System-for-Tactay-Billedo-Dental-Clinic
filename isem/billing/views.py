@@ -41,7 +41,7 @@ def billing(request):
 def billing_add(request):
     if request.method == 'POST':
         patient_id = request.POST.get('patient')
-        branch_id = request.POST.get('branch')
+        # branch_id = request.POST.get('branch')
         amount = request.POST.get('amount')
         amount_paid = request.POST.get('amount_paid', '0')
         type_service = request.POST.get('type')
@@ -55,13 +55,13 @@ def billing_add(request):
             amount_decimal = Decimal(amount) if amount else Decimal('0')
             amount_paid_decimal = Decimal(amount_paid) if amount_paid else Decimal('0')
             
-            branch = None
-            if branch_id:
-                branch = Branch.objects.get(id=branch_id)
+            # branch = None
+            # if branch_id:
+            #     branch = Branch.objects.get(id=branch_id)
 
             billing = BillingRecord.objects.create(
                 patient=patient,
-                branch=branch,
+                # branch=branch,
                 amount=amount_decimal,
                 amount_paid=amount_paid_decimal,
                 type=type_service if type_service else "N/A",
@@ -97,17 +97,17 @@ def billing_edit(request, pk):
     billing = get_object_or_404(BillingRecord, pk=pk)
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest' and request.method == 'GET':
-        branch_id = None
-        if billing.branch:
-            branch_id = billing.branch.id
-        elif billing.appointment and billing.appointment.branch:
-            branch_id = billing.appointment.branch.id
+        # branch_id = None
+        # if billing.branch:
+        #     branch_id = billing.branch.id
+        # elif billing.appointment and billing.appointment.branch:
+        #     branch_id = billing.appointment.branch.id
         
         return JsonResponse({
             'id': billing.id,
             'patient_id': billing.patient.id if billing.patient else None,
             'patient_name': billing.patient_name,
-            'branch_id': branch_id,
+            # 'branch_id': branch_id,
             'amount': str(billing.amount),
             'amount_paid': str(billing.amount_paid),
             'type': billing.type,
@@ -117,7 +117,7 @@ def billing_edit(request, pk):
     
     if request.method == "POST":
         patient_id = request.POST.get("patient")
-        branch_id = request.POST.get("branch")
+        # branch_id = request.POST.get("branch")
         amount_str = request.POST.get("amount", "0")
         amount_paid_str = request.POST.get("amount_paid", "0")
         service_type = request.POST.get("type")
@@ -128,9 +128,9 @@ def billing_edit(request, pk):
             billing.patient = patient
             billing.patient_name = patient.name
         
-        if branch_id:
-            branch = get_object_or_404(Branch, pk=branch_id)
-            billing.branch = branch
+        # if branch_id:
+        #     branch = get_object_or_404(Branch, pk=branch_id)
+        #     billing.branch = branch
         
         try:
             billing.amount = Decimal(str(amount_str).strip()) if amount_str else Decimal('0')

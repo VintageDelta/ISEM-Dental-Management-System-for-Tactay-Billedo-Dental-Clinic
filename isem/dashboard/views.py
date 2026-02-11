@@ -3,6 +3,7 @@ from django.shortcuts import render
 from appointment.models import Appointment
 from inventory.models import InventoryItem
 from patient.models import Patient
+from django.db.models import F
 
 # Create your views here.
 def dashboard(request):
@@ -22,7 +23,7 @@ def dashboard(request):
     )
 
     low_stock_items = InventoryItem.objects.filter(
-    status__in=['low_stock', 'out_of_stock']
+        stock__lte=F("low_stock_threshold")
     )
 
     context = {

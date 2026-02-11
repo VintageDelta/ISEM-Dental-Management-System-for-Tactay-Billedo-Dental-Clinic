@@ -49,7 +49,9 @@
       <!-- Step 1: Medical History Form -->
       <form id="done-medical-form" method="post" action="" class="space-y-3 step-form" data-step="1">
         {% csrf_token %}
+        <label class="block text-sm font-medium text-gray-700 mb-1">Date of Appointment</label>
         <input type="date" name="date" id="done-medical-date" placeholder="Date" required class="w-full border rounded-md p-2 text-sm" />
+        <label class="block text-sm font-medium text-gray-700 mb-1">Attending Dentist</label>
         <input type="text" name="dentist" id="done-medical-dentist" placeholder="Dentist" class="w-full border rounded-md p-2 text-sm" />
 
         <div>
@@ -125,7 +127,7 @@
             class="w-full border rounded-md p-2 text-sm bg-gray-50"
           />
         </div>
-
+        <label class="block text-sm font-medium text-gray-700 mb-1">Findings</label>
         <input
           type="text"
           name="findings"
@@ -133,6 +135,7 @@
           placeholder="Findings"
           class="w-full border rounded-md p-2 text-sm"
         />
+        <label class="block text-sm font-medium text-gray-700 mb-1">Prescriptions</label>
         <input
           type="text"
           name="prescriptions"
@@ -146,7 +149,7 @@
         <!-- Step 2: Financial History Form -->
         <form id="done-financial-form" method="post" action="" class="space-y-3 step-form hidden" data-step="2">
           {% csrf_token %}
-
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date of Appointment</label>
           <input
             type="date"
             name="date" 
@@ -155,7 +158,7 @@
             placeholder="Date"
             class="w-full border rounded-md p-2 text-sm"
           />
-
+          <label class="block text-sm font-medium text-gray-700 mb-1">Bill Type</label>
           <select
             name="bill_type" 
             id="done-financial-bill-type"
@@ -167,7 +170,7 @@
             <option value="Product">Product</option>
             <option value="Consultation">Consultation</option>
           </select>
-
+          <label class="block text-sm font-medium text-gray-700 mb-1">Payment Mode</label>
           <select
             name="payment_mode"
             id="done-financial-payment-mode"
@@ -180,7 +183,7 @@
             <option value="GCash">GCash</option>
             <option value="Paymaya">Paymaya</option>
           </select>
-
+          <label class="block text-sm font-medium text-gray-700 mb-1">Amount Paid</label>
           <input
             type="number"
             name="amount"
@@ -189,7 +192,7 @@
             step="0.01"
             class="w-full border rounded-md p-2 text-sm"
           />
-
+          <label class="block text-sm font-medium text-gray-700 mb-1">Total Bill</label>
           <input
             type="number"
             name="total_bill"
@@ -199,7 +202,7 @@
             step="0.01"
             class="w-full border rounded-md p-2 text-sm"
           />
-
+          <label class="block text-sm font-medium text-gray-700 mb-1">Remaining Balance</label>
           <input
             type="number"
             name="balance"
@@ -217,6 +220,7 @@
           <div id="done-odontogram-records" class="space-y-4 overflow-y-auto pr-2">
             <!-- ONE RECORD TEMPLATE -->
             <div class="odontogram-record border rounded-md p-3 space-y-3">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Date of Operation</label>
               <input type="date" name="date_0" id="done-odontogram-date-0" placeholder="Date of Operation" required class="w-full border rounded-md p-2 text-sm">
 
               <label class="font-semibold text-sm flex items-center justify-between">
@@ -241,7 +245,7 @@
                 {% endfor %}
               </div>
 
-              <label class="font-semibold text-sm">Select Services:</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Select Services:</label>
 
               <!-- Search bar (for this odontogram record) -->
               <input
@@ -297,7 +301,7 @@
                 ></div>
               </div>
 
-
+              <label class="block text-sm font-medium text-gray-700 mb-1">Attending Dentist</label>
               <!-- Dentist Name -->
               <select name="dentist_0" id="done-odontogram-dentist-0" required class="w-full border rounded-md p-2 text-sm">
                 <option value="" disabled selected>Select Dentist</option>
@@ -305,8 +309,8 @@
                 <option value="{{ dentist.id }}">{{ dentist.name }}</option>
                 {% endfor %}
               </select>
-
-              <input type="text" name="status_0" id="done-odontogram-status-0" placeholder="Status" required class="w-full border rounded-md p-2 text-sm">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
+              <input type="text" name="status_0" id="done-odontogram-status-0" placeholder="Note" required class="w-full border rounded-md p-2 text-sm">
 
               <!-- Remove button for extra records -->
               <button type="button" class="remove-record hidden mt-2 text-xs text-red-600 hover:underline">
@@ -343,3 +347,27 @@
     </div>
   </div>
 </div>
+
+<script>
+  const odontogramForm = document.getElementById('done-odontogram-form');
+  const toothCheckboxes = odontogramForm.querySelectorAll('.done-tooth-checkbox');
+  const warning = document.getElementById('done-tooth-warning');
+
+  // Hook the "Save" button
+  const saveBtn = document.getElementById('done-steps-submit-btn');
+
+  saveBtn.addEventListener('click', function(e) {
+    const anyChecked = Array.from(toothCheckboxes).some(cb => cb.checked);
+
+    if (!anyChecked) {
+      e.preventDefault(); // stop default submit action
+      warning.classList.remove('hidden'); // show warning
+      odontogramForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return false;
+    } else {
+      warning.classList.add('hidden'); // hide warning if valid
+      // optionally submit the form here if needed:
+      // odontogramForm.submit();
+    }
+  });
+</script>

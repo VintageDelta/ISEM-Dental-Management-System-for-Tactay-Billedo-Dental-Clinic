@@ -1,0 +1,32 @@
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4">
+
+  <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6 relative">
+
+    <h2 class="text-lg font-semibold mb-4 text-red-600">Confirm Delete</h2>
+
+    <p class="text-sm text-gray-600 mb-6">
+      Are you sure you want to delete
+      <span id="deleteItemName" class="font-semibold"></span>?
+    </p>
+
+    <form id="deleteForm" method="POST">
+      {% csrf_token %}
+
+      <div class="flex justify-end gap-2">
+        <button type="button"
+                onclick="closeDeleteModal()"
+                class="px-4 py-2 text-sm border rounded-md">
+          Cancel
+        </button>
+
+        <button type="submit"
+                class="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700">
+          Delete
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>

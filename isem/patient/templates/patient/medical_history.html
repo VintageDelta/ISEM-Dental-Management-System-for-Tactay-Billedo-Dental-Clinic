@@ -406,6 +406,7 @@
           class="space-y-3 hidden"
         >
           {% csrf_token %}
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date of Appointment</label>
           <input
             type="date"
             name="date"
@@ -413,6 +414,7 @@
             required
             class="w-full border rounded-md p-2 text-sm"
           />
+          <label class="block text-sm font-medium text-gray-700 mb-1">Attending Dentist</label>
           <input
             type="text"
             name="dentist"
@@ -462,13 +464,14 @@
               class="w-full border rounded-md p-2 text-sm bg-gray-50"
             />
           </div>
-          
+          <label class="block text-sm font-medium text-gray-700 mb-1">Findings</label>
           <input
             type="text"
             name="findings"
             placeholder="Findings"
             class="w-full border rounded-md p-2 text-sm"
           />
+          <label class="block text-sm font-medium text-gray-700 mb-1">Prescriptions</label>
           <input
             type="text"
             name="prescriptions"
@@ -673,6 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
           <div id="odontogram-records" class="space-y-4 overflow-y-auto pr-2">
             <div class="odontogram-record border rounded-md p-3 space-y-3">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Date of Operation</label>
               <input
                 type="date"
                 name="date_0"
@@ -681,7 +685,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 class="w-full border rounded-md p-2 text-sm"
               />
 
-              <label class="font-semibold text-sm">Tooth Number:</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Tooth Number:</label>
               <div class="flex items-center gap-2 mb-1 text-xs">
                 <input
                   type="checkbox"
@@ -699,7 +703,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 {% endfor %}
               </div>
 
-              <label class="font-semibold text-sm">Select Services:</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Select Services:</label>
               <div class="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1">
                 {% for service in services %}
                 <label class="flex items-center space-x-2 text-sm">
@@ -715,11 +719,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <option value="{{ dentist.id }}">{{ dentist.name }}</option>
                 {% endfor %}
               </select>
-
+              <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
               <input
                 type="text"
                 name="status_0"
-                placeholder="Status"
+                placeholder="Note"
                 required
                 class="w-full border rounded-md p-2 text-sm"
               />

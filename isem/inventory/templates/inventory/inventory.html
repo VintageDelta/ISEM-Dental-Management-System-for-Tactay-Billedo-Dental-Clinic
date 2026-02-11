@@ -301,6 +301,7 @@
       <!-- Shared Form -->
       <form method="post" id="inventory-form" class="space-y-3">
         {% csrf_token %}
+        <label class="block text-sm font-medium text-gray-700 mb-1">Branch</label>
         <input type="hidden" name="id" id="item-id" />
           <select
         name="branch"
@@ -313,6 +314,7 @@
         <option value="{{ branch.id }}">{{ branch.name }}</option>
         {% endfor %}
         </select>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
         <input
           type="text"
           name="item_name"
@@ -321,7 +323,7 @@
           class="w-full border border-gray-300 rounded-md p-2 text-sm"
           required
         />
-
+        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
         <select
           name="category"
           id="category"
@@ -332,7 +334,7 @@
           <option value="equipment">Equipment</option>
           <option value="other">Other</option>
         </select>
-
+        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
         <textarea
           name="description"
           id="description"
@@ -344,6 +346,7 @@
         <!-- Stock and Threshold Side-by-Side -->
         <div class="grid grid-cols-2 gap-3">
           <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
             <input
               type="number"
               name="stock"
@@ -355,6 +358,7 @@
             />
           </div>
           <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Low Stock Limit</label>
             <input
               type="number"
               name="low_stock_threshold"
@@ -368,7 +372,7 @@
           </div>
         </div>
         <p class="text-xs text-gray-500 -mt-2">Alert when stock ≤ threshold</p>
-
+        <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
         <input
           type="date"
           name="expiry_date"

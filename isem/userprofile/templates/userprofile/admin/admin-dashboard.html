@@ -246,58 +246,85 @@
     </button>
   </div>
 
-  <!-- Dentist -->
-  <div id="dentistContent">
-    <div class="mb-3">
-      <input
-        type="text"
-        placeholder="Search dentist…"
-        class="w-full max-w-sm border rounded-md p-2 text-sm"
-      />
-    </div>
-    <div class="overflow-x-auto bg-white shadow rounded-lg">
-      <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">Name</th>
-            <th class="px-4 py-2 text-left font-semibold text-gray-700">Specialty</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {% for d in dentists %}
-          <tr class="hover:bg-gray-100">
-            <td class="px-4 py-2">{{ d.name }}</td>
-            <td class="px-4 py-2">{{ d.specialty }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="2" class="px-4 py-6 text-center text-gray-500">
-              No dentists found.
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+<!-- Dentist -->
+<div id="dentistContent">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
+    <input type="text" placeholder="Search dentist…" class="w-full md:max-w-sm border rounded-md p-2 text-sm" />
+
+    <button onclick="openCreateModal('dentist')"
+      class="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700">
+      + Add New Dentist
+    </button>
   </div>
+
+  <div class="overflow-x-auto bg-white shadow rounded-lg">
+    <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Name</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Specialization</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Contact</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Email</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-700">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for d in dentists %}
+        <tr class="hover:bg-gray-100">
+          <td class="px-4 py-2">{{ d.name }}</td>
+          <td class="px-4 py-2">{{ d.specialization }}</td>
+          <td class="px-4 py-2">{{ d.contact_number }}</td>
+          <td class="px-4 py-2">{{ d.email }}</td>
+          <td class="px-4 py-2">
+            <div class="flex justify-start gap-2">
+              <!-- Edit -->
+              <a href="#" class="text-gray-500 hover:text-gray-700 edit-dentist-btn" data-id="{{ d.id }}"
+                data-name="{{ d.name }}" data-specialization="{{ d.specialization }}"
+                data-contact="{{ d.contact_number }}" data-email="{{ d.email }}" title="Edit">
+                <i class="uil uil-edit text-xl"></i>
+              </a>
+              <!-- Delete -->
+              <a href="#" class="text-gray-500 hover:text-red-600 delete-dentist-btn" data-id="{{ d.id }}"
+                data-name="{{ d.name }}" title="Delete">
+                <i class="uil uil-trash-alt text-xl"></i>
+              </a>
+            </div>
+          </td>
+
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-4 py-6 text-center text-gray-500">
+            No dentists found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
   <!-- Service -->
   <div id="serviceContent" class="hidden">
-    <div class="relative flex items-center bg-gray-300 rounded px-3 py-2 w-full md:w-96 mb-4">
-      <input
-        id="service-search-bar"
-        type="search"
-        name="search"
-        placeholder="Search services..."
-        autocomplete="off"
-        class="bg-transparent outline-none text-sm w-full"
-      />
-      <!-- Dropdown results -->
-      <div id="service-search-results" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto z-50">
-        <!-- Results will be populated here -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
+      <div class="relative flex items-center bg-gray-300 rounded px-3 py-2 w-full md:w-96 mb-4">
+        <input id="service-search-bar" type="search" name="search" placeholder="Search services..." autocomplete="off"
+          class="bg-transparent outline-none text-sm w-full" />
+  
+        <!-- Dropdown results -->
+        <div id="service-search-results"
+          class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto z-50">
+          <!-- Results will be populated here -->
+        </div>
       </div>
+  
+      <button onclick="openCreateModal('service')"
+        class="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700">
+        + Add New Service
+      </button>
     </div>
-    
+  
+  
     <div class="overflow-x-auto bg-white shadow rounded-lg">
       <table class="w-full min-w-full divide-y divide-gray-200 text-sm">
         <thead class="bg-gray-50">
@@ -306,17 +333,33 @@
             <th class="px-4 py-2 text-left font-semibold text-gray-700">Price</th>
             <th class="px-4 py-2 text-left font-semibold text-gray-700">Duration</th>
             <th class="px-4 py-2 text-left font-semibold text-gray-700">Category</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
           {% for s in services_page_obj %}
-          <tr class="hover:bg-gray-100 service-row" 
-              data-service-name="{{ s.service_name|lower }}" 
-              data-category="{{ s.category|lower }}">
+          <tr class="hover:bg-gray-100 service-row" data-service-name="{{ s.service_name|lower }}"
+            data-category="{{ s.category|lower }}">
             <td class="px-4 py-2">{{ s.service_name }}</td>
             <td class="px-4 py-2">₱{{ s.price }}</td>
             <td class="px-4 py-2">{{ s.duration }} min</td>
             <td class="px-4 py-2">{{ s.category }}</td>
+            <td class="px-4 py-2">
+              <div class="flex justify-start gap-2">
+  
+                <a href="#" class="text-gray-500 hover:text-gray-700 edit-service-btn" data-id="{{ s.id }}"
+                  data-name="{{ s.service_name }}" data-category="{{ s.category }}" data-duration="{{ s.duration }}"
+                  data-price="{{ s.price }}" title="Edit">
+                  <i class="uil uil-edit text-xl"></i>
+                </a>
+  
+                <a href="#" class="text-gray-500 hover:text-red-600 delete-service-btn" data-id="{{ s.id }}"
+                  data-name="{{ s.service_name }}" title="Delete">
+                  <i class="uil uil-trash-alt text-xl"></i>
+                </a>
+  
+              </div>
+            </td>
           </tr>
           {% empty %}
           <tr>
@@ -443,6 +486,8 @@
             <tr>
               <th class="px-4 py-2 text-left font-semibold text-gray-700">Branch Name</th>
               <th class="px-4 py-2 text-left font-semibold text-gray-700">Location</th>
+              <th class="px-4 py-2 text-left font-semibold text-gray-700">Contact</th>
+              <th class="px-4 py-2 text-left font-semibold text-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -450,6 +495,16 @@
             <tr class="hover:bg-gray-100">
               <td class="px-4 py-2">{{ branch.name }}</td>
               <td class="px-4 py-2">{{ branch.address }}</td>
+              <td class="px-4 py-2">{{ branch.contact_number }}</td>
+              <td class="px-4 py-2">
+                <div class="flex justify-start gap-2">
+                  <a href="#" class="text-gray-500 hover:text-gray-700 edit-branch-btn" data-id="{{ branch.id }}"
+                    data-name="{{ branch.name }}" data-address="{{ branch.address }}" data-contact="{{ branch.contact_number }}"
+                    title="Edit">
+                    <i class="uil uil-edit text-xl"></i>
+                  </a>
+                </div>
+              </td>
             </tr>
             {% empty %}
             <tr>
@@ -463,7 +518,7 @@
       </div>
     </div>
   </div>
-</div>
+  </div>
 
 <!-- Add Staff Modal -->
 <div id="add-staff-modal"
@@ -474,22 +529,22 @@
     
     <form method="post" action="{% url 'userprofile:add_staff' %}" class="space-y-3">
       {% csrf_token %}
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
       <input type="text" name="first_name" placeholder="First Name" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
       <input type="text" name="last_name" placeholder="Last Name" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
       <input type="text" name="username" placeholder="Username" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
       <input type="email" name="email" placeholder="Email" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
       <input type="password" name="password1" placeholder="Password" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
       <input type="password" name="password2" placeholder="Confirm Password" required
              class="w-full border rounded-md p-2 text-sm" />
 
@@ -516,22 +571,22 @@
     
     <form method="post" action="{% url 'userprofile:add_user' %}" class="space-y-3">
       {% csrf_token %}
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
       <input type="text" name="first_name" placeholder="First Name" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
       <input type="text" name="last_name" placeholder="Last Name" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
       <input type="text" name="username" placeholder="Username" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
       <input type="email" name="email" placeholder="Email" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
       <input type="password" name="password1" placeholder="Password" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
       <input type="password" name="password2" placeholder="Confirm Password" required
              class="w-full border rounded-md p-2 text-sm" />
 
@@ -558,13 +613,13 @@
     <form method="post" id="edit-user-form" class="space-y-3">
       {% csrf_token %}
       <input type="hidden" name="user_id" id="edit-user-id" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
       <input type="text" name="first_name" id="edit-first-name" placeholder="First Name" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
       <input type="text" name="last_name" id="edit-last-name" placeholder="Last Name" required
              class="w-full border rounded-md p-2 text-sm" />
-      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
       <input type="email" name="email" id="edit-email" placeholder="Email" required
              class="w-full border rounded-md p-2 text-sm" />
       
@@ -595,9 +650,200 @@
   </div>
 </div>
 
+{% include "userprofile/admin/create_modal.html" %}
+{% include "userprofile/admin/edit_modal.html" %}
+{% include "userprofile/admin/delete_modal.html" %}
+
 {% endblock %} 
 
 {% block extra_js %}
+<script>
+//Edit and Delete JS for Clinic
+function closeEditModal() {
+  document.getElementById("editModal").classList.add("hidden");
+  document.getElementById("editModal").classList.remove("flex");
+}
+
+function closeDeleteModal() {
+  document.getElementById("deleteModal").classList.add("hidden");
+  document.getElementById("deleteModal").classList.remove("flex");
+}
+
+document.addEventListener("click", function(e) {
+
+  // ================= EDIT =================
+
+  const editDentist = e.target.closest(".edit-dentist-btn");
+  const editService = e.target.closest(".edit-service-btn");
+  const editBranch = e.target.closest(".edit-branch-btn");
+
+  if (editDentist) {
+    openEditModal("dentist", editDentist.dataset);
+  }
+
+  if (editService) {
+    openEditModal("service", editService.dataset);
+  }
+
+  if (editBranch) {
+    openEditModal("branch", editBranch.dataset);
+  }
+
+  // ================= DELETE =================
+
+  const deleteDentist = e.target.closest(".delete-dentist-btn");
+  const deleteService = e.target.closest(".delete-service-btn");
+
+  if (deleteDentist) {
+    openDeleteModal("dentist", deleteDentist.dataset);
+  }
+
+  if (deleteService) {
+    openDeleteModal("service", deleteService.dataset);
+  }
+
+});
+
+function openEditModal(type, data) {
+
+  const modal = document.getElementById("editModal");
+  const title = document.getElementById("editModalTitle");
+  const form = document.getElementById("editForm");
+  const fields = document.getElementById("editFields");
+
+  fields.innerHTML = "";
+
+  if (type === "dentist") {
+    title.innerText = "Edit Dentist";
+    form.action = `/user/admin/dentist/edit/${data.id}/`;
+
+    fields.innerHTML = `
+      <label class="block text-sm font-medium text-gray-700 mb-1">Dentist Name</label>
+      <input name="name" value="${data.name}" required class="w-full border rounded-md p-2 text-sm" />
+      <label class="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+      <input name="specialization" value="${data.specialization}" required class="w-full border rounded-md p-2 text-sm" />
+      <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+      <input name="contact_number" value="${data.contact}" required class="w-full border rounded-md p-2 text-sm" />
+      <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+      <input name="email" value="${data.email}" required type="email" class="w-full border rounded-md p-2 text-sm" />
+    `;
+  }
+
+  if (type === "service") {
+    title.innerText = "Edit Service";
+    form.action = `/user/admin/service/edit/${data.id}/`;
+
+    fields.innerHTML = `
+      <label class="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
+      <input name="service_name" value="${data.name}" required class="w-full border rounded-md p-2 text-sm" />
+      <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+      <input name="category" value="${data.category}" required class="w-full border rounded-md p-2 text-sm" />
+      <label class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+      <input name="duration" value="${data.duration}" required type="number" class="w-full border rounded-md p-2 text-sm" />
+      <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+      <input name="price" value="${data.price}" required type="number" step="0.01" class="w-full border rounded-md p-2 text-sm" />
+    `;
+  }
+
+  if (type === "branch") {
+    title.innerText = "Edit Branch";
+    form.action = `/user/admin/branch/edit/${data.id}/`;
+
+    fields.innerHTML = `
+      <label class="block text-sm font-medium text-gray-700 mb-1">Branch Name</label>
+      <input name="name" value="${data.name}" required class="w-full border rounded-md p-2 text-sm" />
+      <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+      <input name="address" value="${data.address}" required class="w-full border rounded-md p-2 text-sm" />
+      <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+      <input name="contact_number" value="${data.contact}" required class="w-full border rounded-md p-2 text-sm" />
+    `;
+  }
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+
+function openDeleteModal(type, data) {
+
+  const modal = document.getElementById("deleteModal");
+  const form = document.getElementById("deleteForm");
+
+  document.getElementById("deleteItemName").innerText = data.name;
+
+  form.action = `/user/admin/${type}/delete/${data.id}/`;
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+</script>
+
+<script>
+//Create modal for clinic
+function openCreateModal(type) {
+  const modal = document.getElementById("createModal");
+  const title = document.getElementById("modalTitle");
+  const form = document.getElementById("createForm");
+  const fields = document.getElementById("modalFields");
+
+  fields.innerHTML = "";
+
+  if (type === "dentist") {
+    title.innerText = "Add Dentist";
+    form.action = "{% url 'userprofile:dentist_create' %}";
+
+    fields.innerHTML = `
+      <label class="block text-sm font-medium text-gray-700 mb-1">Dentist Name</label>
+      <input name="name" required placeholder="Name"
+        class="w-full border rounded-md p-2 text-sm" />
+
+      <label class="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+      <input name="specialization" required placeholder="Specialization"
+        class="w-full border rounded-md p-2 text-sm" />
+
+      <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+      <input name="contact_number" required placeholder="Contact Number"
+        class="w-full border rounded-md p-2 text-sm" />
+
+      <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+      <input name="email" type="email" required placeholder="Email"
+        class="w-full border rounded-md p-2 text-sm" />
+    `;
+  }
+
+  if (type === "service") {
+    title.innerText = "Add Service";
+    form.action = "{% url 'userprofile:service_create' %}";
+
+    fields.innerHTML = `
+      <label class="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
+      <input name="service_name" required placeholder="Service Name"
+        class="w-full border rounded-md p-2 text-sm" />
+
+      <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+      <input name="category" required placeholder="Category"
+        class="w-full border rounded-md p-2 text-sm" />
+
+      <label class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+      <input name="duration" type="number" required placeholder="Duration (minutes)"
+        class="w-full border rounded-md p-2 text-sm" />
+      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+      <input name="price" type="number" step="0.01" required placeholder="Price"
+        class="w-full border rounded-md p-2 text-sm" />
+    `;
+  }
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+
+function closeCreateModal() {
+  const modal = document.getElementById("createModal");
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
+}
+</script>
+
 <script>
   //Main tab
   const userTab = document.getElementById("userTab");
@@ -900,88 +1146,85 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-// Service search with dropdown
-document.addEventListener('DOMContentLoaded', function() {
+  // Service search with dropdown
+  document.addEventListener('DOMContentLoaded', function() {
     const serviceSearchInput = document.getElementById('service-search-bar');
     const serviceSearchResults = document.getElementById('service-search-results');
     const serviceRows = document.querySelectorAll('.service-row');
     let searchTimeout;
 
     if (serviceSearchInput && serviceSearchResults) {
-        serviceSearchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const searchValue = serviceSearchInput.value.trim().toLowerCase();
+      serviceSearchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const searchValue = serviceSearchInput.value.trim().toLowerCase();
 
-            if (searchValue === '') {
-                serviceSearchResults.classList.add('hidden');
-                serviceSearchResults.innerHTML = '';
-                serviceRows.forEach(row => {
-                    row.style.display = '';
-                });
-                return;
+        if (searchValue === '') {
+          serviceSearchResults.classList.add('hidden');
+          serviceSearchResults.innerHTML = '';
+          serviceRows.forEach(row => {
+            row.style.display = '';
+          });
+          return;
+        }
+
+        searchTimeout = setTimeout(() => {
+          let matchedServices = [];
+
+          serviceRows.forEach(row => {
+            const serviceName = row.getAttribute('data-service-name');
+            const category = row.getAttribute('data-category');
+
+            if (serviceName.includes(searchValue) || category.includes(searchValue)) {
+              const serviceNameText = row.cells[0].textContent;
+              const price = row.cells[1].textContent;
+              const duration = row.cells[2].textContent;
+              const categoryText = row.cells[3].textContent;
+
+              matchedServices.push({
+                name: serviceNameText,
+                price: price,
+                duration: duration,
+                category: categoryText
+              });
+              row.style.display = '';
+            } else {
+              row.style.display = 'none';
             }
+          });
 
-            searchTimeout = setTimeout(() => {
-                let matchedServices = [];
-                
-                serviceRows.forEach(row => {
-                    const serviceName = row.getAttribute('data-service-name');
-                    const category = row.getAttribute('data-category');
-                    
-                    if (serviceName.includes(searchValue) || category.includes(searchValue)) {
-                        const serviceNameText = row.cells[0].textContent;
-                        const price = row.cells[1].textContent;
-                        const duration = row.cells[2].textContent;
-                        const categoryText = row.cells[3].textContent;
-                        
-                        matchedServices.push({
-                            name: serviceNameText,
-                            price: price,
-                            duration: duration,
-                            category: categoryText
-                        });
-                        
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
+          if (matchedServices.length > 0) {
+            let html = '';
+            matchedServices.forEach(service => {
+              html += `<div class="px-4 py-2 hover:bg-gray-100 border-b last:border-b-0 cursor-pointer service-dropdown-item">
+                <div class="font-medium">${service.name}</div>
+                <div class="text-xs text-gray-500">${service.price} | ${service.duration} | ${service.category}</div>
+              </div>`;
+            });
+            serviceSearchResults.innerHTML = html;
+            serviceSearchResults.classList.remove('hidden');
+          } else {
+            serviceSearchResults.innerHTML = '<div class="px-4 py-2 text-gray-500 text-sm">No services found</div>';
+            serviceSearchResults.classList.remove('hidden');
+          }
+        }, 300);
+      });
 
-                if (matchedServices.length > 0) {
-                    let html = '';
-                    matchedServices.forEach(service => {
-                        html += `
-                            <div class="px-4 py-2 hover:bg-gray-100 border-b last:border-b-0 cursor-pointer service-dropdown-item">
-                                <div class="font-medium">${service.name}</div>
-                                <div class="text-xs text-gray-500">${service.price} | ${service.duration} | ${service.category}</div>
-                            </div>
-                        `;
-                    });
-                    serviceSearchResults.innerHTML = html;
-                    serviceSearchResults.classList.remove('hidden');
-                } else {
-                    serviceSearchResults.innerHTML = '<div class="px-4 py-2 text-gray-500 text-sm">No services found</div>';
-                    serviceSearchResults.classList.remove('hidden');
-                }
-            }, 300);
-        });
+      serviceSearchResults.addEventListener('click', function(e) {
+        const item = e.target.closest('.service-dropdown-item');
+        if (item) {
+          const serviceName = item.querySelector('.font-medium').textContent;
+          serviceSearchInput.value = serviceName;
+          serviceSearchResults.classList.add('hidden');
+        }
+      });
 
-        serviceSearchResults.addEventListener('click', function(e) {
-            const item = e.target.closest('.service-dropdown-item');
-            if (item) {
-                const serviceName = item.querySelector('.font-medium').textContent;
-                serviceSearchInput.value = serviceName;
-                serviceSearchResults.classList.add('hidden');
-            }
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!serviceSearchInput.contains(e.target) && !serviceSearchResults.contains(e.target)) {
-                serviceSearchResults.classList.add('hidden');
-            }
-        });
+      document.addEventListener('click', function(e) {
+        if (!serviceSearchInput.contains(e.target) && !serviceSearchResults.contains(e.target)) {
+          serviceSearchResults.classList.add('hidden');
+        }
+      });
     }
-});
+  });
 </script>
 
 {% endblock %}

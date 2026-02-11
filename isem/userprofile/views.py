@@ -15,6 +15,7 @@ from appointment.models import Appointment
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.password_validation import validate_password
+import os
 from django import forms
 #pagination import
 from django.core.paginator import Paginator
@@ -1069,6 +1070,94 @@ def search_services(request):
             return JsonResponse({'services': []})
     
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+# ---------------- CREATE VIEWS ---------------- #
+from appointment.models import Dentist, Service, Branch
+
+@login_required
+def dentist_create(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        specialization = request.POST.get("specialization")
+        contact_number = request.POST.get("contact_number")
+        email = request.POST.get("email")
+
+        Dentist.objects.create(
+            name=name,
+            specialization=specialization,
+            contact_number=contact_number,
+            email=email,
+        )
+
+    return redirect("userprofile:admin_dashboard")
+
+@login_required
+def service_create(request):
+    if request.method == "POST":
+        service_name = request.POST.get("service_name")
+        category = request.POST.get("category")
+        duration = request.POST.get("duration")
+        price = request.POST.get("price")
+
+        Service.objects.create(
+            service_name=service_name,
+            category=category,
+            duration=duration,
+            price=price,
+        )
+    
+    return redirect("userprofile:admin_dashboard")
+
+@login_required
+def dentist_delete(request, pk):
+    Dentist.objects.filter(pk=pk).delete()
+    return redirect("userprofile:admin_dashboard")
+
+
+@login_required
+def service_delete(request, pk):
+    Service.objects.filter(pk=pk).delete()
+    return redirect("userprofile:admin_dashboard")
+
+@login_required
+def dentist_update(request, pk):
+    dentist = Dentist.objects.get(pk=pk)
+
+    if request.method == "POST":
+        dentist.name = request.POST.get("name")
+        dentist.specialization = request.POST.get("specialization")
+        dentist.contact_number = request.POST.get("contact_number")
+        dentist.email = request.POST.get("email")
+        dentist.save()
+
+    return redirect("userprofile:admin_dashboard")
+
+
+@login_required
+def service_update(request, pk):
+    service = Service.objects.get(pk=pk)
+
+    if request.method == "POST":
+        service.service_name = request.POST.get("service_name")
+        service.category = request.POST.get("category")
+        service.duration = request.POST.get("duration")
+        service.price = request.POST.get("price")
+        service.save()
+
+    return redirect("userprofile:admin_dashboard")
+
+
+@login_required
+def branch_update(request, pk):
+    branch = Branch.objects.get(pk=pk)
+
+    if request.method == "POST":
+        branch.name = request.POST.get("name")
+        branch.address = request.POST.get("address")
+        branch.contact_number = request.POST.get("contact_number")
+        branch.save()
+
+    return redirect("userprofile:admin_dashboard")
 
 @login_required
 def homepage(request):

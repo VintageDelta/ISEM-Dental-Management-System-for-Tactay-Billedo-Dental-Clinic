@@ -123,7 +123,7 @@ class Appointment(models.Model):
     # later you can remove this after data migration
     dentist_name = models.CharField(max_length=255, null=True, blank=True)
 
-    location = models.CharField(max_length=20, null=False)
+    location = models.CharField(max_length=255, null=False)
     date = models.DateField(null=False, blank=False)
     time = models.TimeField(null=False, blank=False)
     end_time = models.TimeField(null=True, blank=True)

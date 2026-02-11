@@ -149,118 +149,42 @@ def reports_dashboard(request):
 
     return render(request, "reports/index.html", context)
 
-@login_required
-@user_passes_test(lambda u: u.is_staff or u.is_superuser)
-def export_reports_dashboard(request):
-    range_type = request.GET.get("range", "daily")
+# -----------------------------
+# Shared Data Builder
+# -----------------------------
+def build_report_data(range_type):
     today = now()
     start_date = today - timedelta(days=30)
 
     trunc = TruncMonth if range_type == "monthly" else TruncDay
     date_format = "%b %Y" if range_type == "monthly" else "%b %d"
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Dashboard Report"
-
-    header_font = Font(bold=True)
-    row = 1
-
-    def write_header(title):
-        nonlocal row
-        ws.cell(row=row, column=1, value=title).font = Font(bold=True, size=14)
-        row += 2
-
-    def write_table(headers, data_rows):
-        nonlocal row
-        for col, h in enumerate(headers, start=1):
-            ws.cell(row=row, column=col, value=h).font = header_font
-        row += 1
-        for data in data_rows:
-            for col, value in enumerate(data, start=1):
-                ws.cell(row=row, column=col, value=value)
-            row += 1
-        row += 2
-
-    # -------------------------
-    # Appointments Summary
-    # -------------------------
-    write_header("Appointments Summary")
-
     appointment_trend = (
-        Appointment.objects.filter(
-            date__gte=start_date,
-            status__in=["arrived", "ongoing", "done"]
-        )
+        Appointment.objects
+        .filter(date__gte=start_date, status__in=["arrived", "ongoing", "done"])
         .annotate(period=trunc("date"))
         .values("period")
-        .annotate(total=Count("id"))
+        .annotate(count=Count("id"))
         .order_by("period")
     )
-
-    appointment_data = [
-        (a["period"].strftime(date_format), a["total"])
-        for a in appointment_trend
-    ]
-
-    write_table(
-        ["Period", "Total Appointments"],
-        appointment_data
-    )
-
-    # -------------------------
-    # Patient Growth
-    # -------------------------
-    write_header("Patient Growth")
 
     patient_growth = (
-        Patient.objects.filter(created_at__gte=start_date)
+        Patient.objects
+        .filter(created_at__gte=start_date)
         .annotate(period=trunc("created_at"))
         .values("period")
-        .annotate(total=Count("id"))
+        .annotate(count=Count("id"))
         .order_by("period")
     )
 
-    patient_data = [
-        (p["period"].strftime(date_format), p["total"])
-        for p in patient_growth
-    ]
-
-    write_table(
-        ["Period", "New Patients"],
-        patient_data
-    )
-
-    # -------------------------
-    # Billing / Revenue (PAID)
-    # -------------------------
-    write_header("Paid Revenue Summary")
-
     revenue_trend = (
-        BillingRecord.objects.filter(
-            payment_status="paid",
-            date_issued__gte=start_date
-        )
+        BillingRecord.objects
+        .filter(payment_status="paid", date_issued__gte=start_date)
         .annotate(period=trunc("date_issued"))
         .values("period")
         .annotate(total=Sum("amount"))
         .order_by("period")
     )
-
-    revenue_data = [
-        (r["period"].strftime(date_format), float(r["total"] or 0))
-        for r in revenue_trend
-    ]
-
-    write_table(
-        ["Period", "Total Revenue (₱)"],
-        revenue_data
-    )
-
-    # -------------------------
-    # Inventory Status Summary
-    # -------------------------
-    write_header("Inventory Status")
 
     inventory_summary = (
         InventoryItem.objects
@@ -270,29 +194,133 @@ def export_reports_dashboard(request):
             low_stock=Count("id", filter=F("status") == "low_stock"),
             expired=Count("id", filter=F("status") == "expired"),
         )
-        .order_by("category")
     )
 
-    inventory_data = [
-        (
-            i["category"],
-            i["total"],
-            i["low_stock"],
-            i["expired"],
-        )
-        for i in inventory_summary
-    ]
+    return {
+        "date": today.date(),
+        "range": range_type,
+        "appointment_chart": [(a["period"].strftime(date_format), a["count"]) for a in appointment_trend],
+        "patient_chart": [(p["period"].strftime(date_format), p["count"]) for p in patient_growth],
+        "revenue_chart": [(r["period"].strftime(date_format), float(r["total"] or 0)) for r in revenue_trend],
+        "inventory_chart": list(inventory_summary),
+        "raw": {
+            "appointments": Appointment.objects.filter(date__gte=start_date),
+            "patients": Patient.objects.filter(created_at__gte=start_date),
+            "billing": BillingRecord.objects.filter(payment_status="paid", date_issued__gte=start_date),
+            "inventory": InventoryItem.objects.all(),
+        }
+    }
 
-    write_table(
-        ["Category", "Total Items", "Low Stock", "Expired"],
-        inventory_data
+# -----------------------------
+# Export View (Excel / PDF)
+# -----------------------------
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+def export_reports_dashboard(request):
+    range_type = request.GET.get("range", "daily")
+    export_format = request.GET.get("format", "excel")
+
+    if export_format not in ["excel", "pdf"]:
+        export_format = "excel"
+
+    data = build_report_data(range_type)
+
+    if export_format == "pdf":
+        return export_pdf_report(data)
+
+    return export_excel_report(data)
+
+# -----------------------------
+# PDF Renderer
+# -----------------------------
+def export_pdf_report(data):
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="Clinic_Report_{data["range"]}_{data["date"]}.pdf"'
     )
+
+    doc = SimpleDocTemplate(response, pagesize=A4)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("Clinic Reports Summary", styles["Title"]))
+    elements.append(Spacer(1, 16))
+
+    def table(title, rows, headers):
+        elements.append(Paragraph(title, styles["Heading2"]))
+        elements.append(Spacer(1, 8))
+        elements.append(Table([headers] + rows))
+        elements.append(Spacer(1, 16))
+
+    table(
+        "Appointments Trend",
+        data["appointment_chart"],
+        ["Period", "Appointments"]
+    )
+
+    table(
+        "Patient Growth",
+        data["patient_chart"],
+        ["Period", "New Patients"]
+    )
+
+    table(
+        "Paid Revenue",
+        data["revenue_chart"],
+        ["Period", "Amount (₱)"]
+    )
+
+    table(
+        "Inventory Status",
+        [(i["category"], i["total"], i["low_stock"], i["expired"]) for i in data["inventory_chart"]],
+        ["Category", "Total", "Low Stock", "Expired"]
+    )
+
+    doc.build(elements)
+    return response
+
+# -----------------------------
+# Excel Renderer
+# -----------------------------
+def export_excel_report(data):
+    wb = Workbook()
+
+    # Appointments
+    ws = wb.active
+    ws.title = "Appointments"
+    ws.append(["ID", "Date", "Status", "Dentist", "Branch"])
+    for a in data["raw"]["appointments"]:
+        ws.append([
+            a.display_id,
+            a.date,
+            a.status,
+            a.dentist.name if a.dentist else "",
+            a.branch.name if a.branch else ""
+        ])
+
+    # Patients
+    ws = wb.create_sheet("Patients")
+    ws.append(["Name", "Email", "Created At"])
+    for p in data["raw"]["patients"]:
+        ws.append([p.name, p.email, p.created_at.date()])
+
+    # Billing
+    ws = wb.create_sheet("Billing")
+    ws.append(["Patient", "Amount", "Issued Date"])
+    for b in data["raw"]["billing"]:
+        ws.append([b.patient.name, float(b.amount), b.date_issued.date()])
+
+    # Inventory
+    ws = wb.create_sheet("Inventory")
+    ws.append(["Item", "Category", "Stock", "Status"])
+    for i in data["raw"]["inventory"]:
+        ws.append([i.item_name, i.category, i.stock, i.status])
 
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     response["Content-Disposition"] = (
-        f'attachment; filename="Clinic_Reports_{today.date()}.xlsx"'
+        f'attachment; filename="Clinic_Data_{data["range"]}_{data["date"]}.xlsx"'
     )
 
     wb.save(response)

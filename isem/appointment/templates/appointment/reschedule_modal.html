@@ -12,6 +12,7 @@
 
       <!-- Dentist Name -->
       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Attending Dentist</label>
         <select id="resched-dentist" name="dentist" required class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select Dentist</option>
           {% for dentist in dentists %}
@@ -22,6 +23,7 @@
 
       <!-- Location -->
       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Branch Location</label>
         <select id="resched-location" name="location" required
                 class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select location</option>
@@ -40,6 +42,7 @@
 
       <!-- Date + Time (same style as create) -->
       <div class="flex flex-col gap-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Date and Time</label>
         <!-- Date on its own row -->
         <input type="date" id="resched-date" name="date"
               class="w-full border rounded-md p-2 text-sm"
@@ -89,7 +92,7 @@
       <input type="hidden" name="time" id="resched-time-hidden">
             <!-- Service (same search + tags UI, but with resched- IDs) -->
       <div>
-        <p class="font-semibold mb-1">Select Service:</p>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Select Service:</label>
 
         <!-- Search bar -->
         <input
@@ -147,7 +150,7 @@
         </div>
       </div>
 
-
+      <label class="block text-sm font-medium text-gray-700 mb-1">Patient's Email</label>
       <!-- Email (prefilled from appointment) -->
       <div>
         <input

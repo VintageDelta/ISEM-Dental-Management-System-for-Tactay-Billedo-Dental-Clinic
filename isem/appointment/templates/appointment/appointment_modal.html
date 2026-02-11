@@ -10,6 +10,7 @@
       {% csrf_token %}
       <!-- Dentist Name -->
       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Attending Dentist</label>
         <select id="dentist_name" name="dentist" required
           class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select Dentist</option>
@@ -20,6 +21,7 @@
       </div>
       <!-- Location -->
       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Branch Location</label>
         <select id="location" name="location" required
                 class="w-full border rounded-md p-2 text-sm">
           <option value="" disabled selected>Select location</option>
@@ -38,6 +40,7 @@
       <!-- Date Time -->
       <div class="flex flex-col gap-2">
         <!-- Date on its own row -->
+        <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Appointment Date and Time</label>
         <input
           type="date"
           id="date"
@@ -102,7 +105,7 @@
 
       <!-- Service (Checkboxes + search + selected box) -->
       <div>
-        <p class="font-semibold mb-1">Select Service:</p>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Select Service:</label>
 
         <!-- Search bar -->
         <input
@@ -165,6 +168,7 @@
       {% if request.user.is_staff or request.user.is_superuser %}
         <!-- Email (admin/staff can edit) -->
         <div class="relative">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Attending Patient</label>
           <input
             type="email"
             id="email"

@@ -42,5 +42,12 @@ urlpatterns = [
     path('add-user/', views.add_user, name='add_user'),
     path('admin/edit-user/<int:user_id>/', views.edit_user, name='edit_user'),
     path('admin/delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
-
+    path("admin/dentist/create/", views.dentist_create, name="dentist_create"),
+    path("admin/service/create/", views.service_create, name="service_create"),
+    path("admin/service/search", views.search_services, name='search_services'),
+    path("admin/dentist/delete/<int:pk>/", views.dentist_delete, name="dentist_delete"),
+    path("admin/service/delete/<int:pk>/", views.service_delete, name="service_delete"),
+    path("admin/dentist/edit/<int:pk>/", views.dentist_update, name="dentist_update"),
+    path("admin/service/edit/<int:pk>/", views.service_update, name="service_update"),
+    path("admin/branch/edit/<int:pk>/", views.branch_update, name="branch_update"),
 ]
