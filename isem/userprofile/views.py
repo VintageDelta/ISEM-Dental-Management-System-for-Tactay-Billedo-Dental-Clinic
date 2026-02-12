@@ -1089,6 +1089,8 @@ def dentist_create(request):
             email=email,
         )
 
+        messages.success(request, "Dentist added successfully!")
+
     return redirect("userprofile:admin_dashboard")
 
 @login_required
@@ -1105,18 +1107,22 @@ def service_create(request):
             duration=duration,
             price=price,
         )
+
+        messages.success(request, "Service added successfully!")
     
     return redirect("userprofile:admin_dashboard")
 
 @login_required
 def dentist_delete(request, pk):
     Dentist.objects.filter(pk=pk).delete()
+    messages.success(request, "Dentist deleted successfully!")
     return redirect("userprofile:admin_dashboard")
 
 
 @login_required
 def service_delete(request, pk):
     Service.objects.filter(pk=pk).delete()
+    messages.success(request, "Service deleted successfully!")
     return redirect("userprofile:admin_dashboard")
 
 @login_required
@@ -1129,6 +1135,8 @@ def dentist_update(request, pk):
         dentist.contact_number = request.POST.get("contact_number")
         dentist.email = request.POST.get("email")
         dentist.save()
+
+    messages.success(request, "Dentist updated successfully!")
 
     return redirect("userprofile:admin_dashboard")
 
@@ -1144,6 +1152,8 @@ def service_update(request, pk):
         service.price = request.POST.get("price")
         service.save()
 
+    messages.success(request, "Service updated successfully!")
+
     return redirect("userprofile:admin_dashboard")
 
 
@@ -1156,6 +1166,8 @@ def branch_update(request, pk):
         branch.address = request.POST.get("address")
         branch.contact_number = request.POST.get("contact_number")
         branch.save()
+
+    messages.success(request, "Branch updated successfully!")
 
     return redirect("userprofile:admin_dashboard")
 

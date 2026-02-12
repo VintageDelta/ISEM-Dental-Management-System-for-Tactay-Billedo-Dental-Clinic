@@ -135,12 +135,74 @@
 
           <!-- Terms -->
           <div class="flex items-center">
-            <input type="checkbox" name="terms" class="mr-2" {% if request.POST.terms %}checked{% endif %} />
-            <label class="text-sm sm:text-base text-gray-600">
-              I agree to the <a href="#" class="text-green-600 hover:underline">terms & conditions</a>
+            <input type="checkbox" name="terms" id="termsCheckbox" class="mr-2" required {% if request.POST.terms %}checked{% endif %} />
+            <label for="termsCheckbox" class="text-sm sm:text-base text-gray-600">
+              I agree to the
+              <button type="button" id="openTermsModal"
+                class="text-green-600 hover:underline focus:outline-none focus:ring-2 focus:ring-green-500 rounded">
+                terms & conditions
+              </button>
             </label>
           </div>
           <input type="hidden" name="role" value="patient" />
+          
+          <!-- Terms & Conditions Modal -->
+          <div id="termsModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
+          
+            <!-- Overlay -->
+            <div id="termsOverlay" class="absolute inset-0 bg-black/50"></div>
+          
+            <!-- Modal Container -->
+            <div class="relative flex items-center justify-center min-h-screen px-4 py-6">
+              <div class="bg-white w-full max-w-2xl rounded-lg shadow-lg flex flex-col max-h-[90vh]">
+          
+                <!-- Header -->
+                <div class="flex items-center justify-between p-4 border-b">
+                  <h2 id="termsTitle" class="text-lg font-semibold text-gray-800">
+                    Terms & Conditions
+                  </h2>
+                  <button type="button" id="closeTermsModal"
+                    class="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 rounded">
+                    <span class="sr-only">Close</span>
+                    &times;
+                  </button>
+                </div>
+          
+                <!-- Scrollable Content -->
+                <div class="p-4 overflow-y-auto flex-1 text-sm text-gray-600 space-y-4">
+                  <p>
+                    By creating an account, you agree to comply with and be bound by the following terms and conditions.
+                  </p>
+                  <p>
+                    You agree to provide accurate, current, and complete information during registration and to update such
+                    information as necessary.
+                  </p>
+                  <p>
+                    You are responsible for maintaining the confidentiality of your account credentials and for all activities
+                    that occur under your account.
+                  </p>
+                  <p>
+                    The clinic reserves the right to modify or discontinue services at any time without prior notice.
+                  </p>
+                  <p>
+                    Personal information collected will be handled in accordance with applicable data protection regulations.
+                  </p>
+                  <p>
+                    Continued use of the system constitutes acceptance of any updates to these terms.
+                  </p>
+                </div>
+          
+                <!-- Footer -->
+                <div class="p-4 border-t flex justify-end">
+                  <button type="button" id="agreeAndClose"
+                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    Close
+                  </button>
+                </div>
+          
+              </div>
+            </div>
+          </div>
           
           <!-- Submit Button -->
           <button type="submit" 
@@ -181,5 +243,35 @@
       }
     </script>
 
+    <script>
+      const modal = document.getElementById('termsModal');
+      const overlay = document.getElementById('termsOverlay');
+      const openBtn = document.getElementById('openTermsModal');
+      const closeBtn = document.getElementById('closeTermsModal');
+      const agreeBtn = document.getElementById('agreeAndClose');
+
+      function openModal() {
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        closeBtn.focus();
+      }
+
+      function closeModal() {
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        openBtn.focus();
+      }
+
+      openBtn.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+      agreeBtn.addEventListener('click', closeModal);
+      overlay.addEventListener('click', closeModal);
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+          closeModal();
+        }
+      });
+    </script>
   </body>
 </html>

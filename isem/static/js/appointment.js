@@ -1930,15 +1930,22 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(data3 => {
           if (!data3.success) throw new Error(data3.error || "Failed to save step 3");
-
           if (window.currentEventId) {
+            const amountPaid = document.getElementById("done-financial-amount")?.value;
+            const paymentMode = document.getElementById("done-financial-payment-mode")?.value;
+            const totalBill = document.getElementById("done-financial-total-due")?.value;
             return fetch(`/dashboard/appointment/update-status/${window.currentEventId}/`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": getCookie("csrftoken"),
               },
-              body: JSON.stringify({ status: "done" }),
+              body: JSON.stringify({
+                status: "done",
+                amount_paid: amountPaid,
+                payment_mode: paymentMode,
+                total_bill: totalBill
+              }),
             }).then(res => res.json());
           }
         })

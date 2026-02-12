@@ -19,6 +19,8 @@ from django.views.decorators.http import require_GET
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required, user_passes_test
 
+from decimal import Decimal
+
 from billing.models import BillingRecord
 from patient.models import Patient
 
@@ -53,6 +55,9 @@ def update_status(request, appointment_id):
         data = json.loads(request.body)
         status = data.get("status")
         print(f"Parsed status: {status}")
+        amount_paid = Decimal(data.get("amount_paid"))
+
+        print("Parsed amount_paid:", amount_paid)
 
         appointment = Appointment.objects.get(id=appointment_id)
 
@@ -105,6 +110,7 @@ def update_status(request, appointment_id):
                         appointment=appointment,
                         type=service_names,
                         amount=total_amount,
+                        amount_paid=amount_paid,
                         date_issued=timezone.now(),
                     )
                     print("✓ Billing record created")
