@@ -1,3 +1,4 @@
+from datetime import date
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -11,7 +12,9 @@ class Patient(models.Model):
     email = models.EmailField(blank=True, null=True)
     address = models.TextField()
     telephone = models.CharField(max_length=15, null=False, blank=False)
-    age = models.PositiveIntegerField()
+    #final addition = birthdate
+    birthdate = models.DateField(blank=True, null=True)
+    # age = models.PositiveIntegerField()
     occupation = models.CharField(max_length=100, blank=True, null=True)
  
  
@@ -27,6 +30,22 @@ class Patient(models.Model):
     abnormal_bleeding_history = models.TextField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def age(self):
+        """Calculate age dynamically from birthdate"""
+        if not self.birthdate:
+            return None
+        today = date.today()
+        age = today.year - self.birthdate.year
+        # Adjust if birthday hasn't occurred yet this year
+        if (today.month, today.day) < (self.birthdate.month, self.birthdate.day):
+            age -= 1
+        return age
+    
+    def __str__(self):
+        return self.name
+    
 
 class MedicalHistory(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='medical_history')

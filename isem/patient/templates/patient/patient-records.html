@@ -93,7 +93,7 @@ Records {% endblock %} {% block content %}
           <td class="py-3 px-4">{{ patient.email }}</td>
           <td class="py-3 px-4">{{ patient.address }}</td>
           <td class="py-3 px-4">{{ patient.telephone }}</td>
-          <td class="py-3 px-4">{{ patient.age }}</td>
+          <td class="py-3 px-4">{{ patient.birthdate|date:"M d, Y"|default:"Not specified" }}</td>
           <td class="py-3 px-4">{{ patient.occupation }}</td>
           <td class="py-3 px-4 text-right">
             {% if user.is_staff or user.is_superuser%}

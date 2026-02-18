@@ -45,6 +45,13 @@
       <!-- Patient Data -->
       <h2 class="text-base font-semibold">Patient Data</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <div>
+          <label class="block text-gray-700">Birth Date</label>
+          <input type="date" name="birthdate" 
+                 value="{{ patient.birthdate|date:'Y-m-d' }}"
+                 max="{{ today|date:'Y-m-d' }}"
+                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+        </div>
         <div>
           <label class="block text-gray-700">Age</label>
           <input type="number" name="age" value="{{ patient.age }}"

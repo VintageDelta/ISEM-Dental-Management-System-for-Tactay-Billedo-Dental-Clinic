@@ -1,7 +1,7 @@
 import os
 from django.forms import ValidationError
 from django.utils import timezone
-from datetime import timedelta
+from datetime import date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout as auth_logout
 from django.contrib.auth.models import User, Group
@@ -296,25 +296,49 @@ class PasswordResetDoneView(View):
             messages.error(request, "Please start the password reset process.")
             return redirect('userprofile:password_reset')
         
-        # Get masked mobile number from session
-        masked_mobile = request.session.get('masked_mobile', 'your phone')
-        
-        # Pass masked number to template to show where code was sent
-        context = {
-            'masked_mobile': masked_mobile
-        }
-        return render(request, 'userprofile/password_reset_done.html', context)
-    
-    def post(self, request):
-        # Get user ID from session
+        # Get user and check if locked
         user_id = request.session.get('reset_user_id')
-        
-        # Verify session hasn't expired
-        if not user_id:
+        try:
+            user = User.objects.get(id=user_id)
+            profile = user.profile
+            
+            # Check if account is locked
+            if profile.is_password_reset_locked():
+                lockout_time = profile.password_reset_locked_until
+                time_remaining = (lockout_time - timezone.now()).total_seconds() / 60
+                messages.error(
+                    request, 
+                    f"Account locked. Try again in {int(time_remaining)} minutes."
+                )
+                return redirect('userprofile:password_reset')
+        except User.DoesNotExist:
             messages.error(request, "Session expired. Please try again.")
             return redirect('userprofile:password_reset')
         
-        # Collect 6 individual digits from separate input fields
+        # Get masked mobile number from session
+        masked_mobile = request.session.get('masked_mobile', 'your phone')
+        
+        # Calculate remaining attempts
+        remaining_attempts = 5 - profile.password_reset_attempts
+        
+        # Pass data to template
+        context = {
+            'masked_mobile': masked_mobile,
+            'remaining_attempts': remaining_attempts,
+            'attempts': profile.password_reset_attempts,
+        }
+        return render(request, 'userprofile/password_reset_done.html', context)
+    
+    def post(self, request):  # ← NOW PROPERLY INDENTED INSIDE THE CLASS
+        """Handle OTP verification with 5-attempt limit"""
+        user_id = request.session.get('reset_user_id')
+
+        # Verify session exists
+        if not user_id:
+            messages.error(request, "Session expired. Please try again.")
+            return redirect('userprofile:password_reset')
+
+        # Collect 6-digit OTP from individual input fields
         otp_digits = [
             request.POST.get('digit1', ''),
             request.POST.get('digit2', ''),
@@ -323,42 +347,76 @@ class PasswordResetDoneView(View):
             request.POST.get('digit5', ''),
             request.POST.get('digit6', ''),
         ]
-        # Combine digits into single string
         otp_entered = ''.join(otp_digits)
-        
-        # Validate that all 6 digits were entered
+
+        # Validate all digits entered
         if len(otp_entered) != 6:
             messages.error(request, "Please enter the complete 6-digit code.")
             return redirect('userprofile:password_reset_done')
-        
+
         try:
-            # Get user and their profile
             user = User.objects.get(id=user_id)
             profile = user.profile
-            
-            # Check if OTP has expired (5 minute validity)
+
+            # CHECK 1: Is account locked?
+            if profile.is_password_reset_locked():
+                remaining = profile.get_lockout_time_remaining()
+                messages.error(
+                    request,
+                    f"Account locked due to too many failed attempts. Try again in {remaining} minute(s)."
+                )
+                return redirect('userprofile:password_reset')
+
+            # CHECK 2: Has OTP expired?
             if not profile.is_otp_valid():
                 messages.error(request, "OTP has expired. Please request a new one.")
-                # Clear session data to force restart
+                # Clear session and force restart
                 request.session.pop('reset_user_id', None)
                 request.session.pop('masked_mobile', None)
                 return redirect('userprofile:password_reset')
-            
-            # Verify entered OTP matches stored OTP
+
+            # CHECK 3: Is OTP correct?
             if profile.otp_code == otp_entered:
-                # Mark OTP as verified
+                # SUCCESS: Mark as verified and reset security counters
                 profile.otp_verified = True
+                profile.password_reset_attempts = 0
+                profile.password_reset_locked_until = None
                 profile.save()
-                
+
                 messages.success(request, "Code verified! Set your new password.")
                 return redirect('userprofile:password_reset_confirm_otp')
+
+            # WRONG OTP: Increment attempt counter
             else:
-                # OTP doesn't match
-                messages.error(request, "Invalid verification code. Please try again.")
-                return redirect('userprofile:password_reset_done')
-                
+                profile.password_reset_attempts += 1
+
+                # Check if maximum attempts reached
+                if profile.password_reset_attempts >= 5:
+                    # LOCK ACCOUNT: Set time lockout
+                    profile.password_reset_locked_until = timezone.now() + timedelta(hours=24)#can change time herein failing attempts
+                    profile.save()
+
+                    # Clear session to prevent further attempts
+                    request.session.pop('reset_user_id', None)
+                    request.session.pop('masked_mobile', None)
+
+                    messages.error(
+                        request,
+                        "Too many failed attempts. Your account has been locked for 30 minutes."
+                    )
+                    return redirect('userprofile:password_reset')
+                else:
+                    # Still have attempts left - save and show remaining
+                    profile.save()
+                    remaining_attempts = 5 - profile.password_reset_attempts
+
+                    messages.error(
+                        request,
+                        f"Invalid verification code. {remaining_attempts} attempt(s) remaining."
+                    )
+                    return redirect('userprofile:password_reset_done')
+
         except User.DoesNotExist:
-            # User ID in session is invalid
             messages.error(request, "Invalid session. Please try again.")
             return redirect('userprofile:password_reset')
 
@@ -596,7 +654,7 @@ def signup(request):
                 email=email,
                 address="",
                 telephone="",
-                age=0,
+                birthdate=None,
                 occupation="",
                 is_guest=False,
 
@@ -806,13 +864,12 @@ def patient_data(request):
         return redirect('userprofile:homepage')
     
     if request.method == "POST":
-
-        age = request.POST.get("age")
-        if age:
+        birthdate = request.POST.get("birthdate")
+        if birthdate:
             try:
-                patient.age = int(age)
+                patient.birthdate = birthdate  
             except ValueError:
-                    pass
+                pass
         
         patient.gender = request.POST.get("gender") or getattr(patient, "gender", "")
         patient.occupation = request.POST.get("occupation") or patient.occupation
@@ -829,7 +886,7 @@ def patient_data(request):
         patient.save()
         return redirect("userprofile:homepage")
 
-    return render(request, 'userprofile/patient_data.html', {'patient': patient})
+    return render(request, 'userprofile/patient_data.html', {'patient': patient, 'today': date.today()})
 
 @never_cache
 @user_passes_test(lambda u: u.is_superuser)

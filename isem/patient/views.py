@@ -137,12 +137,12 @@ def medical_history(request, pk):
 
 
     if request.method == "POST" and 'update_patient_info' in request.POST:
-        age = request.POST.get("age")
-        if age:
+        birthdate = request.POST.get("birthdate")
+        if birthdate:
             try:
-                patient.age = int(age)
+                patient.birthdate = birthdate  
             except ValueError:
-                    pass
+                pass
             
         patient.gender = request.POST.get("gender") or patient.gender
         patient.occupation = request.POST.get("occupation") or patient.occupation
