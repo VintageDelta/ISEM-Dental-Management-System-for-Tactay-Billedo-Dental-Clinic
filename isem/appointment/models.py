@@ -141,11 +141,20 @@ class Appointment(models.Model):
         on_delete=models.SET_NULL,
         related_name="appointments",
     )
-
+    
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default="not_arrived",
+    )
+
+    # NEW: link this appointment as a follow-up of another
+    followup_of = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="followups",
     )
 
     @property

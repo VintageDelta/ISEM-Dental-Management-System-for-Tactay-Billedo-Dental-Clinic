@@ -111,3 +111,37 @@
     </div>
   </div>
 </div>
+
+<!-- Cancel Reason Modal -->
+<div id="cancel-reason-modal"
+     class="fixed inset-0 z-40 hidden flex items-center justify-center bg-black/40 px-3">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-4 space-y-3">
+    <h2 class="text-base font-semibold text-gray-800">Cancel Appointment</h2>
+    <p class="text-xs text-gray-500">
+      Please provide a reason for cancelling this appointment.
+    </p>
+    <textarea
+      id="cancel-reason-input"
+      rows="3"
+      class="w-full border rounded-md p-2 text-sm"
+      placeholder="Type reason here..."
+    ></textarea>
+    <p id="cancel-reason-error" class="text-xs text-red-600 hidden">
+      Please enter a reason.
+    </p>
+    <div class="flex justify-end gap-2 pt-2">
+      <button
+        id="cancel-reason-close"
+        type="button"
+        class="px-3 py-1.5 text-xs rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300">
+        Close
+      </button>
+      <button
+        id="cancel-reason-confirm"
+        type="button"
+        class="px-3 py-1.5 text-xs rounded-md bg-red-600 text-white hover:bg-red-700">
+        Confirm cancel
+      </button>
+    </div>
+  </div>
+</div>

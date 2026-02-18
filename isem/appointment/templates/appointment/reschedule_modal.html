@@ -169,10 +169,31 @@
         <p id="resched-current-time" class="mt-1"></p>
       </div>
 
+      <!-- Reschedule reason -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Reason for rescheduling
+        </label>
+        <textarea
+          id="resched-reason"
+          name="reason"
+          rows="3"
+          class="w-full border rounded-md p-2 text-sm"
+          placeholder="Reason about why this appointment is rescheduled."
+        ></textarea>
+      </div>
+
       <!-- Actions -->
       <div class="flex justify-end gap-2 pt-3">
         <button type="button" id="close-reschedule-btn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
-        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Changes</button>
+        <button
+          type="submit"
+          id="resched-save-btn"
+          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 opacity-50 cursor-not-allowed"
+          disabled
+        >
+          Save Changes
+        </button>
       </div>
       
             <!-- Small loading row inside reschedule modal -->
@@ -189,3 +210,48 @@
     </form>
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const dateInputs = [
+      document.getElementById('date'),
+      document.getElementById('resched-date')
+    ].filter(Boolean);
+
+    if (dateInputs.length) {
+      const today = new Date();
+      today.setDate(today.getDate() + 1);
+
+      const year  = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day   = String(today.getDate()).padStart(2, '0');
+
+      const tomorrowStr = `${year}-${month}-${day}`;
+
+      dateInputs.forEach(input => {
+        input.min = tomorrowStr;
+      });
+    }
+
+    // Enable Save only when reason is non-empty
+    const reasonInput = document.getElementById('resched-reason');
+    const saveBtn     = document.getElementById('resched-save-btn');
+
+    if (reasonInput && saveBtn) {
+      const toggleSave = () => {
+        const hasText = reasonInput.value.trim().length > 0;
+        saveBtn.disabled = !hasText;
+        if (hasText) {
+          saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+          saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      };
+
+      // Initial state
+      toggleSave();
+
+      // Update on user input
+      reasonInput.addEventListener('input', toggleSave);
+    }
+  });
+</script>

@@ -606,21 +606,142 @@ if (window.calendarsInitialized) {
         btnRow.style.flexShrink = "0";
         btnRow.style.pointerEvents = "auto";
 
-      if (info.view && info.view.type === "timeGridDay") {
-        const followBtn = document.createElement("button");
-        followBtn.textContent = "Follow up";
-        followBtn.title = "Create a follow-up appointment with the same services.";  // tooltip
-        followBtn.style.padding = isMobile ? "2px 3px" : "3px 6px";
-        followBtn.style.fontSize = isMobile ? "0.55rem" : "0.65rem";
-        followBtn.style.borderRadius = "6px";
-        followBtn.style.background = "#16a34a";
-        followBtn.style.color = "#fff";
-        followBtn.style.border = "none";
-        followBtn.style.cursor = "pointer";
 
+        if (info.view && info.view.type === "timeGridDay") {
+          const isDone       = props.status === "done";
+          const hasFollowup  = !!props.followup_id;
+          const followupId   = props.followup_id;
+          const followupDate = props.followup_date; // "YYYY-MM-DD"
+          const isAllowed    = canManage && isDone;  // staff/admin AND status done
+
+          // --- VIEW FOLLOW UP (patients + staff) ---
+          if (hasFollowup && followupId) {
+            const viewBtn = document.createElement("button");
+            viewBtn.textContent = "View follow up";
+            viewBtn.title = "Open the follow-up appointment.";
+            viewBtn.style.padding = isMobile ? "2px 3px" : "3px 6px";
+            viewBtn.style.fontSize = isMobile ? "0.55rem" : "0.65rem";
+            viewBtn.style.borderRadius = "6px";
+            viewBtn.style.background = "#16a34a";
+            viewBtn.style.color = "#fff";
+            viewBtn.style.border = "none";
+            viewBtn.style.cursor = "pointer";
+
+            // Everyone can click this (no canManage check)
+            viewBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+
+              if (!window.timelineCalendar || !window.mainCalendar) return;
+
+              // 1) Move both calendars to follow-up date
+              if (followupDate) {
+                const dateObj = new Date(followupDate + "T00:00:00");
+                window.mainCalendar.gotoDate(dateObj);
+                window.timelineCalendar.changeView("timeGridDay", dateObj);
+              }
+
+              // 2) After navigation, load that follow-up appointment's details
+              setTimeout(() => {
+                const target = window.timelineCalendar.getEventById(String(followupId));
+                if (!target) return;
+
+                currentEventId = followupId;
+                window.currentEventId = followupId;
+                window.reschedAppointmentId = followupId;
+
+                // Reuse your details fetch logic
+                fetch(`/dashboard/appointment/get-appointment-details/${followupId}/`)
+                  .then(res => res.json())
+                  .then(data => {
+                    if (!data.success) return;
+
+                    const appt    = data.appointment;
+                    const patient = data.patient || {};
+
+                    const dDentist  = document.getElementById("detail-dentist");
+                    const dPatient  = document.getElementById("detail-patient");
+                    const dLocation = document.getElementById("detail-location");
+                    const dDate     = document.getElementById("detail-date");
+                    const dTime     = document.getElementById("detail-time");
+                    const dService  = document.getElementById("detail-service");
+
+                    if (dDentist)  dDentist.textContent  = appt.dentist || "N/A";
+                    if (dPatient)  dPatient.textContent  =
+                      (patient.name && patient.name.trim()) ||
+                      (patient.email && patient.email.trim()) ||
+                      "Unknown";
+                    if (dLocation) dLocation.textContent = appt.location || "N/A";
+                    if (dDate)     dDate.textContent     = appt.date || "N/A";
+                    if (dTime)     dTime.textContent     = appt.time || "N/A";
+                    if (dService)  dService.textContent  = appt.services || "N/A";
+
+                    // Cancel button enable/disable based on follow-up status + can_manage
+                    const cancelBtn = document.getElementById("status-cancel-btn");
+                    if (cancelBtn) {
+                      const status2    = target.extendedProps.status;
+                      const canManage2 = !!target.extendedProps.can_manage;
+
+                      if (status2 === "done" && !canManage2) {
+                        cancelBtn.disabled = true;
+                        cancelBtn.classList.add("opacity-50", "cursor-not-allowed");
+                      } else {
+                        cancelBtn.disabled = false;
+                        cancelBtn.classList.remove("opacity-50", "cursor-not-allowed");
+                      }
+                    }
+
+                    openAppointmentModal("status-modal");
+                  });
+              }, 150);
+            });
+
+            btnRow.appendChild(viewBtn);
+
+          // --- FOLLOW UP (staff/admin only, when no follow-up yet) ---
+          } else if (canManage) {
+            const followBtn = document.createElement("button");
+            followBtn.textContent = "Follow up";
+            followBtn.title = "Create a follow-up appointment with the same services.";
+            followBtn.style.padding = isMobile ? "2px 3px" : "3px 6px";
+            followBtn.style.fontSize = isMobile ? "0.55rem" : "0.65rem";
+            followBtn.style.borderRadius = "6px";
+            followBtn.style.background = "#16a34a";
+            followBtn.style.color = "#fff";
+            followBtn.style.border = "none";
+            followBtn.style.cursor = isDone ? "pointer" : "default";
+
+            if (isAllowed) {
+              followBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                currentEventId = info.event.id;
+                window.currentEventId = currentEventId;
+
+                const propsInner = info.event.extendedProps || {};
+
+                const origInput = document.getElementById("followup-original-id");
+                if (origInput) origInput.value = currentEventId;
+
+                const followDate = document.getElementById("followup-date");
+                if (followDate && propsInner.preferred_date) {
+                  followDate.value = propsInner.preferred_date;
+                }
+
+                openAppointmentModal("followup-modal");
+              });
+            } else {
+              followBtn.disabled = true;
+              followBtn.style.opacity = "0.5";
+              followBtn.title = "Follow-up is only available once the appointment is marked as Done.";
+            }
+
+            btnRow.appendChild(followBtn);
+          }
+
+
+        // Reschedule button (disabled when done or cancelled)
         const rescheduleBtn = document.createElement("button");
         rescheduleBtn.textContent = "Reschedule";
-        rescheduleBtn.title = "Change this appointment to a different date and time.";  // tooltip
+        rescheduleBtn.title = "Change this appointment to a different date and time.";
         rescheduleBtn.style.padding = isMobile ? "2px 3px" : "3px 6px";
         rescheduleBtn.style.fontSize = isMobile ? "0.55rem" : "0.65rem";
         rescheduleBtn.style.borderRadius = "6px";
@@ -629,84 +750,75 @@ if (window.calendarsInitialized) {
         rescheduleBtn.style.border = "none";
         rescheduleBtn.style.cursor = "pointer";
 
-          if (!isCancelled || canManage) {
-            followBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                currentEventId = info.event.id;
-                const propsInner = info.event.extendedProps || {};
-                const origInput = document.getElementById("followup-original-id");
-                if (origInput) origInput.value = currentEventId;
-                const followDate = document.getElementById("followup-date");
-                if (followDate && propsInner.preferred_date) {
-                  followDate.value = propsInner.preferred_date;
-                }
-                openAppointmentModal("followup-modal");
+        // Only allow reschedule if NOT done and NOT cancelled
+        // (if you want admins to still be able to resched, change this condition)
+        if (!isDone && !isCancelled) {
+          rescheduleBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            currentEventId = info.event.id;
+            window.reschedAppointmentId = info.event.id;
+            const propsInner = info.event.extendedProps || {};
+
+            const rDentist  = document.getElementById("resched-dentist");
+            const rLocation = document.getElementById("resched-location");
+            const rDate     = document.getElementById("resched-date");
+            const rEmail    = document.getElementById("resched-email");
+
+            if (rDentist)  rDentist.value  = propsInner.dentist_id || "";
+            if (rLocation) rLocation.value = (propsInner.branch_id || "").toString();
+            if (rDate)     rDate.value     = propsInner.preferred_date || propsInner.date || "";
+            if (rEmail)    rEmail.value    = propsInner.email || "";
+
+            const rawTime       = propsInner.preferred_time || propsInner.time || "";
+            const reschedAmpm   = document.getElementById("resched-ampm");
+            const reschedHour   = document.getElementById("resched-hour");
+            const reschedMin    = document.getElementById("resched-minute");
+            const reschedHidden = document.getElementById("resched-time-hidden");
+
+            if (rawTime && reschedAmpm && reschedHour && reschedMin) {
+              const [timePart, ampmPart] = rawTime.split(" ");
+              const [hStr, mStr] = timePart.split(":");
+              reschedAmpm.value = ampmPart;
+              reschedAmpm.dispatchEvent(new Event("change"));
+              reschedHour.value = String(parseInt(hStr, 10));
+              reschedMin.value  = mStr;
+              if (typeof to24Hour === "function" && reschedHidden) {
+                reschedHidden.value =
+                  `${String(to24Hour(reschedHour.value, ampmPart)).padStart(2, "0")}:${mStr}`;
+              }
+            }
+
+            const serviceIds = propsInner.service_ids || [];
+            const allServiceCbs = document.querySelectorAll(
+              "#resched-services-checkboxes input.resched-service-checkbox"
+            );
+            allServiceCbs.forEach(cb => {
+              cb.checked = serviceIds.includes(parseInt(cb.value, 10));
             });
 
-            rescheduleBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-                currentEventId = info.event.id;
-                window.reschedAppointmentId = info.event.id;
-                const propsInner = info.event.extendedProps || {};
+            if (typeof window.refreshReschedSelectedServiceTags === "function") {
+              window.refreshReschedSelectedServiceTags();
+            }
 
-                const rDentist  = document.getElementById("resched-dentist");
-                const rLocation = document.getElementById("resched-location");
-                const rDate     = document.getElementById("resched-date");
-                const rEmail    = document.getElementById("resched-email");
+            const currentScheduleEl = document.getElementById("resched-current-time");
+            if (currentScheduleEl) {
+              const dateLabel = propsInner.preferred_date || propsInner.date || "";
+              const timeLabel2 = propsInner.preferred_time || propsInner.time || "";
+              currentScheduleEl.textContent =
+                dateLabel && timeLabel2 ? `${dateLabel} at ${timeLabel2}` : "";
+            }
 
-                if (rDentist)  rDentist.value  = propsInner.dentist_id || "";
-                if (rLocation) rLocation.value = (propsInner.branch_id || "").toString();
-                if (rDate)     rDate.value     = propsInner.preferred_date || propsInner.date || "";
-                if (rEmail)    rEmail.value    = propsInner.email || "";
+            openAppointmentModal("reschedule-modal");
+          });
+        } else {
+          // disable if done or cancelled
+          rescheduleBtn.disabled = true;
+          rescheduleBtn.style.opacity = "0.5";
+          rescheduleBtn.style.cursor = "default";
+          rescheduleBtn.title = "Reschedule is not available for done or cancelled appointments.";
+        }
 
-
-                const rawTime      = propsInner.preferred_time || propsInner.time || "";
-                const reschedAmpm  = document.getElementById("resched-ampm");
-                const reschedHour  = document.getElementById("resched-hour");
-                const reschedMin   = document.getElementById("resched-minute");
-                const reschedHidden= document.getElementById("resched-time-hidden");
-
-                if (rawTime && reschedAmpm && reschedHour && reschedMin) {
-                  const [timePart, ampmPart] = rawTime.split(" ");
-                  const [hStr, mStr] = timePart.split(":");
-                  reschedAmpm.value = ampmPart;
-                  reschedAmpm.dispatchEvent(new Event("change"));
-                  reschedHour.value = String(parseInt(hStr, 10));
-                  reschedMin.value  = mStr;
-                  if (typeof to24Hour === "function" && reschedHidden) {
-                    reschedHidden.value = `${String(to24Hour(reschedHour.value, ampmPart)).padStart(2, "0")}:${mStr}`;
-                  }
-                }
-
-                const serviceIds = propsInner.service_ids || [];
-                const allServiceCbs = document.querySelectorAll("#resched-services-checkboxes input.resched-service-checkbox");
-                allServiceCbs.forEach(cb => {
-                  cb.checked = serviceIds.includes(parseInt(cb.value, 10));
-                });
-
-                if (typeof window.refreshReschedSelectedServiceTags === "function") {
-                  window.refreshReschedSelectedServiceTags();
-                }
-
-                const currentScheduleEl = document.getElementById("resched-current-time");
-                if (currentScheduleEl) {
-                  const dateLabel = propsInner.preferred_date || propsInner.date || "";
-                  const timeLabel2 = propsInner.preferred_time || propsInner.time || "";
-                  currentScheduleEl.textContent = dateLabel && timeLabel2 ? `${dateLabel} at ${timeLabel2}` : "";
-                }
-                openAppointmentModal("reschedule-modal");
-            });
-          } else {
-            followBtn.disabled = true;
-            rescheduleBtn.disabled = true;
-            followBtn.style.opacity = "0.5";
-            rescheduleBtn.style.opacity = "0.5";
-            followBtn.style.cursor = "default";
-            rescheduleBtn.style.cursor = "default";
-          }
-
-          btnRow.appendChild(followBtn);
-          btnRow.appendChild(rescheduleBtn);
+        btnRow.appendChild(rescheduleBtn);
         }
 
         // In week view there are no buttons, but we still append the (empty) btnRow

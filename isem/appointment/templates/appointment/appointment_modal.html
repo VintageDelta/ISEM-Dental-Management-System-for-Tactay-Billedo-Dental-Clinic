@@ -276,3 +276,26 @@
     </div>
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const dateInput = document.getElementById('date');
+    if (!dateInput) return;
+
+    const today = new Date();
+
+    // Move to tomorrow
+    today.setDate(today.getDate() + 1);
+
+    const year  = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // 01–12
+    const day   = String(today.getDate()).padStart(2, '0');      // 01–31
+
+    const tomorrowStr = `${year}-${month}-${day}`;  // "YYYY-MM-DD"
+
+    // Disable today and all past dates
+    dateInput.min = tomorrowStr;
+
+    // Optional: set default value to tomorrow as well
+    // dateInput.value = tomorrowStr;
+  });
+</script>

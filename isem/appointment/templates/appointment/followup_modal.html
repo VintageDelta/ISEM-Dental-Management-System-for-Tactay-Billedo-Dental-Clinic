@@ -91,3 +91,29 @@
     </form>
   </div>
 </div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const followupDateInput = document.getElementById("followup-date");
+    if (!followupDateInput) return;
+
+    // Compute tomorrow in YYYY-MM-DD
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const yyyy = tomorrow.getFullYear();
+    const mm = String(tomorrow.getMonth() + 1).padStart(2, "0");
+    const dd = String(tomorrow.getDate()).padStart(2, "0");
+    const minStr = `${yyyy}-${mm}-${dd}`;
+
+    // Disable today and all past dates
+    followupDateInput.min = minStr;
+
+    // Guard against manual typing
+    followupDateInput.addEventListener("change", () => {
+      if (followupDateInput.value && followupDateInput.value < minStr) {
+        followupDateInput.value = minStr;
+      }
+    });
+  });
+</script>

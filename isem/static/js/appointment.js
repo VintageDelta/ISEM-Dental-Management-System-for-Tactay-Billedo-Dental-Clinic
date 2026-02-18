@@ -245,62 +245,76 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedEmptyText: document.getElementById("resched-selected-services-empty"),
   });
 
+  
+  const cancelReasonModal    = document.getElementById("cancel-reason-modal");
+  const cancelReasonInput    = document.getElementById("cancel-reason-input");
+  const cancelReasonError    = document.getElementById("cancel-reason-error");
+  const cancelReasonCloseBtn = document.getElementById("cancel-reason-close");
+  const cancelReasonConfirm  = document.getElementById("cancel-reason-confirm");
 
-
+  // When clicking "Cancel Appointment" in status modal
   statusCancelBtn?.addEventListener("click", () => {
-    console.log("Cancel button clicked");    // TEMP DEBUG
-    if (!window.currentEventId) return;     // calendar.js sets currentEventId
+    if (!window.currentEventId) return;
     pendingCancelEventId = window.currentEventId;
-    openAppointmentModal("cancel-confirm-modal");
+    openAppointmentModal("cancel-reason-modal");
   });
 
-  confirmNo?.addEventListener("click", () => {
+  // Close reason modal without cancelling
+  cancelReasonCloseBtn?.addEventListener("click", () => {
     pendingCancelEventId = null;
-    closeAppointmentModal("cancel-confirm-modal");
+    cancelReasonInput.value = "";
+    cancelReasonError.classList.add("hidden");
+    closeAppointmentModal("cancel-reason-modal");
   });
 
-confirmYes?.addEventListener("click", () => {
-  if (!pendingCancelEventId) return;
+  // Confirm cancel with reason
+  cancelReasonConfirm?.addEventListener("click", () => {
+    if (!pendingCancelEventId) return;
 
-  const idStr = String(pendingCancelEventId);
+    const reason = (cancelReasonInput.value || "").trim();
+    if (!reason) {
+      cancelReasonError.classList.remove("hidden");
+      return;
+    }
 
-  fetch(`/dashboard/appointment/update-status/${pendingCancelEventId}/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken")
-    },
-    body: JSON.stringify({ status: "cancelled" })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (!data.success) return;
+    const idStr = String(pendingCancelEventId);
 
-      // 1) Update the event object in the timeline immediately
-      if (window.timelineCalendar) {
-        const ev = window.timelineCalendar.getEventById(idStr);
-        if (ev) {
-          ev.setExtendedProp("status", "cancelled"); // rerenders this event [web:234][web:263]
+    fetch(`/dashboard/appointment/update-status/${pendingCancelEventId}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        status: "cancelled",
+        note: reason,          // send reason to backend
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) return;
+
+        if (window.timelineCalendar) {
+          const ev = window.timelineCalendar.getEventById(idStr);
+          if (ev) ev.setExtendedProp("status", "cancelled");
         }
-      }
+        if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
+        if (window.mainCalendar) window.mainCalendar.refetchEvents();
 
-      // 2) Refetch from the server so everything stays in sync
-      if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
-      if (window.mainCalendar) window.mainCalendar.refetchEvents();
+        setTimeout(() => {
+          if (typeof window.renderTodaysAppointments === "function") {
+            window.renderTodaysAppointments();
+          }
+        }, 300);
 
-      // 3) Rebuild today's side list after refetch
-      setTimeout(() => {
-        if (typeof window.renderTodaysAppointments === "function") {
-          window.renderTodaysAppointments();
-        }
-      }, 300);
+        cancelReasonInput.value = "";
+        cancelReasonError.classList.add("hidden");
+        closeAppointmentModal("cancel-reason-modal");
+        closeAppointmentModal("status-modal");
+      });
 
-      closeAppointmentModal("cancel-confirm-modal");
-      closeAppointmentModal("status-modal");
-    });
-
-  pendingCancelEventId = null;
-});
+    pendingCancelEventId = null;
+  });
 
 
   // Status / Followup / Reschedule
@@ -1566,7 +1580,62 @@ function initFollowupForm() {
   });
 
   validateFollowupForm();
+
+  // === NEW: AJAX submit to create_followup and update event ===
+  followupForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!followupSaveBtn || followupSaveBtn.disabled) return;
+
+    const formData = new FormData(followupForm);
+
+    followupSaveBtn.disabled = true;
+    followupSaveBtn.classList.add("opacity-50", "cursor-not-allowed");
+
+    fetch("/dashboard/appointment/create-followup/", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: formData,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) {
+          alert(data.error || "Failed to create follow-up.");
+          return;
+        }
+
+        const followupId = data.followup_id;
+        const followupDate = data.followup_date; // "YYYY-MM-DD"
+
+        // Update original event so its button becomes "View follow up"
+        if (window.timelineCalendar && window.currentEventId && followupId) {
+          const ev = window.timelineCalendar.getEventById(
+            String(window.currentEventId)
+          );
+          if (ev) {
+            ev.setExtendedProp("followup_id", followupId);
+            ev.setExtendedProp("followup_date", followupDate);
+          }
+        }
+
+        closeAppointmentModal("followup-modal");
+
+        if (window.timelineCalendar) window.timelineCalendar.refetchEvents();
+        if (window.mainCalendar) window.mainCalendar.refetchEvents();
+      })
+      .catch((err) => {
+        console.error("Follow-up create error", err);
+        alert("Network error while creating follow-up.");
+      })
+      .finally(() => {
+        followupSaveBtn.disabled = false;
+        followupSaveBtn.classList.remove("opacity-50", "cursor-not-allowed");
+      });
+  });
 }
+
 
 // NEW: helper to populate status modal details from get-appointment-details JSON
 function fillStatusModalDetails(apptData, patientData) {

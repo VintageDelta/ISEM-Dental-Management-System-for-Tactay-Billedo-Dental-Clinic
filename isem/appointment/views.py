@@ -54,8 +54,10 @@ def update_status(request, appointment_id):
 
         data = json.loads(request.body)
         status = data.get("status")
+        note = data.get("note") 
         print(f"Parsed status: {status}")
-        amount_paid = Decimal(data.get("amount_paid"))
+        amount_paid_raw = data.get("amount_paid")
+        amount_paid = Decimal(amount_paid_raw) if amount_paid_raw is not None else Decimal("0")
 
         print("Parsed amount_paid:", amount_paid)
 
@@ -70,14 +72,21 @@ def update_status(request, appointment_id):
 
         # create log only if status actually changed
         if old_status != new_status:
+            log_note = None
+            if new_status == "cancelled" and note:
+                log_note = f"Status changed from {old_status or '-'} to cancelled. Reason: {note}"
+            else:
+                log_note = f"Status changed from {old_status or '-'} to {new_status}"
+
             AppointmentLog.objects.create(
                 appointment=appointment,
                 action="status_changed",
                 old_status=old_status,
                 new_status=new_status,
                 actor=request.user if request.user.is_authenticated else None,
-                note=f"Status changed from {old_status} to {new_status}",
+                note=log_note,
             )
+
 
         print(f"✓ Appointment status updated to: {status}")
 
@@ -313,6 +322,7 @@ def create_followup(request):
         preferred_date=date_obj,
         preferred_time=time_obj,
         email=original.email,
+        followup_of=original,  # NEW: link child to original
     )
     followup.services.set(selected_services)
     
@@ -324,6 +334,14 @@ def create_followup(request):
         note=f"Follow-up created from appointment {original.id}",
     )
 
+    # NEW: if this was an AJAX follow-up creation, return JSON with IDs/date
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({
+            "success": True,
+            "followup_id": followup.id,
+            "followup_date": followup.date.strftime("%Y-%m-%d"),
+        })
+
     messages.add_message(
         request,
         messages.SUCCESS,
@@ -331,6 +349,7 @@ def create_followup(request):
         extra_tags="appointment_created",
     )
     return redirect("appointment:appointment_page")
+
 
 # POSTTTT Saves yo shi in the database FRFR
 def appointment_page(request):
@@ -487,12 +506,13 @@ def events(request):
             total_minutes = sum((s.duration or 0) for s in a.services.all())
             end_dt = start_dt + timedelta(minutes=total_minutes)
 
+        # NEW: get the first follow-up appointment (if any)
+        followup = a.followups.order_by("date", "time").first()
+
         events.append({
             "id": str(a.id),
             "title": f"{service_names} - {(a.dentist.name if a.dentist else a.dentist_name) or 'N/A'}",
 
-            # UPDATED: always send full ISO datetimes for start/end,
-            # so FullCalendar can compute the correct visual duration.
             "start": start_dt.strftime("%Y-%m-%dT%H:%M:%S"),
             "end": end_dt.strftime("%Y-%m-%dT%H:%M:%S"),
 
@@ -511,8 +531,13 @@ def events(request):
                 "email": a.email,
                 "status": a.status,
                 "can_manage": is_admin,
+
+                # NEW: follow‑up info
+                "followup_id": followup.id if followup else None,
+                "followup_date": str(followup.date) if followup else None,
             }
         })
+
 
     return JsonResponse(events, safe=False)
 
@@ -553,11 +578,17 @@ def get_booked_times(request):
 def reschedule_appointment(request, appointment_id):
     appt = Appointment.objects.get(id=appointment_id)
 
+    # store old values BEFORE changing appt
+    old_date = appt.date
+    old_time = appt.time
+    old_start_dt = datetime.combine(old_date, old_time)
+
     dentist = Dentist.objects.get(id=request.POST.get("dentist"))
     location = request.POST.get("location")
     date_str = request.POST.get("date")
     time_str = request.POST.get("time")
     email = request.POST.get("email")
+    reason = request.POST.get("reason", "").strip()
 
     service_ids = request.POST.getlist("services")
     selected_services = Service.objects.filter(id__in=service_ids)
@@ -575,12 +606,12 @@ def reschedule_appointment(request, appointment_id):
 
     with transaction.atomic():
         start_time, end_time = find_next_available_slot(
-        dentist,
-        date_obj,
-        total_minutes,
-        preferred_time,
-        location=location,
-    )
+            dentist,
+            date_obj,
+            total_minutes,
+            preferred_time,
+            location=location,
+        )
 
     if not start_time or not end_time:
         return JsonResponse({
@@ -588,6 +619,7 @@ def reschedule_appointment(request, appointment_id):
             "error": "No available time slot for the selected date and services."
         }, status=400)
 
+    # update appointment
     appt.dentist_name = dentist.name
     appt.location = location
     appt.date = date_obj
@@ -599,18 +631,52 @@ def reschedule_appointment(request, appointment_id):
     appt.services.set(selected_services)
     appt.save()
 
+    # build new datetime for "to" side
+    new_start_dt = datetime.combine(date_obj, start_time)
+
+    # Windows-safe strftime: "%b %d, %Y %I:%M %p"
+    # example raw: "Feb 05, 2036 08:00 AM"
+    fmt = "%b %d, %Y %I:%M %p"
+    old_str = old_start_dt.strftime(fmt)
+    new_str = new_start_dt.strftime(fmt)
+
+    # remove leading zero in day: "Feb 05, ..." -> "Feb 5, ..."
+    def strip_day_leading_zero(s: str) -> str:
+        # month (3 chars) + space = first 4, then day starts at index 4
+        # e.g. "Feb 05, 2036 ..." -> "Feb 5, 2036 ..."
+        if s[4] == "0":
+            s = s[:4] + s[5:]
+        return s
+
+    old_str = strip_day_leading_zero(old_str)
+    new_str = strip_day_leading_zero(new_str)
+
+    # convert "AM"/"PM" -> "a.m." / "p.m."
+    old_str = old_str.replace("AM", "a.m.").replace("PM", "p.m.")
+    new_str = new_str.replace("AM", "a.m.").replace("PM", "p.m.")
+
+    note_text = f"Rescheduled from {old_str} to {new_str}."
+
+    log_note = None
+    if reason:
+        log_note = (
+            f"{note_text} Reason: {reason}"
+        )
+    else:
+        log_note = note_text
+
     AppointmentLog.objects.create(
         appointment=appt,
         action="rescheduled",
         old_status=None,
         new_status=appt.status,
         actor=request.user if request.user.is_authenticated else None,
-        note=f"Rescheduled to {date_obj} {start_time} at {location}",
+        note=log_note,
     )
-
 
     messages.success(request, "Appointment rescheduled successfully!")
     return JsonResponse({"success": True})
+
 
 
 @csrf_exempt
