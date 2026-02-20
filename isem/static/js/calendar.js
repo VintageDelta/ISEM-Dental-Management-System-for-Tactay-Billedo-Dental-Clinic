@@ -2,6 +2,8 @@ let currentEventId = null;
 window.currentEventId = null;
 let mainCalendar = null;
 let timelineCalendar = null;
+let reminderModalOpen = false;
+window.reminderModalOpen = false;
 
 if (window.calendarsInitialized) {
   console.log("Calendars already initialized, skipping.");

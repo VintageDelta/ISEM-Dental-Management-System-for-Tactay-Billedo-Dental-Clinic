@@ -205,3 +205,85 @@ class AppointmentLog(models.Model):
 
     def __str__(self):
         return f"Log for {self.appointment.display_id} - {self.action} at {self.created_at}"
+
+
+class AppointmentReminderSetting(models.Model):
+    """
+    Stores customizable reminder offsets for one appointment.
+    All offsets are in days before the appointment date/time.
+    """
+    appointment = models.OneToOneField(
+        Appointment,
+        related_name="reminder_setting",
+        on_delete=models.CASCADE,
+    )
+
+    # comma-separated list of integer day offsets, e.g. "14,7,5,3,1"
+    offsets_days = models.CharField(
+        max_length=100,
+        default="14,7,5,3,1",
+        help_text="Comma-separated day offsets before appointment date.",
+    )
+
+    send_email = models.BooleanField(default=True)
+    send_sms = models.BooleanField(default=True)
+
+    # internal flag so you don't resend multiple times on the same day
+    last_checked_at = models.DateTimeField(null=True, blank=True)
+
+    def get_offsets(self):
+        """
+        Return list of distinct positive integers sorted desc, e.g. [14,7,5,3,1].
+        """
+        nums = []
+        for part in (self.offsets_days or "").split(","):
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                val = int(part)
+                if val > 0:
+                    nums.append(val)
+            except ValueError:
+                continue
+        return sorted(set(nums), reverse=True)
+
+    def __str__(self):
+        return f"ReminderSettings for Appointment {self.appointment_id}"
+    
+
+class GlobalReminderSetting(models.Model):
+    """
+    Single row storing default reminder automation for all appointments.
+    """
+    offsets_days = models.CharField(
+        max_length=100,
+        default="14,7,5,3,1",
+        help_text="Comma-separated day offsets before appointment date.",
+    )
+    send_email = models.BooleanField(default=True)
+    send_sms = models.BooleanField(default=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def get_offsets(self):
+        nums = []
+        for part in (self.offsets_days or "").split(","):
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                val = int(part)
+                if val > 0:
+                    nums.append(val)
+            except ValueError:
+                continue
+        return sorted(set(nums), reverse=True)
+
+    def __str__(self):
+        return "Global Reminder Settings"
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(id=1)
+        return obj

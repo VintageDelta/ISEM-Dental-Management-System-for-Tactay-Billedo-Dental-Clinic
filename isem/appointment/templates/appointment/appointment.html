@@ -7,43 +7,50 @@
 
 <div class="max-w-6xl mx-auto space-y-4">
 
-  <!-- Header row with title, Logs button, and New appointment button -->
+  <!-- Header row -->
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-semibold text-gray-800">Appointments</h1>
 
-    <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2">
       {% if request.user.is_staff or request.user.is_superuser %}
-        <!-- Logs button only for staff/admin -->
         <a href="{% url 'appointment:logs' %}"
           class="inline-flex items-center px-4 py-2 rounded-md bg-gray-200 text-gray-800 text-sm font-medium hover:bg-gray-300">
           <span class="material-icons text-base mr-1">history</span>
           Logs
         </a>
+
+        <button
+          type="button"
+          id="open-reminder-settings-btn"
+          class="inline-flex items-center px-4 py-2 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700"
+        >
+          <span class="material-icons text-base mr-1">schedule</span>
+          Reminder automation
+        </button>
       {% endif %}
     </div>
   </div>
 
-<!-- Main layout: calendar + timeline -->
-<div class="flex flex-col md:flex-row gap-4 mt-6 items-stretch">
-  <!-- Calendar section -->
-  <div class="flex flex-col w-full md:flex-1 md:max-w-[700px]">
-    <!-- Create appointment button (full width, outside card) -->
-    <button id="create-appointment-btn"
-      title="Create a new appointment for a patient."
-      class="w-full mb-3 px-3 py-2 text-sm bg-green-600 text-white rounded-md flex items-center justify-center gap-1 hover:bg-green-700 transition">
-      <i class="la la-plus"></i> Create Appointment
-    </button>
-    <!-- Calendar card -->
-    <div class="bg-white p-3 md:p-5 lg:p-6 rounded-xl shadow flex flex-col w-full">
-      <!-- Drop down Branch Select-->
-      <div class="mb-4">
-        <label class="font-semibold block mb-1 text-sm">Select Branch:</label>
 
-        <div class="w-full max-w-full">
-          <select
-            id="branch-filter"
-            class="block w-full border p-2 rounded-md text-sm truncate"
-          >
+  <!-- ===================== -->
+  <!-- Calendar + Timeline -->
+  <!-- ===================== -->
+  <div class="flex flex-col md:flex-row gap-4 mt-6 items-stretch">
+
+    <!-- Calendar section -->
+    <div class="flex flex-col w-full md:flex-1 md:max-w-[700px]">
+
+      <button id="create-appointment-btn"
+        class="w-full mb-3 px-3 py-2 text-sm bg-green-600 text-white rounded-md flex items-center justify-center gap-1 hover:bg-green-700 transition">
+        <i class="la la-plus"></i> Create Appointment
+      </button>
+
+      <div class="bg-white p-3 md:p-5 lg:p-6 rounded-xl shadow flex flex-col w-full">
+
+        <div class="mb-4">
+          <label class="font-semibold block mb-1 text-sm">Select Branch:</label>
+          <select id="branch-filter"
+            class="block w-full border p-2 rounded-md text-sm truncate">
             <option value="">All Branches</option>
             {% for branch in branches %}
               <option value="{{ branch.name }}">
@@ -57,73 +64,155 @@
             {% endfor %}
           </select>
         </div>
-      </div>
-      <div class="w-full overflow-x-auto">
-        <div class="w-full md:min-w-[360px] text-xs md:text-sm px-1 md:px-0">
-          <div id="calendar" class="h-full"></div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Timeline + list section -->
-  <div class="w-full md:flex-1">
-    <div class="bg-white p-3 md:p-4 lg:p-6 rounded-xl shadow w-full">
-
-      <!-- Timeline legend (now on top) -->
-      <div class="flex flex-wrap items-center justify-center gap-2 mb-3 text-[11px] text-slate-600">
-        <span class="flex items-center gap-1">
-          <span class="h-2 w-2 rounded-full" style="background-color:#9CA3AF;"></span>
-          Not yet arrived
-        </span>
-        <span class="flex items-center gap-1">
-          <span class="h-2 w-2 rounded-full" style="background-color:#3B82F6;"></span>
-          Arrived
-        </span>
-        <span class="flex items-center gap-1">
-          <span class="h-2 w-2 rounded-full" style="background-color:#F59E0B;"></span>
-          On going
-        </span>
-        <span class="flex items-center gap-1">
-          <span class="h-2 w-2 rounded-full" style="background-color:#10B981;"></span>
-          Done
-        </span>
-        <span class="flex items-center gap-1">
-          <span class="h-2 w-2 rounded-full" style="background-color:#EF4444;"></span>
-          Cancelled
-        </span>
-      </div>
-
-      <!-- Timeline wrapper -->
-      <div class="w-full overflow-x-auto mb-4">
-        <!-- Scrollable wrapper; height synced from JS -->
-        <div id="timeline-scroll" class="w-full overflow-y-auto h-full">
-          <div class="w-full md:min-w-[360px] text-xs md:text-sm px-1 md:px-0 h-full">
-            <div id="timeline-calendar" class="h-full"></div> <!-- h-full -->
+        <div class="w-full overflow-x-auto">
+          <div class="w-full md:min-w-[360px] text-xs md:text-sm">
+            <div id="calendar" class="h-full"></div>
           </div>
         </div>
-      </div>
 
-      <!-- Timeline list (hidden for now) -->
-      <div class="hidden relative pl-3 md:pl-4 border-l border-gray-300 max-h-[400px] md:max-h-[600px] overflow-y-auto">
-        <ul id="todays-appointments-list" class="space-y-6"></ul>
       </div>
     </div>
+
+
+    <!-- Timeline section -->
+    <div class="w-full md:flex-1">
+      <div class="bg-white p-3 md:p-4 lg:p-6 rounded-xl shadow w-full">
+
+        <!-- Legend -->
+        <div class="flex flex-wrap items-center justify-center gap-2 mb-3 text-[11px] text-slate-600">
+          <span class="flex items-center gap-1">
+            <span class="h-2 w-2 rounded-full" style="background-color:#9CA3AF;"></span>
+            Not yet arrived
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="h-2 w-2 rounded-full" style="background-color:#3B82F6;"></span>
+            Arrived
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="h-2 w-2 rounded-full" style="background-color:#F59E0B;"></span>
+            On going
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="h-2 w-2 rounded-full" style="background-color:#10B981;"></span>
+            Done
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="h-2 w-2 rounded-full" style="background-color:#EF4444;"></span>
+            Cancelled
+          </span>
+        </div>
+
+        <!-- Timeline calendar -->
+        <div class="w-full overflow-x-auto mb-4">
+          <div id="timeline-scroll" class="w-full overflow-y-auto h-full">
+            <div class="w-full md:min-w-[360px] text-xs md:text-sm h-full">
+              <div id="timeline-calendar" class="h-full"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timeline list -->
+        <div class="hidden relative pl-3 md:pl-4 border-l border-gray-300 max-h-[400px] md:max-h-[600px] overflow-y-auto">
+          <ul id="todays-appointments-list" class="space-y-6"></ul>
+        </div>
+
+      </div>
+    </div>
+
   </div>
+  <!-- END flex row -->
 
 
+  {% if request.user.is_staff or request.user.is_superuser %}
+  <!-- ===================== -->
+  <!-- TABLE (NOW BELOW) -->
+  <!-- ===================== -->
+  <div class="mt-6 bg-white p-4 md:p-6 rounded-xl shadow w-full">
 
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-800">Appointment Records</h2>
+        <p class="text-xs text-gray-500">
+          Filter by date range and services. Leave end date empty to use the same as start date.
+        </p>
+      </div>
 
-{# Put the includes here, after the main layout #}
-{% include "appointment/appointment_modal.html" %}
-{% include "appointment/done_steps_modal.html" %}
-{% include "appointment/reschedule_modal.html" %}
-{% include "appointment/pop_up_modals.html" %}
-{% include "appointment/followup_modal.html" %}
-{% include "appointment/notify_modal.html" %}
-{% include "appointment/status_modal.html" %}
+      <div class="flex flex-wrap items-end gap-2">
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Start date</label>
+          <input type="date" id="admin-start-date"
+            class="border rounded-md px-2 py-1 text-xs">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">End date</label>
+          <input type="date" id="admin-end-date"
+            class="border rounded-md px-2 py-1 text-xs">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Service</label>
+          <select id="admin-service-filter"
+            class="border rounded-md px-2 py-1 text-xs min-w-[180px]">
+            <option value="">All services</option>
+            {% for service in services %}
+              <option value="{{ service.id }}">{{ service.service_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="button" id="admin-filter-apply"
+          class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700">
+          Apply filter
+        </button>
+
+      </div>
+    </div>
+
+  <div class="border rounded-lg overflow-hidden">
+
+    <!-- Scroll container -->
+    <div class="max-h-[500px] overflow-auto">
+      <table class="min-w-full text-xs">
+        <thead class="bg-gray-50 sticky top-0 z-10">
+          <tr class="text-left text-[11px] uppercase tracking-wide text-gray-500">
+            <th class="px-2 py-2">Date</th>
+            <th class="px-2 py-2">Time</th>
+            <th class="px-2 py-2">Patient</th>
+            <th class="px-2 py-2">Dentist</th>
+            <th class="px-2 py-2">Branch</th>
+            <th class="px-2 py-2">Services</th>
+            <th class="px-2 py-2">Status</th>
+          </tr>
+        </thead>
+        <tbody id="admin-appointments-tbody">
+          <tr>
+            <td colspan="7" class="px-2 py-3 text-center text-gray-400">
+              No data yet. Pick a date range and click Apply filter.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+  {% endif %}
+
+  {% include "appointment/appointment_modal.html" %}
+  {% include "appointment/done_steps_modal.html" %}
+  {% include "appointment/reschedule_modal.html" %}
+  {% include "appointment/pop_up_modals.html" %}
+  {% include "appointment/followup_modal.html" %}
+  {% include "appointment/notify_modal.html" %}
+  {% include "appointment/status_modal.html" %}
+  {% include "appointment/reminder_settings_modal.html" %}
+
+</div>
 
 {% endblock %}
+
 
 
 {% block extra_js %}
@@ -134,11 +223,137 @@
 </script>
 
 <script src="{% static 'vendor/fullcalendar/index.global.min.js' %}"></script>
-{% comment %} <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script> {% endcomment %}
 <script src="{% static 'js/calendar.js' %}"></script>
 <script src="{% static 'js/calendar_mobile.js' %}"></script>
 <script src="{% static 'js/appointment_mobile.js' %}"></script>
 <script src="{% static 'js/appointment.js' %}"></script>
 
+{% if request.user.is_staff or request.user.is_superuser %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const startInput = document.getElementById("admin-start-date");
+    const endInput   = document.getElementById("admin-end-date");
+    const serviceSel = document.getElementById("admin-service-filter");
+    const applyBtn   = document.getElementById("admin-filter-apply");
+    const tbody      = document.getElementById("admin-appointments-tbody");
+
+    if (!startInput || !applyBtn || !tbody) return;
+
+    function renderRows(rows) {
+      tbody.innerHTML = "";
+      if (!rows.length) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 7;
+        td.className = "px-2 py-3 text-center text-gray-400";
+        td.textContent = "No appointments found for this filter.";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.className = "border-t text-[11px]";
+
+        const cDate = document.createElement("td");
+        cDate.className = "px-2 py-1";
+        cDate.textContent = r.date;
+
+        const cTime = document.createElement("td");
+        cTime.className = "px-2 py-1";
+        cTime.textContent = r.time;
+
+        const cPatient = document.createElement("td");
+        cPatient.className = "px-2 py-1";
+        cPatient.textContent = r.patient;
+
+        const cDentist = document.createElement("td");
+        cDentist.className = "px-2 py-1";
+        cDentist.textContent = r.dentist || "-";
+
+        const cBranch = document.createElement("td");
+        cBranch.className = "px-2 py-1";
+        cBranch.textContent = r.branch || "-";
+
+        const cServices = document.createElement("td");
+        cServices.className = "px-2 py-1";
+        cServices.textContent = r.services || "-";
+
+        const cStatus = document.createElement("td");
+        cStatus.className = "px-2 py-1";
+        cStatus.textContent = r.status;
+
+        tr.appendChild(cDate);
+        tr.appendChild(cTime);
+        tr.appendChild(cPatient);
+        tr.appendChild(cDentist);
+        tr.appendChild(cBranch);
+        tr.appendChild(cServices);
+        tr.appendChild(cStatus);
+        tbody.appendChild(tr);
+      });
+    }
+
+    function fetchTableData() {
+      const start = startInput.value;
+      let end = endInput.value;
+      const serviceId = serviceSel ? serviceSel.value : "";
+
+      if (!start) {
+        alert("Please pick at least a start date.");
+        return;
+      }
+      if (!end) {
+        end = start; // auto use start date if end empty
+      }
+
+      const params = new URLSearchParams({
+        start_date: start,
+        end_date: end,
+      });
+      if (serviceId) {
+        params.append("service_id", serviceId);
+      }
+
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="px-2 py-3 text-center text-gray-400">
+            Loading...
+          </td>
+        </tr>
+      `;
+
+      fetch("{% url 'appointment:appointments_table_data' %}?" + params.toString())
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) {
+            alert(data.error || "Failed to load appointments.");
+            return;
+          }
+          renderRows(data.rows);
+        })
+        .catch(err => {
+          console.error("Table data error", err);
+          alert("Network error while loading appointments.");
+        });
+    }
+
+    applyBtn.addEventListener("click", fetchTableData);
+
+    // Optional: default start date = today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    startInput.value = todayStr;
+    // auto load today's appointments initially
+    fetchTableData();
+  });
+</script>
+
+
+{% endif %}
 
 {% endblock %}

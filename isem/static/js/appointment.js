@@ -670,27 +670,21 @@ const confirmTimeEl   = document.getElementById("confirm-picked-time");
 const confirmSaveBtn  = document.getElementById("confirm-save-btn");
 const confirmReschedBtn = document.getElementById("confirm-reschedule-btn");
 
-// NEW: hidden fields to store the actual picked slot from backend (optional but recommended)
 const pickedStartInput = document.getElementById("picked-start-time");
 const pickedEndInput   = document.getElementById("picked-end-time");
 
 let pendingSubmitTimeout = null;
 
 if (addForm && overlay && loadingStep && confirmStep) {
-  // Intercept the normal submit
   addForm.addEventListener("submit", (e) => {
-    e.preventDefault(); // stop immediate POST
-
-    // If form invalid by our existing validation, do nothing
+    e.preventDefault();
     if (addSaveBtn && addSaveBtn.disabled) return;
 
-    // Prepare overlay: show loading step, hide confirm step
     loadingStep.classList.remove("hidden");
     confirmStep.classList.add("hidden");
     overlay.classList.remove("hidden");
     overlay.classList.add("flex");
 
-    // Small animation setup (same as before)
     const content = overlay.querySelector("div");
     if (content) {
       content.classList.remove("opacity-100", "scale-100");
@@ -701,36 +695,31 @@ if (addForm && overlay && loadingStep && confirmStep) {
       });
     }
 
-    // After 5 seconds, switch to confirmation step (and call backend)
     if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
     pendingSubmitTimeout = setTimeout(() => {
       const formData = new FormData(addForm);
 
-        fetch("/dashboard/appointment/precompute-slot/", { 
-          method: "POST",
-          headers: {
-            "X-CSRFToken": getCookie("csrftoken"),
-          },
-          body: formData,
-        })
+      fetch("/dashboard/appointment/precompute-slot/", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: formData,
+      })
         .then((res) => res.json())
         .then((data) => {
           if (!data.success) {
-            // ❗ NO AVAILABLE NON-OVERLAPPING SLOT:
-            // show message and disable Save so user must change schedule
             confirmDateEl.textContent = "N/A";
             confirmTimeEl.textContent =
               data.error || "No available time slot for the selected date and services.";
-
             if (confirmSaveBtn) {
               confirmSaveBtn.disabled = true;
               confirmSaveBtn.classList.add("opacity-50", "cursor-not-allowed");
             }
           } else {
-            // ✅ USE ACTUAL PICKED SLOT FROM BACKEND (NOT PREFERRED TIME)
-            const dateVal = data.date;          // "YYYY-MM-DD"
-            const start   = data.start_time;    // "HH:MM" 24h
-            const end     = data.end_time;      // "HH:MM" 24h
+            const dateVal = data.date;
+            const start   = data.start_time;
+            const end     = data.end_time;
 
             confirmDateEl.textContent = dateVal || "N/A";
 
@@ -750,13 +739,11 @@ if (addForm && overlay && loadingStep && confirmStep) {
               confirmTimeEl.textContent = "N/A";
             }
 
-            // Re‑enable Save (slot is valid)
             if (confirmSaveBtn) {
               confirmSaveBtn.disabled = false;
               confirmSaveBtn.classList.remove("opacity-50", "cursor-not-allowed");
             }
 
-            // OPTIONAL: store picked slot in hidden inputs so backend can use it directly
             if (pickedStartInput) pickedStartInput.value = start || "";
             if (pickedEndInput)   pickedEndInput.value   = end || "";
           }
@@ -777,22 +764,18 @@ if (addForm && overlay && loadingStep && confirmStep) {
     }, 5000);
   });
 
-  // User confirms: actually submit form to Django
+  // These three listeners MUST stay inside the if-block
   confirmSaveBtn?.addEventListener("click", () => {
     if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
-
     overlay.classList.add("hidden");
     overlay.classList.remove("flex");
     closeAppointmentModal("appointment-modal");
-
     setTimeout(() => {
       if (window.recalcCalendarLayout) window.recalcCalendarLayout();
     }, 50);
-
     addForm.submit();
   });
 
-  // User wants to change schedule
   confirmReschedBtn?.addEventListener("click", () => {
     if (pendingSubmitTimeout) clearTimeout(pendingSubmitTimeout);
     overlay.classList.add("hidden");
@@ -809,9 +792,115 @@ CHANGES:
 - Optional: pickedStartInput/pickedEndInput allow you to persist the exact picked slot to the backend if you add
   corresponding hidden inputs in the form.
 */
+// === Global Reminder Automation Modal ===
+const openReminderBtn   = document.getElementById("open-reminder-settings-btn");
+const reminderModal     = document.getElementById("reminder-settings-modal");
+const inputOffsets      = document.getElementById("reminder-offsets");
+const chkEmail          = document.getElementById("reminder-send-email");
+const chkSms            = document.getElementById("reminder-send-sms");
+const btnReminderClose  = document.getElementById("reminder-settings-cancel");
+const btnReminderSave   = document.getElementById("reminder-settings-save");
+
+function openReminderModal() {
+  const reminderModal = document.getElementById("reminder-settings-modal");
+  const inputOffsets  = document.getElementById("reminder-offsets");
+  const chkEmail      = document.getElementById("reminder-send-email");
+  const chkSms        = document.getElementById("reminder-send-sms");
+
+  window.reminderModalOpen = true;   // flag ON
+  window.currentEventId = null;      // clear selection
+
+  if (!reminderModal) return;
+
+  reminderModal.classList.remove("hidden");
+  reminderModal.classList.add("flex");
+
+  const content =
+    reminderModal.querySelector(".modal-content") ||
+    reminderModal.querySelector(".bg-white.rounded-2xl") ||
+    reminderModal.querySelector(".bg-white.rounded-lg");
+
+  if (content) {
+    content.classList.remove("opacity-0", "scale-95");
+    content.classList.add("opacity-100", "scale-100");
+  }
+
+  fetch("/dashboard/appointment/reminders/default/", {
+    headers: { "X-Requested-With": "XMLHttpRequest" },
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) return;
+      if (inputOffsets) inputOffsets.value = data.offsets_days || "14,7,5,3,1";
+      if (chkEmail)     chkEmail.checked   = !!data.send_email;
+      if (chkSms)       chkSms.checked     = !!data.send_sms;
+    })
+    .catch(err => {
+      console.error("Error loading global reminder settings:", err);
+    });
+}
+
+function closeReminderModal() {
+  const reminderModal = document.getElementById("reminder-settings-modal");
+  if (!reminderModal) return;
+
+  window.reminderModalOpen = false;  // flag OFF
+
+  const content =
+    reminderModal.querySelector(".modal-content") ||
+    reminderModal.querySelector(".bg-white.rounded-2xl") ||
+    reminderModal.querySelector(".bg-white.rounded-lg");
+
+  if (content) {
+    content.classList.remove("opacity-100", "scale-100");
+    content.classList.add("opacity-0", "scale-95");
+    setTimeout(() => {
+      reminderModal.classList.add("hidden");
+      reminderModal.classList.remove("flex");
+    }, 200);
+  } else {
+    reminderModal.classList.add("hidden");
+    reminderModal.classList.remove("flex");
+  }
+}
 
 
-  // Initialize
+openReminderBtn?.addEventListener("click", openReminderModal);
+btnReminderClose?.addEventListener("click", closeReminderModal);
+
+btnReminderSave?.addEventListener("click", () => {
+  const payload = {
+    offsets_days: inputOffsets.value || "",
+    send_email: chkEmail.checked,
+    send_sms:   chkSms.checked,
+  };
+
+  fetch("/dashboard/appointment/reminders/default/save/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+      "X-Requested-With": "XMLHttpRequest",
+    },
+    body: JSON.stringify(payload),
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) {
+        alert(data.error || "Failed to save reminder automation settings.");
+        return;
+      }
+      alert("Global reminder automation saved.");
+      closeReminderModal();
+    })
+    .catch(err => {
+      console.error("Error saving global reminder settings:", err);
+      alert("Network error while saving settings.");
+    });
+});
+
+
+    // Initialize
   initTimeValidation();
   initRescheduleForm();
   initFollowupForm();

@@ -1,7 +1,6 @@
 from django.urls import path
 from . import views
 
-
 app_name = 'appointment'
 
 urlpatterns = [
@@ -30,4 +29,12 @@ urlpatterns = [
         views.notify_patient_email,
         name="notify_patient_email",
     ),
+    #Apppointment Table
+    path(
+        "appointments-table-data/",
+        views.appointments_table_data,
+        name="appointments_table_data",
+    ),
+    path("reminders/default/", views.get_global_reminder_settings, name="get_global_reminder_settings"),
+    path("reminders/default/save/", views.save_global_reminder_settings, name="save_global_reminder_settings"),
 ]

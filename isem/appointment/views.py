@@ -25,7 +25,7 @@ from billing.models import BillingRecord
 from patient.models import Patient
 
 from .forms import AppointmentForm
-from .models import Dentist, Service, Appointment, AppointmentLog,Branch
+from .models import Dentist, Service, Appointment, AppointmentLog, Branch, GlobalReminderSetting
 from .utils import find_next_available_slot
 
 def is_staff_or_superuser(user):
@@ -681,8 +681,6 @@ def reschedule_appointment(request, appointment_id):
     messages.success(request, "Appointment rescheduled successfully!")
     return JsonResponse({"success": True})
 
-
-
 @csrf_exempt
 def get_appointment_details(request, appointment_id):
     """Get appointment details including patient info for the done steps modal"""
@@ -759,6 +757,47 @@ def get_appointment_details(request, appointment_id):
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
+
+@login_required
+@csrf_exempt
+def get_global_reminder_settings(request):
+    """
+    Return global default reminder automation settings (for all appointments).
+    """
+    try:
+        setting = GlobalReminderSetting.get_solo()
+        return JsonResponse({
+            "success": True,
+            "offsets_days": setting.offsets_days,
+            "send_email": setting.send_email,
+            "send_sms": setting.send_sms,
+        })
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+
+@login_required
+@csrf_exempt
+@require_POST
+def save_global_reminder_settings(request):
+    """
+    Save global default reminder automation settings (for all appointments).
+    """
+    try:
+        data = json.loads(request.body.decode("utf-8")) if request.body else {}
+        offsets_days = data.get("offsets_days", "")
+        send_email = bool(data.get("send_email", True))
+        send_sms = bool(data.get("send_sms", True))
+
+        setting = GlobalReminderSetting.get_solo()
+        setting.offsets_days = offsets_days
+        setting.send_email = send_email
+        setting.send_sms = send_sms
+        setting.save()
+
+        return JsonResponse({"success": True})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 @require_POST
 def precompute_appointment_slot(request):
@@ -853,3 +892,61 @@ def autocomplete_patients(request):
             })
 
     return JsonResponse({"results": results})
+
+
+@login_required
+@user_passes_test(is_staff_or_superuser)
+@require_GET
+def appointments_table_data(request):
+    """
+    JSON API: return appointments for the table view.
+    Query params:
+      start_date (YYYY-MM-DD) - required
+      end_date   (YYYY-MM-DD) - optional; if missing, use start_date
+      service_id (int, optional)
+    """
+    start_str = request.GET.get("start_date")
+    end_str = request.GET.get("end_date") or start_str
+    service_id = request.GET.get("service_id")
+
+    if not start_str:
+        return JsonResponse({"success": False, "error": "start_date is required"}, status=400)
+
+    try:
+        start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
+    except ValueError:
+        return JsonResponse({"success": False, "error": "Invalid date format"}, status=400)
+
+    qs = Appointment.objects.select_related("dentist", "branch", "patient").prefetch_related("services")
+    qs = qs.filter(date__range=(start_date, end_date))
+
+    if service_id:
+        qs = qs.filter(services__id=service_id)
+
+    # Optional: only upcoming + today, or also past; here we include all in range
+    qs = qs.order_by("date", "time")
+
+    rows = []
+    for a in qs:
+        service_names = ", ".join(s.service_name for s in a.services.all())
+        patient_name = ""
+        if a.patient and a.patient.name:
+            patient_name = a.patient.name
+        elif a.email:
+            patient_name = a.email
+        else:
+            patient_name = "Unknown"
+
+        rows.append({
+            "id": a.id,
+            "date": str(a.date),
+            "time": a.time.strftime("%I:%M %p"),
+            "patient": patient_name,
+            "dentist": a.dentist.name if a.dentist else a.dentist_name or "",
+            "branch": a.branch.name if a.branch else a.location,
+            "services": service_names,
+            "status": a.get_status_display(),
+        })
+
+    return JsonResponse({"success": True, "rows": rows})
