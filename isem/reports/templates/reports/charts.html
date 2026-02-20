@@ -1,0 +1,22 @@
+<!-- Charts -->
+<div class="grid grid-cols-1 md:grid-cols-5 xl:grid-cols-4 gap-4">
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="font-semibold mb-4">Appointment Trend</h2>
+        <canvas id="appointmentChart" data-labels='{{ appointment_labels|safe }}' data-values='{{ appointment_data|safe }}'></canvas>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="font-semibold mb-4">Patient Growth</h2>
+        <canvas id="patientChart" data-labels='{{ patient_labels|safe }}' data-values='{{ patient_data|safe }}'></canvas>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="font-semibold mb-4">Paid Revenue Trend</h2>
+        <canvas id="revenueChart" data-labels='{{ revenue_labels|safe }}' data-values='{{ revenue_data|safe }}'></canvas>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="font-semibold mb-4">Inventory by Category</h2>
+        <canvas id="inventoryChart" data-labels='{{ inventory_category_labels|safe }}' data-values='{{ inventory_category_data|safe }}'></canvas>
+    </div>
+</div>

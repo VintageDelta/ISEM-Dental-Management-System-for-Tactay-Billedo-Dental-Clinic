@@ -56,8 +56,12 @@ def update_status(request, appointment_id):
         status = data.get("status")
         note = data.get("note") 
         print(f"Parsed status: {status}")
-        amount_paid_raw = data.get("amount_paid")
-        amount_paid = Decimal(amount_paid_raw) if amount_paid_raw is not None else Decimal("0")
+        amount_paid_non_decimal = data.get("amount_paid")
+
+        if amount_paid_non_decimal is not None:
+            amount_paid = Decimal(amount_paid_non_decimal)
+        else:
+            amount_paid = None
 
         print("Parsed amount_paid:", amount_paid)
 

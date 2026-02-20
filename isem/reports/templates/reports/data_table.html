@@ -1,0 +1,83 @@
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-8">
+    <div class="p-6 border-b border-gray-100 bg-gray-50/50">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h2 class="text-lg font-bold text-gray-800">Detailed Data Logs</h2>
+
+            <form method="GET" class="flex flex-wrap items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100">
+                <input type="hidden" name="range" value="{{ range_type }}">
+
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-400 ml-1 mb-0.5 uppercase">Module</span>
+                    <select name="report_type" onchange="this.form.submit()"
+                        class="text-sm font-semibold bg-white rounded-lg border-gray-200 shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 py-1.5 pl-3 pr-8">
+                        <option value="appointment" {% if report_type == 'appointment' %} selected {% endif %}>Appointments</option>
+                        <option value="patient" {% if report_type == 'patient' %} selected {% endif %}>Patients</option>
+                        <option value="billing" {% if report_type == 'billing' %} selected {% endif %}>Billing</option>
+                        <option value="inventory" {% if report_type == 'inventory' %} selected {% endif %}>Inventory</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-col hidden">
+                    <span class="text-[10px] font-bold text-gray-400 ml-1 mb-0.5 uppercase">Date Range Filter</span>
+                    <div class="flex items-center bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+                        <input type="date" name="start_date" value="{{ start_date }}"
+                            class="text-sm border-none focus:ring-0 py-1.5 pr-0 w-36 text-gray-600">
+                        <span class="text-gray-300 px-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <input type="date" name="end_date" value="{{ end_date }}"
+                            class="text-sm border-none focus:ring-0 py-1.5 pl-0 w-36 text-gray-600">
+                    </div>
+                </div>
+
+                <div class="flex items-end self-end gap-2">
+                    <!-- <button type="submit"
+                        class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-sm active:transform active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        Filter
+                    </button> -->
+                    
+                    {% if start_date or end_date %}
+                    <a href="?range={{ range_type }}&report_type={{ report_type }}" 
+                       class="p-2 text-gray-400 hover:text-red-500 transition-colors" title="Clear Filters">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                    {% for header in headers %}
+                    <th class="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">{{ header }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% if report_data %}
+                {% for row in report_data %}
+                <tr class="hover:bg-blue-50/30 transition-colors">
+                    {% for cell in row %}
+                    <td class="px-6 py-4 text-sm text-gray-700 font-medium">{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="100%" class="px-6 py-12 text-center text-gray-400 italic">
+                        No records found for this criteria.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>

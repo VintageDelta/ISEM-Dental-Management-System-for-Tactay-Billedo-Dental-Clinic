@@ -1,0 +1,29 @@
+{% load humanize %}
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <div class="bg-white p-5 rounded shadow">
+        <p class="text-sm text-gray-500">Completed Appointments</p>
+        <p class="text-3xl font-bold text-green-600">{{ completed_appointments }}</p>
+    </div>
+
+    <div class="bg-white p-5 rounded shadow">
+        <p class="text-sm text-gray-500">Total Patients</p>
+        <p class="text-3xl font-bold">{{ total_patients }}</p>
+    </div>
+
+    <div class="bg-white p-5 rounded shadow">
+        <p class="text-sm text-gray-500">Paid Revenue</p>
+        <p class="text-3xl font-bold text-blue-600">₱{{ paid_revenue|floatformat:2|intcomma }}</p>
+    </div>
+
+    <div class="bg-white p-5 rounded shadow">
+        <p class="text-sm text-gray-500">Low Stock Items</p>
+        <p class="text-3xl font-bold text-yellow-600">{{ low_stock_count }}</p>
+    </div>
+
+    <div class="bg-white p-5 rounded shadow">
+        <p class="text-sm text-gray-500">Expired Items</p>
+        <p class="text-3xl font-bold text-red-600">{{ expired_item_count }}</p>
+    </div>
+</div>

@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.humanize",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -86,11 +87,11 @@ WSGI_APPLICATION = "isem.wsgi.application"
 DATABASES = {
     "default": {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'isem_db',         # database name you created
-        'USER': 'root',            # default WAMP username
-        'PASSWORD': '',             # WAMP password of your account (e.g. p@ssw0rd) #renuupassword = admin123
-        'HOST': '127.0.0.1',       # or 'localhost'
-        'PORT': '3306',            # default MySQL port in WAMP
+        'NAME': config('DB_NAME'),         # database name you created
+        'USER': config('DB_USER'),            # default WAMP username
+        'PASSWORD': config('DB_PASSWORD'),             # WAMP password of your account (e.g. p@ssw0rd) #renuupassword = admin123
+        'HOST': config('DB_HOST'),       # or 'localhost'
+        'PORT': config('DB_PORT'),            # default MySQL port in WAMP
     }
 }
 

@@ -1,4 +1,5 @@
 {% extends "core/base.html" %}
+{% load static %}
 {% block title %}Reports Dashboard{% endblock %}
 
 {% block content %}
@@ -12,18 +13,43 @@
             Reports Dashboard
         </h1>
 
-        <div class="flex flex-wrap items-center gap-2">
-
+        <div class="flex flex-wrap items-end gap-2">
             <!-- Range Filters -->
-            <a href="?range=daily" class="px-4 py-2 rounded text-sm font-medium
+            <a href="?range=daily&start_date={{ start_date }}&end_date={{ end_date }}" class="px-4 py-2 rounded text-sm font-medium
            {% if range_type == 'daily' %}bg-blue-600 text-white{% else %}bg-gray-200{% endif %}">
                 Daily
             </a>
 
-            <a href="?range=monthly" class="px-4 py-2 rounded text-sm font-medium
+            <a href="?range=monthly&start_date={{ start_date }}&end_date={{ end_date }}" class="px-4 py-2 rounded text-sm font-medium
            {% if range_type == 'monthly' %}bg-blue-600 text-white{% else %}bg-gray-200{% endif %}">
                 Monthly
             </a>
+
+            <form method="GET" class="flex flex-col">
+                <span class="text-[10px] font-bold text-gray-400 ml-1 mb-0.5 uppercase tracking-wider">Specific Range Filter</span>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+                        <input type="date" name="start_date" value="{{ start_date }}"
+                            class="text-sm border-none focus:ring-0 py-1.5 w-32 md:w-36 text-gray-600 cursor-pointer">
+                        
+                        <span class="text-gray-300">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        
+                        <input type="date" name="end_date" value="{{ end_date }}"
+                            class="text-sm border-none focus:ring-0 py-1.5 w-32 md:w-36 text-gray-600 cursor-pointer">
+                    </div>
+                    
+                    <button type="submit" class="p-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </button>
+                </div>
+                <input type="hidden" name="range" value="{{ range_type }}">
+            </form>
 
             <!-- Divider -->
             <div class="w-px h-6 bg-gray-300 mx-2"></div>
@@ -43,7 +69,8 @@
                 </span>
             </a>
 
-            <a href="{% url 'reports:export' %}?range={{ range_type }}&format=pdf"
+            <form>{% csrf_token %}</form> <button
+                onclick="handlePdfExport('{% url 'reports:export' %}?range={{ range_type }}&format=pdf&start_date={{ start_date }}&end_date={{ end_date }}')"
                 class="group relative inline-flex items-center px-4 py-2 rounded bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
                 Export PDF
                 <span class="pointer-events-none absolute bottom-full mb-2
@@ -55,144 +82,19 @@
                text-xs text-indigo-100 shadow-lg">
                     Charts & summary
                 </span>
-            </a>
+            </button>
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div class="bg-white p-5 rounded shadow">
-            <p class="text-sm text-gray-500">Completed Appointments</p>
-            <p class="text-3xl font-bold text-green-600">{{ completed_appointments }}</p>
-        </div>
+    {% include "reports/summary_cards.html" %}
 
-        <div class="bg-white p-5 rounded shadow">
-            <p class="text-sm text-gray-500">Total Patients</p>
-            <p class="text-3xl font-bold">{{ total_patients }}</p>
-        </div>
+    {% include "reports/charts.html" %}
 
-        <div class="bg-white p-5 rounded shadow">
-            <p class="text-sm text-gray-500">Paid Revenue</p>
-            <p class="text-3xl font-bold text-blue-600">₱{{ paid_revenue|floatformat:2 }}</p>
-        </div>
-
-        <div class="bg-white p-5 rounded shadow">
-            <p class="text-sm text-gray-500">Low Stock Items</p>
-            <p class="text-3xl font-bold text-yellow-600">{{ low_stock_count }}</p>
-        </div>
-
-        <div class="bg-white p-5 rounded shadow">
-            <p class="text-sm text-gray-500">Expired Items</p>
-            <p class="text-3xl font-bold text-red-600">{{ expired_item_count }}</p>
-        </div>
-    </div>
-
-    <!-- Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded shadow">
-            <h2 class="font-semibold mb-4">Appointment Trend</h2>
-            <canvas id="appointmentChart"></canvas>
-        </div>
-
-        <div class="bg-white p-6 rounded shadow">
-            <h2 class="font-semibold mb-4">Patient Growth</h2>
-            <canvas id="patientChart"></canvas>
-        </div>
-
-        <div class="bg-white p-6 rounded shadow">
-            <h2 class="font-semibold mb-4">Paid Revenue Trend</h2>
-            <canvas id="revenueChart"></canvas>
-        </div>
-
-        <div class="bg-white p-6 rounded shadow">
-            <h2 class="font-semibold mb-4">Inventory by Category</h2>
-            <canvas id="inventoryChart"></canvas>
-        </div>
-    </div>
+    {% include "reports/data_table.html" %}
 </div>
+{% endblock %}
 
-<script>
-    function createLineChart(id, labels, data, label, color) {
-        new Chart(document.getElementById(id), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: label,
-                    data: data,
-                    borderColor: color,
-                    backgroundColor: color + "33",
-                    tension: 0.3,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: true } },
-                scales: { y: { beginAtZero: true } }
-            }
-        });
-    }
-
-    function createBarChart(id, labels, data, label) {
-        new Chart(document.getElementById(id), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: label,
-                    data: data,
-                    backgroundColor: '#3b82f6'
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
-            }
-        });
-    }
-
-    createLineChart(
-        "appointmentChart",
-        {{ appointment_labels| safe }},
-        {{ appointment_data| safe }},
-        "Appointments",
-        "#10b981"
-    );
-
-    createLineChart(
-        "patientChart",
-        {{ patient_labels| safe }},
-        {{ patient_data| safe }},
-        "New Patients",
-        "#6366f1"
-    );
-
-    createLineChart(
-        "revenueChart",
-        {{ revenue_labels| safe }},
-        {{ revenue_data| safe }},
-        "Revenue",
-        "#2563eb"
-    );
-
-    createBarChart(
-        "inventoryChart",
-        {{ inventory_category_labels| safe }},
-        {{ inventory_category_data| safe }},
-        "Items"
-    );
-</script>
-
-<script>
-    function setExportFormat(format) {
-        const btn = document.getElementById("exportBtn");
-        const baseUrl = "{% url 'reports:export' %}";
-        btn.href = `${baseUrl}?range={{ range_type }}&format=${format}`;
-
-        // Close dropdown
-        document.getElementById('exportDropdown').classList.add('hidden');
-    }
-</script>
+{% block extra_js %}
+<script src="{% static 'js/reports_charts.js' %}"></script>
+<script src="{% static 'js/reports_export.js' %}"></script>
 {% endblock %}
