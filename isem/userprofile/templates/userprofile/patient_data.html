@@ -23,7 +23,7 @@
   <!-- LOGO SECTION -->
   <div class="relative text-center mt-8 mb-6">
     <img
-      src="{% static 'landingpage/logo_W.png' %}"
+      src="{% static 'landingpage/logo_w.png' %}"
       alt="Tactay-Billedo Dental Clinic Logo"
       class="mx-auto w-28 sm:w-36 md:w-40 lg:w-44 object-contain"
     />
@@ -52,12 +52,6 @@
                  max="{{ today|date:'Y-m-d' }}"
                  class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
         </div>
-        <div>
-          <label class="block text-gray-700">Age</label>
-          <input type="number" name="age" value="{{ patient.age }}"
-                 class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-        </div>
-
         <div>
           <label class="block text-gray-700">Gender</label>
           <select name="gender"

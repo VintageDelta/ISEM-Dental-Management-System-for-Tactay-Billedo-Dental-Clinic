@@ -191,7 +191,7 @@
         <nav class="p-2 sm:p-3 md:p-4 flex-1">
   <ul class="space-y-2 sm:space-y-3 md:space-y-4">
 
-    {% if not user.is_staff or not user.is_superuser %}
+    {% if not user.is_staff and not user.is_superuser %}
     <!-- Home -->
     <li>
       <a href="{% url 'userprofile:homepage' %}"
@@ -329,7 +329,8 @@
               </div>
               <div class="text-left">
                 <p class="font-semibold">{{ user.first_name }}</p>
-                <p class="text-xs text-gray-500">{% if user.is_superuser %}Admin{% elif user.is_staff %}Staff{% else %}Patient{% endif %}</p>
+                <p class="text-xs text-gray-500">{% if user.is_superuser %}Admin{% elif user.is_staff %}Staff{% else
+                  %}Patient{% endif %}</p>
               </div>
               <span class="material-icons text-gray-500">expand_more</span>
             </button>
