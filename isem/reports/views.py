@@ -433,7 +433,7 @@ def export_pdf_report(data, request):
         elements.append(Spacer(1, 5))
         t = Table([table_headers] + table_data, colWidths=col_widths)
         t.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), colors.blue),
+            ('BACKGROUND', (0,0), (-1,0), colors.lightgreen),
             ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
             ('ALIGN', (0,0), (-1,-1), 'CENTER'),
             ('FONTSIZE', (0,0), (-1,-1), 8),
