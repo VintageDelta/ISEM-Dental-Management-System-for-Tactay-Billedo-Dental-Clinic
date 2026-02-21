@@ -260,9 +260,10 @@ def build_report_data(range_type, start_date, end_date):
         .values("category")
         .annotate(
             total=Count("id"),
-            low_stock=Count("id", filter=F("status") == "low_stock"),
-            expired=Count("id", filter=F("status") == "expired"),
+            low_stock=Count("id", filter=Q(status="low_stock")),
+            expired=Count("id", filter=Q(status="expired")),
         )
+        .order_by("category")
     )
 
     return {
