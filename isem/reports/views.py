@@ -456,7 +456,7 @@ def export_pdf_report(data, request):
 
     # Billing/Revenue Summary
     bill_data = [[b.patient.name, f"P {b.amount}", b.payment_status, str(b.date_issued.date())] for b in data["raw"]["billing"][:10]]
-    create_summary_table("Financial Records (Recent)", ["Patient", "Amount", "Status", "Date"], bill_data, [150, 80, 100, 100])
+    create_summary_table("Billing Records (Recent)", ["Patient", "Amount", "Status", "Date"], bill_data, [150, 80, 100, 100])
 
     doc.build(elements)
     return response
