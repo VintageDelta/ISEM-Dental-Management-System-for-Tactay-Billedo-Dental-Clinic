@@ -411,10 +411,10 @@ def export_pdf_report(data, request):
         return cell_elements
 
     # Prepare the 2x2 grid data
-    # Row 1: Appointment (Top Left) | Patient (Top Right)
-    # Row 2: Revenue (Bottom Left)     | Inventory (Bottom Right)
-    row1 = [get_chart_cell('appointmentChart', 'Appointments'), get_chart_cell('patientChart', 'New Patients')]
-    row2 = [get_chart_cell('revenueChart', 'Revenue Trend'), get_chart_cell('inventoryChart', 'Inventory Levels')]
+    # Row 1: Revenue (Top Left) | Patient (Top Right)
+    # Row 2: Appointment (Bottom Left)     | Inventory (Bottom Right)
+    row1 = [get_chart_cell('revenueChart', 'Revenue Trend'), get_chart_cell('patientChart', 'New Patients')]
+    row2 = [get_chart_cell('appointmentChart', 'Appointments'), get_chart_cell('inventoryChart', 'Inventory Levels')]
 
     chart_grid = Table([row1, row2], colWidths=[250, 250])
     chart_grid.setStyle(TableStyle([
